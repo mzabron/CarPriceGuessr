@@ -1,1 +1,1 @@
-Projekt WWW i JS
+Projekt WWW i JS!
