@@ -1,0 +1,9 @@
+{
+  "name": "car-price-guessr-server",
+  "version": "1.0.0",
+  "description": "backend of car-price-guessr",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
