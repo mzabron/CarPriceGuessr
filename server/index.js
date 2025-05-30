@@ -1,7 +1,10 @@
 const express = require('express');
 const app = express();
+const userRoutes = require('./routes/userRoutes');
 
-console.log(app);
+app.use(express.json());
+
+app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
     res.send("hello");
