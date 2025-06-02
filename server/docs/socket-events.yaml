@@ -1,0 +1,134 @@
+# Socket.io Events
+  socketio:
+    events:
+      - name: connection
+        description: Event fired when a new client connects to the server
+        direction: client → server
+        
+      - name: disconnect
+        description: Event fired when a client disconnects from the server
+        direction: client → server
+        
+      - name: rooms:list
+        description: Sends the list of available rooms to the client
+        direction: server → client
+        payload:
+          type: array
+          items:
+            $ref: '#/components/schemas/Room'
+            
+      - name: rooms:join
+        description: Client requests to join a specific room
+        direction: client → server
+        payload:
+          type: object
+          properties:
+            roomId:
+              type: integer
+              example: 1
+            playerName:
+              type: string
+              example: "player1"
+          required:
+            - roomId
+            - playerName
+            
+      - name: rooms:joined
+        description: Sent to client after successfully joining a room
+        direction: server → client
+        payload:
+          type: object
+          properties:
+            room:
+              $ref: '#/components/schemas/Room'
+            player:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: "socket-id-123"
+                name:
+                  type: string
+                  example: "player1"
+              
+      - name: rooms:playerJoined
+        description: Notifies all room members that a new player has joined
+        direction: server → client
+        payload:
+          type: object
+          properties:
+            roomId:
+              type: integer
+              example: 1
+            playerName:
+              type: string
+              example: "player1"
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                    
+      - name: rooms:leave
+        description: Client requests to leave a room
+        direction: client → server
+        payload:
+          type: object
+          properties:
+            roomId:
+              type: integer
+              example: 1
+            playerName:
+              type: string
+              example: "player1"
+          required:
+            - roomId
+            - playerName
+            
+      - name: rooms:left
+        description: Sent to client after successfully leaving a room
+        direction: server → client
+        payload:
+          type: object
+          properties:
+            room:
+              $ref: '#/components/schemas/Room'
+            playerName:
+              type: string
+              example: "player1"
+              
+      - name: rooms:playerLeft
+        description: Notifies all room members that a player has left
+        direction: server → client
+        payload:
+          type: object
+          properties:
+            roomId:
+              type: integer
+              example: 1
+            playerName:
+              type: string
+              example: "player1"
+            players:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                    
+      - name: error
+        description: Sent to client when an error occurs
+        direction: server → client
+        payload:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Room ID is required"
