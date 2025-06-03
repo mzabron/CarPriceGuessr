@@ -1,74 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import socketService from '../services/socketService';
 import apiService from '../services/apiService';
 
 const RoomList = ({ onClose }) => {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const socket = socketService.connect();
+    // Initial fetch of rooms
+    fetchRooms();
 
-    // Listen for room list updates
-    const handleRoomsList = (roomsList) => {
-      console.log('Received rooms list:', roomsList);
-      setRooms(roomsList);
-      setLoading(false);
-    };
+    // Set up socket listeners
+    socketService.onRoomsList((updatedRooms) => {
+      console.log('Received updated rooms list:', updatedRooms);
+      setRooms(updatedRooms);
+    });
 
-    socket.on('rooms:list', handleRoomsList);
-
-    // Initial data loading
-    const loadInitialData = async () => {
-      try {
-        const initialRooms = await apiService.getRooms();
-        console.log('Initial rooms from API:', initialRooms);
-        setRooms(initialRooms);
-      } catch (error) {
-        console.error('Error loading initial rooms:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialData();
-    socketService.getRoomsList();
-
+    // Cleanup
     return () => {
-      socket.off('rooms:list', handleRoomsList);
+      socketService.removeAllListeners();
     };
   }, []);
 
-  const handleJoinRoom = (roomId) => {
-    socketService.joinRoom(roomId);
-    onClose();
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const fetchedRooms = await apiService.getRooms();
+      console.log('Fetched rooms:', fetchedRooms);
+      setRooms(fetchedRooms);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      setError('Failed to fetch rooms');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJoinByCode = (e) => {
+  const handleJoinByCode = async (e) => {
     e.preventDefault();
     setError('');
-
+    
     if (!joinCode.trim()) {
-      setError('Please enter a room code');
+      setError('Room code is required');
       return;
     }
 
-    // For now, just show an info message since backend isn't ready
-    alert('Join by code feature coming soon!');
-    setJoinCode('');
+    try {
+      const response = await apiService.joinRoomByCode(joinCode);
+      // Handle successful join
+      onClose();
+    } catch (error) {
+      setError(error.message);
+    }
   };
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-6">
-          <p>Loading rooms...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -110,38 +96,36 @@ const RoomList = ({ onClose }) => {
         {/* Public Rooms Section */}
         <div>
           <h3 className="text-lg font-semibold mb-3">Available Rooms</h3>
-          {rooms.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No rooms available</p>
-          ) : (
-            <div className="space-y-4">
+          {loading ? (
+            <p className="text-gray-500">Loading rooms...</p>
+          ) : rooms.length > 0 ? (
+            <div className="space-y-2">
               {rooms.map((room) => (
                 <div
                   key={room.id}
-                  className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50"
+                  className="p-4 border rounded-lg flex justify-between items-center"
                 >
                   <div>
-                    <h3 className="font-semibold">{room.name}</h3>
-                    <p className="text-sm text-gray-600">
+                    <h4 className="font-semibold">{room.name}</h4>
+                    <p className="text-sm text-gray-500">
                       Players: {room.players.length}/{room.playersLimit}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Rounds: {room.rounds} | Duration: {room.answerTime}s
                     </p>
                   </div>
                   <button
-                    onClick={() => handleJoinRoom(room.id)}
+                    onClick={() => {
+                      socketService.joinRoom(room.id);
+                      onClose();
+                    }}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                     disabled={room.players.length >= room.playersLimit}
-                    className={`px-4 py-2 rounded ${
-                      room.players.length >= room.playersLimit
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-blue-500 text-white hover:bg-blue-600'
-                    }`}
                   >
                     {room.players.length >= room.playersLimit ? 'Full' : 'Join'}
                   </button>
                 </div>
               ))}
             </div>
+          ) : (
+            <p className="text-gray-500">No rooms available</p>
           )}
         </div>
       </div>

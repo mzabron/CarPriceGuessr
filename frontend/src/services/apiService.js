@@ -1,25 +1,34 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'http://localhost:8080/api';
 
 class ApiService {
   async createRoom(roomConfig) {
     try {
+      console.log('Sending room creation request with config:', roomConfig);
+      
+      const requestBody = {
+        roomName: roomConfig.roomName,
+        playersLimit: roomConfig.maxPlayers,
+        isPrivate: roomConfig.visibility === 'private',
+        rounds: roomConfig.rounds,
+        powerUps: roomConfig.powerUps,
+        answerTime: roomConfig.roundDuration
+      };
+      
+      console.log('Formatted request body:', requestBody);
+
       const response = await fetch(`${API_URL}/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          roomName: roomConfig.roomName,
-          playersLimit: roomConfig.maxPlayers,
-          isPrivate: roomConfig.visibility === 'private',
-          rounds: roomConfig.rounds,
-          powerUps: roomConfig.powerUps,
-          answerTime: roomConfig.roundDuration
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('Room creation response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Room creation failed:', errorData);
         if (errorData.errors) {
           throw { errors: errorData.errors };
         }
@@ -27,6 +36,7 @@ class ApiService {
       }
 
       const data = await response.json();
+      console.log('Room creation successful:', data);
       return data;
     } catch (error) {
       console.error('Error creating room:', error);
@@ -68,8 +78,6 @@ class ApiService {
       throw error;
     }
   }
-
-  // Add more API methods as needed
 }
 
 export default new ApiService(); 
