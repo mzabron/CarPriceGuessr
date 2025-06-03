@@ -1,5 +1,5 @@
-
-const rooms = [
+// Store rooms in memory
+let rooms = [
   {
     id: 1,
     name: 'Room 1',
@@ -13,15 +13,17 @@ const rooms = [
     playersLimit: 4,
     players: []
   }
-]
+];
 
+let ioInstance = null;
 
 // socket handlers
 const setupRoomSocketHandlers = (io) => {
+  ioInstance = io;
   io.on('connection', (socket) => {
     console.log('A user connected: ', socket.id);
 
-    // wylistuj pokoje
+    // Send current rooms list to the connected client
     socket.emit('rooms:list', rooms);
 
     // handler do dolaczania do pokoju
@@ -147,20 +149,67 @@ const setupRoomSocketHandlers = (io) => {
 
 exports.setupRoomSocketHandlers = setupRoomSocketHandlers;
 
-// fallback methods
+// Room management methods
 exports.createRoom = (req, res) => {
-  const { roomName } = req.body;
+  try {
+    const roomData = req.body;
+    console.log('Current rooms before creation:', JSON.stringify(rooms, null, 2));
+    console.log('Received room creation request:', JSON.stringify(roomData, null, 2));
 
-  if (!roomName) {
-    return res.status(400).json({ error: 'Room name is required' });
+    // Validate required fields
+    if (!roomData.roomName) {
+      console.log('Room creation failed: name is required');
+      return res.status(400).json({ error: 'Room name is required' });
+    }
+
+    // Create new room with all properties
+    const newId = rooms.length > 0 ? Math.max(...rooms.map(r => r.id)) + 1 : 1;
+    console.log('Generated new room ID:', newId);
+
+    const newRoom = {
+      id: newId,
+      name: roomData.roomName,
+      playersLimit: roomData.playersLimit || 4,
+      rounds: roomData.rounds || 5,
+      powerUps: roomData.powerUps || 2,
+      answerTime: roomData.answerTime || 30,
+      players: []
+    };
+
+    console.log('Created new room object:', JSON.stringify(newRoom, null, 2));
+
+    // Add room to rooms array using immutable update
+    rooms = [...rooms, newRoom];
+    console.log('Current rooms after adding new room:', JSON.stringify(rooms, null, 2));
+
+    // Emit updated room list to all connected clients
+    if (ioInstance) {
+      console.log('Broadcasting updated room list to all clients');
+      ioInstance.emit('rooms:list', rooms);
+    } else {
+      console.warn('Socket.io instance not available - room list not broadcasted');
+    }
+
+    // Send response with created room
+    res.status(201).json({ 
+      message: `Room '${newRoom.name}' created successfully`,
+      room: newRoom
+    });
+  } catch (error) {
+    console.error('Error in createRoom:', error);
+    res.status(500).json({ error: 'Internal server error while creating room' });
   }
-
-  res.status(201).json({ message: `Room '${roomName}' created successfully` });
-}
+};
 
 exports.getRooms = (req, res) => {
-  res.json(rooms);
-}
+  try {
+    console.log('Getting all rooms:', JSON.stringify(rooms, null, 2));
+    res.json(rooms);
+  } catch (error) {
+    console.error('Error in getRooms:', error);
+    res.status(500).json({ error: 'Internal server error while fetching rooms' });
+  }
+};
 
 exports.deleteRoom = (req, res) => {
   const { id } = req.params;
@@ -170,6 +219,12 @@ exports.deleteRoom = (req, res) => {
     return res.status(404).json({ message: 'Room not found' });
   }
 
-  rooms.splice(roomIndex, 1);
+  rooms = rooms.filter(room => room.id !== parseInt(id));
+  
+  // Broadcast updated room list
+  if (ioInstance) {
+    ioInstance.emit('rooms:list', rooms);
+  }
+  
   res.status(204).send();
-}
+};
