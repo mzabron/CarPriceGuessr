@@ -27,7 +27,7 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/users', userRoutes);
-app.use('/api/rooms', roomRoutes);
+app.use('/rooms', roomRoutes);
 
 setupRoomSocketHandlers(io);
 
