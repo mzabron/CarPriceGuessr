@@ -2,26 +2,14 @@ import React, { useState, useEffect } from 'react';
 import socketService from '../services/socketService';
 import apiService from '../services/apiService';
 
-const RoomList = ({ onClose }) => {
+const RoomList = ({ onClose, user }) => {
   const [rooms, setRooms] = useState([]);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial fetch of rooms
     fetchRooms();
-
-    // Set up socket listeners
-    socketService.onRoomsList((updatedRooms) => {
-      console.log('Received updated rooms list:', updatedRooms);
-      setRooms(updatedRooms);
-    });
-
-    // Cleanup
-    return () => {
-      socketService.removeAllListeners();
-    };
   }, []);
 
   const fetchRooms = async () => {
@@ -38,6 +26,26 @@ const RoomList = ({ onClose }) => {
     }
   };
 
+  const handleJoinRoom = (roomId) => {
+    try {
+      socketService.connect();
+      if (user) {
+        socketService.setCurrentUser(user);
+      } else {
+        const guestUser = {
+          name: `Guest_${Math.floor(Math.random() * 10000)}`
+        };
+        socketService.setCurrentUser(guestUser);
+      }
+      socketService.joinRoom(roomId);
+      onClose();
+    } catch (error) {
+      console.error('Error joining room:', error);
+      setError('Failed to join room');
+      socketService.disconnect();
+    }
+  };
+
   const handleJoinByCode = async (e) => {
     e.preventDefault();
     setError('');
@@ -49,7 +57,16 @@ const RoomList = ({ onClose }) => {
 
     try {
       const response = await apiService.joinRoomByCode(joinCode);
-      // Handle successful join
+      socketService.connect();
+      if (user) {
+        socketService.setCurrentUser(user);
+      } else {
+        // Generate guest name if user is not logged in
+        const guestUser = {
+          name: `Guest_${Math.floor(Math.random() * 10000)}`
+        };
+        socketService.setCurrentUser(guestUser);
+      }
       onClose();
     } catch (error) {
       setError(error.message);
@@ -68,6 +85,14 @@ const RoomList = ({ onClose }) => {
             ✕
           </button>
         </div>
+
+        {!user && (
+          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded">
+            <p className="text-sm text-yellow-700">
+              You are not logged in but you can still join as a guest.
+            </p>
+          </div>
+        )}
 
         {/* Join by Code Section */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -112,10 +137,7 @@ const RoomList = ({ onClose }) => {
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      socketService.joinRoom(room.id);
-                      onClose();
-                    }}
+                    onClick={() => handleJoinRoom(room.id)}
                     className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                     disabled={room.players.length >= room.playersLimit}
                   >

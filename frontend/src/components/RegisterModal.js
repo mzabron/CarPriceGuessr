@@ -43,7 +43,6 @@ const RegisterModal = ({ onClose, onRegister }) => {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-2">Nickname</label>
             <input
               type="text"
               value={name}

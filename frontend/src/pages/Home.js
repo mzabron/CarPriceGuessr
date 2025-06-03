@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import RegisterModal from '../components/RegisterModal';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
-import socketService from '../services/socketService';
 
 const Home = () => {
   const [showRegister, setShowRegister] = useState(false);
@@ -10,46 +9,26 @@ const Home = () => {
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    // Connect to Socket.IO when component mounts
-    socketService.connect();
-
-    return () => {
-      // Cleanup Socket.IO connection when component unmounts
-      socketService.disconnect();
-    };
-  }, []);
-
-  // Update socket service when user changes
-  useEffect(() => {
-    socketService.setCurrentUser(user);
-  }, [user]);
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with Register button */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">Car Price Guessr</h1>
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">Playing as:</span>
-                <span className="font-semibold text-gray-800">{user.name}</span>
-              </div>
-            ) : (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Car Price Guessr
+            </h1>
+            {!user && (
               <button
                 onClick={() => setShowRegister(true)}
-                className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
               >
-                Register
+                Login
               </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Main content */}
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-2">
@@ -98,6 +77,7 @@ const Home = () => {
       {showRoomList && (
         <RoomList
           onClose={() => setShowRoomList(false)}
+          user={user}
         />
       )}
     </div>
