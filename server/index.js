@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const gameRoutes = require('./routes/gameRoutes');
 const { setupRoomSocketHandlers } = require('./controllers/roomController');
 const { createServer } = require('node:http')
 const { Server } = require('socket.io');
@@ -28,6 +30,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/users', userRoutes);
 app.use('/rooms', roomRoutes);
+app.use('/cars', gameRoutes);
 
 setupRoomSocketHandlers(io);
 
