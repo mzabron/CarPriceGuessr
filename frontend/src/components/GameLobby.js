@@ -31,13 +31,25 @@ const GameLobby = () => {
       checkAllPlayersReady(sortedPlayers);
     });
 
+    // Listen for player left event
+    socketService.socket?.on('rooms:playerLeft', ({ playerName, players: updatedPlayers }) => {
+      console.log('Player left:', playerName, 'Updated players:', updatedPlayers);
+      const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
+      setPlayers(sortedPlayers);
+      checkAllPlayersReady(sortedPlayers);
+    });
+
+    // Listen for player joined event
+    socketService.socket?.on('rooms:playerJoined', ({ playerName, players: updatedPlayers }) => {
+      console.log('Player joined:', playerName, 'Updated players:', updatedPlayers);
+      const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
+      setPlayers(sortedPlayers);
+      checkAllPlayersReady(sortedPlayers);
+    });
+
     // Listen for chat messages
     socketService.socket?.on('chat:newMessage', (message) => {
       setMessages(prev => [...prev, message]);
-      // Scroll to bottom when new message arrives
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-      }
     });
 
     // Listen for initial room settings
@@ -59,12 +71,26 @@ const GameLobby = () => {
 
     return () => {
       socketService.socket?.off('playerList');
+      socketService.socket?.off('rooms:playerLeft');
+      socketService.socket?.off('rooms:playerJoined');
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');
       socketService.socket?.off('hostStatus');
     };
   }, []);
+
+  // Auto-scroll chat when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      const { scrollHeight, clientHeight, scrollTop } = chatContainerRef.current;
+      const isScrolledNearBottom = scrollHeight - clientHeight - scrollTop < 100;
+      
+      if (isScrolledNearBottom) {
+        chatContainerRef.current.scrollTop = scrollHeight;
+      }
+    }
+  }, [messages]);
 
   const checkAllPlayersReady = (playerList) => {
     setAllPlayersReady(playerList.every(player => player.isReady));
@@ -96,6 +122,12 @@ const GameLobby = () => {
         playerName: socketService.getCurrentUser()?.name
       });
       setNewMessage('');
+      // Force scroll to bottom when user sends a message
+      if (chatContainerRef.current) {
+        setTimeout(() => {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }, 100);
+      }
     }
   };
 
@@ -299,9 +331,26 @@ const GameLobby = () => {
         <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
           <div className="space-y-2">
             {messages.map((msg, index) => (
-              <div key={index} className="bg-white p-2 rounded shadow">
-                <span className="font-bold">{msg.player}: </span>
-                <span>{msg.text}</span>
+              <div 
+                key={index} 
+                className={`p-2 rounded shadow ${
+                  msg.type === 'system' 
+                    ? msg.text.includes('joined')
+                      ? 'bg-green-50 text-green-600 italic'
+                      : msg.text.includes('left') || msg.text.includes('disconnected')
+                        ? 'bg-red-50 text-red-600 italic'
+                        : 'bg-gray-100 text-gray-600 italic'
+                    : 'bg-white'
+                }`}
+              >
+                {msg.type === 'system' ? (
+                  <div>{msg.text}</div>
+                ) : (
+                  <>
+                    <span className="font-bold">{msg.player}: </span>
+                    <span>{msg.text}</span>
+                  </>
+                )}
                 <div className="text-xs text-gray-500">
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </div>

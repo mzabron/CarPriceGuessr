@@ -88,6 +88,14 @@ const setupRoomSocketHandlers = (io) => {
       // Send current player list to all players in the room
       io.to(roomChannel).emit('playerList', room.players);
 
+      // Send join message to chat
+      io.to(roomChannel).emit('chat:newMessage', {
+        player: 'System',
+        text: `${playerName} has joined the room`,
+        timestamp: new Date(),
+        type: 'system'
+      });
+
       // informuj gracza ze dolaczyl
       socket.emit('rooms:joined', { room, player });
 
@@ -122,8 +130,25 @@ const setupRoomSocketHandlers = (io) => {
         return socket.emit('error', { message: `${playerName} is not in room with id: ${roomId}` });
       }
 
+      const player = room.players[playerIndex];
+      const wasHost = player.isHost;
+
       socket.leave(roomChannel);
       room.players.splice(playerIndex, 1);
+      
+      // If the host left, assign host status to the next player
+      if (wasHost && room.players.length > 0) {
+        room.players[0].isHost = true;
+        io.to(room.players[0].id).emit('hostStatus', true);
+      }
+
+      // Send leave message to chat
+      io.to(roomChannel).emit('chat:newMessage', {
+        player: 'System',
+        text: `${playerName} has left the room`,
+        timestamp: new Date(),
+        type: 'system'
+      });
       
       // Check if room is empty and delete it if so
       if (room.players.length === 0) {
@@ -160,7 +185,23 @@ const setupRoomSocketHandlers = (io) => {
         if (room && room.players) {
           const playerIndex = room.players.findIndex(p => p.id === socket.id);
           if (playerIndex !== -1) {
-            const player = room.players.splice(playerIndex, 1)[0];
+            const player = room.players[playerIndex];
+            const wasHost = player.isHost;
+            room.players.splice(playerIndex, 1);
+
+            // If the host disconnected, assign host status to the next player
+            if (wasHost && room.players.length > 0) {
+              room.players[0].isHost = true;
+              io.to(room.players[0].id).emit('hostStatus', true);
+            }
+
+            // Send disconnect message to chat
+            io.to(`room-${roomId}`).emit('chat:newMessage', {
+              player: 'System',
+              text: `${player.name} has disconnected`,
+              timestamp: new Date(),
+              type: 'system'
+            });
 
             // Check if room is empty and delete it if so
             if (room.players.length === 0) {
