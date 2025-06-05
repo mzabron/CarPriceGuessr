@@ -20,7 +20,7 @@ const RoomList = ({ onClose, user }) => {
       const fetchedRooms = await apiService.getRooms();
       console.log('Fetched rooms:', fetchedRooms);
       // Filter out private rooms
-      const publicRooms = fetchedRooms.filter(room => room.visibility === 'public');
+      const publicRooms = fetchedRooms.filter(room => room.settings.visibility === 'public');
       setRooms(publicRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -32,7 +32,9 @@ const RoomList = ({ onClose, user }) => {
 
   const handleJoinRoom = async (roomId) => {
     try {
+      // First connect to socket
       socketService.connect();
+      
       if (user) {
         socketService.setCurrentUser(user);
       } else {
@@ -61,8 +63,10 @@ const RoomList = ({ onClose, user }) => {
     }
 
     try {
-      const response = await apiService.joinRoomByCode(joinCode);
+      // First connect to socket
       socketService.connect();
+      
+      const response = await apiService.joinRoomByCode(joinCode);
       if (user) {
         socketService.setCurrentUser(user);
       } else {
@@ -75,6 +79,7 @@ const RoomList = ({ onClose, user }) => {
       navigate(`/lobby/${response.roomId}`);
     } catch (error) {
       setError(error.message);
+      socketService.disconnect();
     }
   };
 
@@ -125,7 +130,29 @@ const RoomList = ({ onClose, user }) => {
 
         {/* Public Rooms Section */}
         <div>
-          <h3 className="text-lg font-semibold mb-3">Available Rooms</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold">Available Rooms</h3>
+            <button
+              onClick={fetchRooms}
+              disabled={loading}
+              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2"
+            >
+              <svg 
+                className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                />
+              </svg>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
           {loading ? (
             <p className="text-gray-500">Loading rooms...</p>
           ) : rooms.length > 0 ? (
@@ -138,15 +165,15 @@ const RoomList = ({ onClose, user }) => {
                   <div>
                     <h4 className="font-semibold">{room.name}</h4>
                     <p className="text-sm text-gray-500">
-                      Players: {room.players.length}/{room.playersLimit}
+                      Players: {room.players.length}/{room.settings.playersLimit}
                     </p>
                   </div>
                   <button
                     onClick={() => handleJoinRoom(room.id)}
                     className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    disabled={room.players.length >= room.playersLimit}
+                    disabled={room.players.length >= room.settings.playersLimit}
                   >
-                    {room.players.length >= room.playersLimit ? 'Full' : 'Join'}
+                    {room.players.length >= room.settings.playersLimit ? 'Full' : 'Join'}
                   </button>
                 </div>
               ))}

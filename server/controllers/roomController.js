@@ -112,6 +112,12 @@ const setupRoomSocketHandlers = (io) => {
       socket.leave(roomChannel);
       room.players.splice(playerIndex, 1);
       
+      // Check if room is empty and delete it if so
+      if (room.players.length === 0) {
+        rooms = rooms.filter(r => r.id !== roomId);
+        console.log(`Room ${roomId} deleted because it's empty`);
+      }
+      
       // informuj gracza ze wyszedl
       socket.emit('rooms:left', { room, playerName });
       
@@ -125,7 +131,8 @@ const setupRoomSocketHandlers = (io) => {
       socket.roomId = null;
       console.log(`${playerName} left room: ${room.name}`);
 
-      socket.emit('rooms:list', rooms);
+      // Broadcast updated room list to all clients
+      io.emit('rooms:list', rooms);
       console.log(rooms);
     });
 
@@ -142,12 +149,21 @@ const setupRoomSocketHandlers = (io) => {
           if (playerIndex !== -1) {
             const player = room.players.splice(playerIndex, 1)[0];
 
+            // Check if room is empty and delete it if so
+            if (room.players.length === 0) {
+              rooms = rooms.filter(r => r.id !== roomId);
+              console.log(`Room ${roomId} deleted because it's empty`);
+            }
+
             io.to(`room-${roomId}`).emit('rooms:playerLeft', {
               roomId,
               playerId: socket.id,
               playerName: player.name,
               players: room.players
             });
+
+            // Broadcast updated room list to all clients
+            io.emit('rooms:list', rooms);
           }
         }
       }
@@ -177,6 +193,7 @@ exports.createRoom = (req, res) => {
       name: roomData.roomName,
       players: [],
       settings: {
+        roomName: roomData.roomName,
         playersLimit: roomData.playersLimit || 4,
         rounds: roomData.rounds || 5,
         powerUps: roomData.powerUps || 2,

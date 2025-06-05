@@ -71,6 +71,7 @@ const Home = () => {
       {showCreateGame && (
         <CreateGameModal
           onClose={() => setShowCreateGame(false)}
+          user={user}
         />
       )}
 

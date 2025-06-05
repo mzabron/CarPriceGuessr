@@ -13,6 +13,7 @@ const GameLobby = () => {
   const [isHost, setIsHost] = useState(false);
   const [allPlayersReady, setAllPlayersReady] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [tempSettings, setTempSettings] = useState(null);
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -42,11 +43,13 @@ const GameLobby = () => {
     // Listen for initial room settings
     socketService.socket?.on('room:settings', (settings) => {
       setGameSettings(settings);
+      setTempSettings(settings);
     });
 
     // Listen for settings updates
     socketService.socket?.on('room:settingsUpdated', (settings) => {
       setGameSettings(settings);
+      setTempSettings(settings);
     });
 
     // Listen for host status changes
@@ -96,13 +99,21 @@ const GameLobby = () => {
     }
   };
 
-  const handleSettingsUpdate = (updatedSettings) => {
-    if (!isHost) return;
+  const handleSettingsUpdate = () => {
+    if (!isHost || !tempSettings) return;
     
     socketService.socket?.emit('room:updateSettings', {
       roomId: parseInt(roomId),
-      settings: updatedSettings
+      settings: tempSettings
     });
+    setIsEditingSettings(false);
+  };
+
+  const handleSettingsChange = (changes) => {
+    setTempSettings(prev => ({
+      ...prev,
+      ...changes
+    }));
   };
 
   const renderGameSettings = () => {
@@ -110,70 +121,94 @@ const GameLobby = () => {
 
     if (isHost && isEditingSettings) {
       return (
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2">Rounds</label>
-            <input
-              type="number"
-              value={gameSettings.rounds}
-              onChange={(e) => handleSettingsUpdate({ ...gameSettings, rounds: parseInt(e.target.value) })}
-              min="1"
-              max="10"
-              className="w-full p-2 border rounded"
-            />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-2">Rounds</label>
+              <input
+                type="number"
+                value={tempSettings.rounds}
+                onChange={(e) => handleSettingsChange({ rounds: parseInt(e.target.value) })}
+                min="1"
+                max="10"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-2">Max Players</label>
+              <input
+                type="number"
+                value={tempSettings.playersLimit}
+                onChange={(e) => handleSettingsChange({ playersLimit: parseInt(e.target.value) })}
+                min="2"
+                max="10"
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-2">Power-ups</label>
+              <input
+                type="number"
+                value={tempSettings.powerUps}
+                onChange={(e) => handleSettingsChange({ powerUps: parseInt(e.target.value) })}
+                min="0"
+                max={tempSettings.rounds}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-2">Round Duration</label>
+              <select
+                value={tempSettings.roundDuration}
+                onChange={(e) => handleSettingsChange({ roundDuration: parseInt(e.target.value) })}
+                className="w-full p-2 border rounded"
+              >
+                {[10, 20, 30, 40, 50, 60].map(duration => (
+                  <option key={duration} value={duration}>{duration}s</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className="block mb-2">Max Players</label>
-            <input
-              type="number"
-              value={gameSettings.playersLimit}
-              onChange={(e) => handleSettingsUpdate({ ...gameSettings, playersLimit: parseInt(e.target.value) })}
-              min="2"
-              max="10"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-2">Power-ups</label>
-            <input
-              type="number"
-              value={gameSettings.powerUps}
-              onChange={(e) => handleSettingsUpdate({ ...gameSettings, powerUps: parseInt(e.target.value) })}
-              min="0"
-              max={gameSettings.rounds}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-2">Round Duration</label>
-            <select
-              value={gameSettings.roundDuration}
-              onChange={(e) => handleSettingsUpdate({ ...gameSettings, roundDuration: parseInt(e.target.value) })}
-              className="w-full p-2 border rounded"
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setIsEditingSettings(false);
+                setTempSettings(gameSettings);
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 border rounded"
             >
-              {[10, 20, 30, 40, 50, 60].map(duration => (
-                <option key={duration} value={duration}>{duration}s</option>
-              ))}
-            </select>
+              Cancel
+            </button>
+            <button
+              onClick={handleSettingsUpdate}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Save Changes
+            </button>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-2 gap-4">
-        <div>Rounds: {gameSettings.rounds}</div>
-        <div>Max Players: {gameSettings.playersLimit}</div>
-        <div>Power-ups: {gameSettings.powerUps}</div>
-        <div>Round Duration: {gameSettings.roundDuration}s</div>
-        <div>Room Type: {gameSettings.visibility}</div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2 text-lg font-semibold">Room Name: {gameSettings.roomName}</div>
+          <div>Rounds: {gameSettings.rounds}</div>
+          <div>Max Players: {gameSettings.playersLimit}</div>
+          <div>Power-ups: {gameSettings.powerUps}</div>
+          <div>Round Duration: {gameSettings.roundDuration}s</div>
+          <div>Room Type: {gameSettings.visibility}</div>
+        </div>
         {isHost && (
-          <button
-            onClick={() => setIsEditingSettings(true)}
-            className="col-span-2 mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Edit Settings
-          </button>
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsEditingSettings(true)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Edit Settings
+            </button>
+          </div>
         )}
       </div>
     );
@@ -215,6 +250,12 @@ const GameLobby = () => {
 
         {/* Game Controls */}
         <div className="mt-auto p-4 flex justify-center items-center space-x-4">
+          <button
+            onClick={handleLeaveRoom}
+            className="px-6 py-3 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600"
+          >
+            Leave Room
+          </button>
           <button
             onClick={handleReadyToggle}
             className={`px-6 py-3 rounded-lg font-bold ${
@@ -275,14 +316,6 @@ const GameLobby = () => {
           </div>
         </form>
       </div>
-
-      {/* Leave Room Button */}
-      <button
-        onClick={handleLeaveRoom}
-        className="absolute top-4 right-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-      >
-        Leave Room
-      </button>
     </div>
   );
 };

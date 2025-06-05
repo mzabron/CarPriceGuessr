@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import socketService from '../services/socketService';
 
-const CreateGameModal = ({ onClose }) => {
+const CreateGameModal = ({ onClose, user }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     roomName: '',
@@ -58,7 +58,7 @@ const CreateGameModal = ({ onClose }) => {
       
       // Set current user as host
       const hostUser = {
-        name: `Host_${Math.floor(Math.random() * 10000)}`,
+        name: user ? user.name : `Guest_${Math.floor(Math.random() * 10000)}`,
         isHost: true
       };
       socketService.setCurrentUser(hostUser);

@@ -36,7 +36,8 @@ class SocketService {
     const playerName = this.currentUser ? this.currentUser.name : `Guest_${Math.floor(Math.random() * 1000)}`;
     this.socket.emit('rooms:join', { 
       roomId,
-      playerName
+      playerName,
+      isHost: this.currentUser?.isHost || false
     });
   }
 
