@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const RoomList = ({ onClose, user }) => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
+  const [allRooms, setAllRooms] = useState([]);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -19,7 +20,9 @@ const RoomList = ({ onClose, user }) => {
       setLoading(true);
       const fetchedRooms = await apiService.getRooms();
       console.log('Fetched rooms:', fetchedRooms);
-      // Filter out private rooms
+      // Store all rooms for code search
+      setAllRooms(fetchedRooms);
+      // Filter out private rooms for display
       const publicRooms = fetchedRooms.filter(room => room.settings.visibility === 'public');
       setRooms(publicRooms);
     } catch (error) {
@@ -63,10 +66,22 @@ const RoomList = ({ onClose, user }) => {
     }
 
     try {
+      // Find room with matching code from all rooms (including private)
+      const room = allRooms.find(r => r.code === joinCode.trim().toUpperCase());
+      
+      if (!room) {
+        setError('Room not found');
+        return;
+      }
+
+      if (room.players.length >= room.settings.playersLimit) {
+        setError('Room is full');
+        return;
+      }
+
       // First connect to socket
       socketService.connect();
       
-      const response = await apiService.joinRoomByCode(joinCode);
       if (user) {
         socketService.setCurrentUser(user);
       } else {
@@ -75,10 +90,13 @@ const RoomList = ({ onClose, user }) => {
         };
         socketService.setCurrentUser(guestUser);
       }
+
+      await socketService.joinRoom(room.id);
       onClose();
-      navigate(`/lobby/${response.roomId}`);
+      navigate(`/lobby/${room.id}`);
     } catch (error) {
-      setError(error.message);
+      console.error('Error joining room:', error);
+      setError('Failed to join room');
       socketService.disconnect();
     }
   };

@@ -162,7 +162,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Round Duration (seconds)</label>
+            <label className="block mb-2">Answer Time (seconds)</label>
             <select
               name="roundDuration"
               value={formData.roundDuration}

@@ -56,28 +56,6 @@ class ApiService {
       throw error;
     }
   }
-
-  async joinRoomByCode(code) {
-    try {
-      const response = await fetch(`${API_URL}/rooms/join-by-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Invalid room code');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error joining room by code:', error);
-      throw error;
-    }
-  }
 }
 
 export default new ApiService(); 

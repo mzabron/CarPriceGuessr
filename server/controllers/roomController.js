@@ -3,6 +3,19 @@ let rooms = [];
 
 let ioInstance = null;
 
+// Generate a random room code
+const generateRoomCode = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code;
+  do {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+  } while (rooms.some(room => room.code === code));
+  return code;
+};
+
 // socket handlers
 const setupRoomSocketHandlers = (io) => {
   ioInstance = io;
@@ -186,14 +199,17 @@ exports.createRoom = (req, res) => {
     }
 
     const newId = rooms.length > 0 ? Math.max(...rooms.map(r => r.id)) + 1 : 1;
-    console.log('Generated new room ID:', newId);
+    const roomCode = generateRoomCode();
+    console.log('Generated new room ID:', newId, 'with code:', roomCode);
 
     const newRoom = {
       id: newId,
+      code: roomCode,
       name: roomData.roomName,
       players: [],
       settings: {
         roomName: roomData.roomName,
+        roomCode: roomCode,
         playersLimit: roomData.playersLimit || 4,
         rounds: roomData.rounds || 5,
         powerUps: roomData.powerUps || 2,
@@ -250,4 +266,30 @@ exports.deleteRoom = (req, res) => {
   }
   
   res.status(204).send();
+};
+
+// Add join by code endpoint
+exports.joinRoomByCode = (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Room code is required' });
+    }
+
+    const room = rooms.find(r => r.code === code.toUpperCase());
+    
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (room.players.length >= room.settings.playersLimit) {
+      return res.status(400).json({ error: 'Room is full' });
+    }
+
+    res.json({ roomId: room.id });
+  } catch (error) {
+    console.error('Error in joinRoomByCode:', error);
+    res.status(500).json({ error: 'Internal server error while joining room' });
+  }
 };

@@ -157,7 +157,7 @@ const GameLobby = () => {
               />
             </div>
             <div>
-              <label className="block mb-2">Round Duration</label>
+              <label className="block mb-2">Answer Time</label>
               <select
                 value={tempSettings.roundDuration}
                 onChange={(e) => handleSettingsChange({ roundDuration: parseInt(e.target.value) })}
@@ -197,7 +197,7 @@ const GameLobby = () => {
           <div>Rounds: {gameSettings.rounds}</div>
           <div>Max Players: {gameSettings.playersLimit}</div>
           <div>Power-ups: {gameSettings.powerUps}</div>
-          <div>Round Duration: {gameSettings.roundDuration}s</div>
+          <div>Answer Time: {gameSettings.roundDuration}s</div>
           <div>Room Type: {gameSettings.visibility}</div>
         </div>
         {isHost && (
@@ -244,6 +244,17 @@ const GameLobby = () => {
       <div className="flex-1 flex flex-col">
         {/* Game Settings */}
         <div className="bg-gray-100 p-4">
+          <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
+            <span>Room Code: <span className="font-mono">{gameSettings?.roomCode}</span></span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(gameSettings?.roomCode);
+              }}
+              className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Copy
+            </button>
+          </div>
           <h3 className="text-xl font-bold mb-4">Game Settings</h3>
           {renderGameSettings()}
         </div>
