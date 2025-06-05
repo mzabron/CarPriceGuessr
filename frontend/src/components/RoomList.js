@@ -61,7 +61,6 @@ const RoomList = ({ onClose, user }) => {
       if (user) {
         socketService.setCurrentUser(user);
       } else {
-        // Generate guest name if user is not logged in
         const guestUser = {
           name: `Guest_${Math.floor(Math.random() * 10000)}`
         };
@@ -124,7 +123,7 @@ const RoomList = ({ onClose, user }) => {
           {loading ? (
             <p className="text-gray-500">Loading rooms...</p>
           ) : rooms.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
               {rooms.map((room) => (
                 <div
                   key={room.id}

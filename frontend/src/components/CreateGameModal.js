@@ -14,6 +14,16 @@ const CreateGameModal = ({ onClose }) => {
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  const checkDuplicateRoomName = async (roomName) => {
+    try {
+      const existingRooms = await apiService.getRooms();
+      return existingRooms.some(room => room.name === roomName);
+    } catch (error) {
+      console.error('Error checking room names:', error);
+      throw new Error('Failed to validate room name');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -31,6 +41,13 @@ const CreateGameModal = ({ onClose }) => {
 
     setIsCreating(true);
     try {
+      const isDuplicate = await checkDuplicateRoomName(formData.roomName);
+      if (isDuplicate) {
+        setError('A room with this name already exists');
+        setIsCreating(false);
+        return;
+      }
+
       const response = await apiService.createRoom(formData);
       console.log('Room created:', response);
       onClose();
