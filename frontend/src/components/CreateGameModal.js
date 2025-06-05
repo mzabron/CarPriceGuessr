@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import socketService from '../services/socketService';
 
 const CreateGameModal = ({ onClose }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     roomName: '',
     visibility: 'public',
@@ -50,7 +52,23 @@ const CreateGameModal = ({ onClose }) => {
 
       const response = await apiService.createRoom(formData);
       console.log('Room created:', response);
+      
+      // Connect to socket
+      socketService.connect();
+      
+      // Set current user as host
+      const hostUser = {
+        name: `Host_${Math.floor(Math.random() * 10000)}`,
+        isHost: true
+      };
+      socketService.setCurrentUser(hostUser);
+      
+      // Join the room
+      await socketService.joinRoom(response.room.id);
+      
       onClose();
+      // Navigate to the lobby with the new room ID
+      navigate(`/lobby/${response.room.id}`);
     } catch (error) {
       console.error('Failed to create room:', error);
       setError(error.message || 'Failed to create room. Please try again.');

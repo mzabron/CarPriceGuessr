@@ -25,6 +25,10 @@ class SocketService {
     this.currentUser = user;
   }
 
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
   // Room events
   joinRoom(roomId) {
     if (!this.socket) return;

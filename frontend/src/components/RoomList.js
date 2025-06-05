@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import socketService from '../services/socketService';
 import apiService from '../services/apiService';
+import { useNavigate } from 'react-router-dom';
 
 const RoomList = ({ onClose, user }) => {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +19,9 @@ const RoomList = ({ onClose, user }) => {
       setLoading(true);
       const fetchedRooms = await apiService.getRooms();
       console.log('Fetched rooms:', fetchedRooms);
-      setRooms(fetchedRooms);
+      // Filter out private rooms
+      const publicRooms = fetchedRooms.filter(room => room.visibility === 'public');
+      setRooms(publicRooms);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setError('Failed to fetch rooms');
@@ -26,7 +30,7 @@ const RoomList = ({ onClose, user }) => {
     }
   };
 
-  const handleJoinRoom = (roomId) => {
+  const handleJoinRoom = async (roomId) => {
     try {
       socketService.connect();
       if (user) {
@@ -37,8 +41,9 @@ const RoomList = ({ onClose, user }) => {
         };
         socketService.setCurrentUser(guestUser);
       }
-      socketService.joinRoom(roomId);
+      await socketService.joinRoom(roomId);
       onClose();
+      navigate(`/lobby/${roomId}`);
     } catch (error) {
       console.error('Error joining room:', error);
       setError('Failed to join room');
@@ -67,6 +72,7 @@ const RoomList = ({ onClose, user }) => {
         socketService.setCurrentUser(guestUser);
       }
       onClose();
+      navigate(`/lobby/${response.roomId}`);
     } catch (error) {
       setError(error.message);
     }

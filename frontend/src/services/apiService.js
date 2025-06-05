@@ -8,7 +8,7 @@ class ApiService {
       const requestBody = {
         roomName: roomConfig.roomName,
         playersLimit: roomConfig.maxPlayers,
-        isPrivate: roomConfig.visibility === 'private',
+        visibility: roomConfig.visibility,
         rounds: roomConfig.rounds,
         powerUps: roomConfig.powerUps,
         answerTime: roomConfig.roundDuration
