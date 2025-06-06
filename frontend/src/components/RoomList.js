@@ -124,7 +124,7 @@ const RoomList = ({ onClose, user }) => {
 
         {/* Join by Code Section */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3">Join Private Room</h3>
+          <h3 className="text-lg font-semibold mb-3">Join room by code</h3>
           <form onSubmit={handleJoinByCode} className="flex gap-2">
             <input
               type="text"

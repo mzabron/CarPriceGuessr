@@ -25,6 +25,20 @@ const setupRoomSocketHandlers = (io) => {
     // Send current rooms list to the connected client
     socket.emit('rooms:list', rooms);
 
+    // Handle player ready status
+    socket.on('playerReady', (isReady) => {
+      if (socket.roomId) {
+        const room = rooms.find(r => r.id === socket.roomId);
+        if (room) {
+          const player = room.players.find(p => p.id === socket.id);
+          if (player) {
+            player.isReady = isReady;
+            io.to(`room-${socket.roomId}`).emit('playerList', room.players);
+          }
+        }
+      }
+    });
+
     // Handle room settings update
     socket.on('room:updateSettings', (data) => {
       const { roomId, settings } = data;

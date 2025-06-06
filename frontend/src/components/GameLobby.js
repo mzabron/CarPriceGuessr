@@ -29,6 +29,12 @@ const GameLobby = () => {
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
       setPlayers(sortedPlayers);
       checkAllPlayersReady(sortedPlayers);
+      
+      // Update local ready state based on current player's status
+      const currentPlayer = updatedPlayers.find(p => p.id === socketService.socket?.id);
+      if (currentPlayer) {
+        setIsReady(currentPlayer.isReady);
+      }
     });
 
     // Listen for player left event
@@ -260,9 +266,9 @@ const GameLobby = () => {
                   <span className="font-semibold">{player.name}</span>
                   {player.isHost && <span className="ml-2 text-yellow-400">(Host)</span>}
                 </div>
-                {player.isReady && (
-                  <span className="text-green-400">Ready</span>
-                )}
+                <span className={`${player.isReady ? 'text-green-400' : 'text-red-400'}`}>
+                  {player.isReady ? 'Ready' : 'Not Ready'}
+                </span>
               </div>
               <div className="mt-2 text-gray-300">
                 Points: {player.points || 0}
@@ -307,7 +313,7 @@ const GameLobby = () => {
                 : 'bg-gray-300 text-gray-700'
             }`}
           >
-            {isReady ? "I'm Ready!" : "Not Ready"}
+            {isReady ? "Ready!" : "Click to be Ready"}
           </button>
           
           {isHost && (
