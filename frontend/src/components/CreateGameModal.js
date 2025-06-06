@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import socketService from '../services/socketService';
 
-const CreateGameModal = ({ onClose }) => {
+const CreateGameModal = ({ onClose, user }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     roomName: '',
     visibility: 'public',
@@ -13,6 +15,16 @@ const CreateGameModal = ({ onClose }) => {
   });
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  const checkDuplicateRoomName = async (roomName) => {
+    try {
+      const existingRooms = await apiService.getRooms();
+      return existingRooms.some(room => room.name === roomName);
+    } catch (error) {
+      console.error('Error checking room names:', error);
+      throw new Error('Failed to validate room name');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,9 +43,32 @@ const CreateGameModal = ({ onClose }) => {
 
     setIsCreating(true);
     try {
+      const isDuplicate = await checkDuplicateRoomName(formData.roomName);
+      if (isDuplicate) {
+        setError('A room with this name already exists');
+        setIsCreating(false);
+        return;
+      }
+
       const response = await apiService.createRoom(formData);
       console.log('Room created:', response);
+      
+      // Connect to socket
+      socketService.connect();
+      
+      // Set current user as host
+      const hostUser = {
+        name: user ? user.name : `Guest_${Math.floor(Math.random() * 10000)}`,
+        isHost: true
+      };
+      socketService.setCurrentUser(hostUser);
+      
+      // Join the room
+      await socketService.joinRoom(response.room.id);
+      
       onClose();
+      // Navigate to the lobby with the new room ID
+      navigate(`/lobby/${response.room.id}`);
     } catch (error) {
       console.error('Failed to create room:', error);
       setError(error.message || 'Failed to create room. Please try again.');
@@ -127,7 +162,7 @@ const CreateGameModal = ({ onClose }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Round Duration (seconds)</label>
+            <label className="block mb-2">Answer Time (seconds)</label>
             <select
               name="roundDuration"
               value={formData.roundDuration}

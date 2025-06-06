@@ -8,7 +8,7 @@ class ApiService {
       const requestBody = {
         roomName: roomConfig.roomName,
         playersLimit: roomConfig.maxPlayers,
-        isPrivate: roomConfig.visibility === 'private',
+        visibility: roomConfig.visibility,
         rounds: roomConfig.rounds,
         powerUps: roomConfig.powerUps,
         answerTime: roomConfig.roundDuration
@@ -53,28 +53,6 @@ class ApiService {
       return await response.json();
     } catch (error) {
       console.error('Error fetching rooms:', error);
-      throw error;
-    }
-  }
-
-  async joinRoomByCode(code) {
-    try {
-      const response = await fetch(`${API_URL}/rooms/join-by-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ code }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Invalid room code');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error joining room by code:', error);
       throw error;
     }
   }
