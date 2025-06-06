@@ -86,6 +86,17 @@ class SocketService {
     this.socket.on('rooms:list', callback);
   }
 
+  // Game events
+  startGame() {
+    if (!this.socket) return;
+    this.socket.emit('game:start');
+  }
+
+  onGameStart(callback) {
+    if (!this.socket) return;
+    this.socket.on('game:start', callback);
+  }
+
   // Cleanup listeners
   removeAllListeners() {
     if (this.socket) {

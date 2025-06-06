@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import socketService from '../services/socketService';
+import PlayerList from './PlayerList';
+import ChatBox from './ChatBox';
 
 const GameLobby = () => {
   const navigate = useNavigate();
@@ -14,7 +16,6 @@ const GameLobby = () => {
   const [allPlayersReady, setAllPlayersReady] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(null);
-  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     // Set initial host status from socket service
@@ -45,12 +46,9 @@ const GameLobby = () => {
       checkAllPlayersReady(sortedPlayers);
     });
 
-    // Listen for player joined event
-    socketService.socket?.on('rooms:playerJoined', ({ playerName, players: updatedPlayers }) => {
-      console.log('Player joined:', playerName, 'Updated players:', updatedPlayers);
-      const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
-      setPlayers(sortedPlayers);
-      checkAllPlayersReady(sortedPlayers);
+    // Listen for game start
+    socketService.socket?.on('game:start', ({ roomId }) => {
+      navigate(`/game/${roomId}`);
     });
 
     // Listen for chat messages
@@ -78,25 +76,13 @@ const GameLobby = () => {
     return () => {
       socketService.socket?.off('playerList');
       socketService.socket?.off('rooms:playerLeft');
-      socketService.socket?.off('rooms:playerJoined');
+      socketService.socket?.off('game:start');
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');
       socketService.socket?.off('hostStatus');
     };
-  }, []);
-
-  // Auto-scroll chat when new messages arrive
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      const { scrollHeight, clientHeight, scrollTop } = chatContainerRef.current;
-      const isScrolledNearBottom = scrollHeight - clientHeight - scrollTop < 100;
-      
-      if (isScrolledNearBottom) {
-        chatContainerRef.current.scrollTop = scrollHeight;
-      }
-    }
-  }, [messages]);
+  }, [navigate]);
 
   const checkAllPlayersReady = (playerList) => {
     setAllPlayersReady(playerList.every(player => player.isReady));
@@ -108,7 +94,9 @@ const GameLobby = () => {
   };
 
   const handleStartGame = () => {
-    socketService.socket?.emit('startGame');
+    if (isHost && allPlayersReady) {
+      socketService.startGame();
+    }
   };
 
   const handleLeaveRoom = () => {
@@ -128,12 +116,6 @@ const GameLobby = () => {
         playerName: socketService.getCurrentUser()?.name
       });
       setNewMessage('');
-      // Force scroll to bottom when user sends a message
-      if (chatContainerRef.current) {
-        setTimeout(() => {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }, 100);
-      }
     }
   };
 
@@ -254,32 +236,9 @@ const GameLobby = () => {
 
   return (
     <div className="h-screen flex">
-      {/* Players List - Left Side */}
-      <div className="w-1/4 bg-gray-800 p-4 overflow-y-auto">
-        <h2 className="text-2xl font-bold text-white mb-4">Players</h2>
-        <div className="space-y-4">
-          {players.map((player, index) => (
-            <div key={player.id} className="bg-gray-700 rounded-lg p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-gray-400 mr-2">#{index + 1}</span>
-                  <span className="font-semibold">{player.name}</span>
-                  {player.isHost && <span className="ml-2 text-yellow-400">(Host)</span>}
-                </div>
-                <span className={`${player.isReady ? 'text-green-400' : 'text-red-400'}`}>
-                  {player.isReady ? 'Ready' : 'Not Ready'}
-                </span>
-              </div>
-              <div className="mt-2 text-gray-300">
-                Points: {player.points || 0}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Middle Section */}
-      <div className="flex-1 flex flex-col">
+      <PlayerList players={players} showReadyStatus={true} />
+      
+      <div className="flex-1 bg-white">
         {/* Game Settings */}
         <div className="bg-gray-100 p-4">
           <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
@@ -332,56 +291,12 @@ const GameLobby = () => {
         </div>
       </div>
 
-      {/* Chat - Right Side */}
-      <div className="w-1/4 bg-gray-100 flex flex-col">
-        <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
-          <div className="space-y-2">
-            {messages.map((msg, index) => (
-              <div 
-                key={index} 
-                className={`p-2 rounded shadow ${
-                  msg.type === 'system' 
-                    ? msg.text.includes('joined')
-                      ? 'bg-green-50 text-green-600 italic'
-                      : msg.text.includes('left') || msg.text.includes('disconnected')
-                        ? 'bg-red-50 text-red-600 italic'
-                        : 'bg-gray-100 text-gray-600 italic'
-                    : 'bg-white'
-                }`}
-              >
-                {msg.type === 'system' ? (
-                  <div>{msg.text}</div>
-                ) : (
-                  <>
-                    <span className="font-bold">{msg.player}: </span>
-                    <span>{msg.text}</span>
-                  </>
-                )}
-                <div className="text-xs text-gray-500">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <form onSubmit={handleSendMessage} className="p-4 bg-gray-200">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 px-3 py-2 rounded border"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Send
-            </button>
-          </div>
-        </form>
-      </div>
+      <ChatBox 
+        messages={messages}
+        newMessage={newMessage}
+        setNewMessage={setNewMessage}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 };
