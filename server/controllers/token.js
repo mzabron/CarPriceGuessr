@@ -31,7 +31,7 @@ async function fetchNewApplicationToken() {
     tokenExpiryTime = Date.now() + (expires_in * 1000);
     console.log('Successfully fetched new eBay access token. Expires in:', expires_in / 60, 'minutes');
     console.log(access_token);
-    return access_token
+    currentAccessToken = access_token;
   } catch (error) {
     console.error('Error getting application access token:', error.response ? error.response.data : error.message);
     throw new Error('Failed to fetch eBay application token');
