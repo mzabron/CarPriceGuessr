@@ -1,0 +1,254 @@
+openapi: 3.0.0
+info:
+  title: Car Price Guessr API
+  description: |
+    Backend API for Car Price Guessr application
+    
+    ## Socket.io Integration
+    This API includes real-time communication via Socket.io for room management and game functionality.
+    
+    ### Socket.io Events
+    
+    #### Client → Server Events:
+    - `rooms:join` - Join a room with roomId and playerName
+    - `rooms:leave` - Leave a room with roomId and playerName
+    
+    #### Server → Client Events:
+    - `rooms:list` - List of available rooms
+    - `rooms:joined` - Confirmation of successful room join
+    - `rooms:playerJoined` - Notification when a new player joins
+    - `rooms:left` - Confirmation of successful room leave
+    - `rooms:playerLeft` - Notification when a player leaves
+    - `error` - Error message
+    
+    For detailed Socket.io event documentation, see the [socket-events.md](./socket-events.md) file.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: users
+    description: User management
+  - name: rooms
+    description: Game room management
+  - name: system
+    description: System endpoints
+
+paths:
+  /:
+    get:
+      tags:
+        - system
+      summary: Root endpoint
+      description: Returns a hello message
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "hello"
+  
+  /api/users:
+    get:
+      tags:
+        - users
+      summary: Get all users
+      description: Returns a list of all users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      description: Creates a new user with the provided name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "john_doe"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  
+  /api/users/{id}:
+    delete:
+      tags:
+        - users
+      summary: Delete a user
+      description: Deletes a user with the specified ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the user to delete
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User not found"
+  
+  /rooms:
+    get:
+      tags:
+        - rooms
+      summary: Get all rooms
+      description: Returns a list of all game rooms
+      responses:
+        '200':
+          description: A list of rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+    
+    post:
+      tags:
+        - rooms
+      summary: Create a new room
+      description: Creates a new game room with the provided name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roomName
+              properties:
+                roomName:
+                  type: string
+                  example: "Game Room 1"
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Room 'Game Room 1' created successfully"
+        '400':
+          description: Bad request - Room name is required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Room name is required"
+  
+  /rooms/{id}:
+    delete:
+      tags:
+        - rooms
+      summary: Delete a room
+      description: Deletes a room with the specified ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the room to delete
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Room deleted successfully
+        '404':
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Room not found"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "lpc-10"
+      required:
+        - id
+        - name
+    
+    Room:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Room 1"
+        playersLimit:
+          type: integer
+          example: 4
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+      required:
+        - id
+        - name
+        - playersLimit
+        - players
+    
+    Player:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "socket-id-123"
+        name:
+          type: string
+          example: "player1"
+      required:
+        - id
+        - name
