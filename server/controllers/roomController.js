@@ -39,6 +39,20 @@ const setupRoomSocketHandlers = (io) => {
       }
     });
 
+    // Handle game start
+    socket.on('game:start', () => {
+      if (socket.roomId) {
+        const room = rooms.find(r => r.id === socket.roomId);
+        if (room) {
+          const player = room.players.find(p => p.id === socket.id);
+          if (player && player.isHost && room.players.every(p => p.isReady)) {
+            room.gameStarted = true;
+            io.to(`room-${socket.roomId}`).emit('game:start', { roomId: socket.roomId });
+          }
+        }
+      }
+    });
+
     // Handle room settings update
     socket.on('room:updateSettings', (data) => {
       const { roomId, settings } = data;
@@ -73,12 +87,52 @@ const setupRoomSocketHandlers = (io) => {
         return socket.emit('error', { message: `Room with id ${roomId} not found` });
       }
 
+      // If this is a rejoin after game start, just send the current state
+      if (data.rejoin) {
+        socket.join(`room-${roomId}`);
+        socket.roomId = roomId;
+        io.to(`room-${roomId}`).emit('playerList', room.players);
+        socket.emit('room:settings', room.settings);
+        return;
+      }
+
       if (room.players.length >= room.settings.playersLimit) {
         return socket.emit('error', { message: `Room with id ${roomId} is currently full` });
       }
 
-      const playerName = data.playerName;
+      // Check if the room is in game state before proceeding with join
+      if (room.gameStarted && !data.rejoin) {
+        const player = {
+          id: socket.id,
+          name: data.playerName,
+          points: 0,
+          isReady: true, // Auto-ready since game is in progress
+          isHost: data.isHost || false
+        };
 
+        room.players.push(player);
+        socket.join(`room-${roomId}`);
+        socket.roomId = roomId;
+
+        // Send current game state
+        socket.emit('room:settings', room.settings);
+        io.to(`room-${roomId}`).emit('playerList', room.players);
+
+        // Redirect to game immediately
+        socket.emit('game:start', { roomId });
+
+        // Notify others
+        io.to(`room-${roomId}`).emit('chat:newMessage', {
+          player: 'System',
+          text: `${data.playerName} has joined the game`,
+          timestamp: new Date(),
+          type: 'system'
+        });
+
+        return;
+      }
+
+      const playerName = data.playerName;
       const roomChannel = `room-${roomId}`;
 
       const player = {
@@ -110,10 +164,10 @@ const setupRoomSocketHandlers = (io) => {
         type: 'system'
       });
 
-      // informuj gracza ze dolaczyl
+      // inform player they joined
       socket.emit('rooms:joined', { room, player });
 
-      // informuj graczy w pokoju o nowym graczu
+      // inform players in room about new player
       io.to(roomChannel).emit('rooms:playerJoined', {
         roomId,
         playerName,
@@ -121,7 +175,6 @@ const setupRoomSocketHandlers = (io) => {
       });
 
       socket.emit('rooms:list', rooms);
-      console.log(rooms);
     });
 
     // handler do opuszczania pokoju
