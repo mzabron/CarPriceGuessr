@@ -8,7 +8,8 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:8080');
+      // this.socket = io('http://localhost:8080');
+      this.socket = io('http://192.168.0.59');
       this.setupEventListeners();
     }
     return this.socket;

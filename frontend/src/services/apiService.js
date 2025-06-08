@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8080';
+// const API_URL = 'http://localhost:8080';
+const API_URL = '';
 
 class ApiService {
   async createRoom(roomConfig) {
@@ -16,7 +17,7 @@ class ApiService {
       
       console.log('Formatted request body:', requestBody);
 
-      const response = await fetch(`${API_URL}/rooms`, {
+      const response = await fetch(`${API_URL}/api/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +47,7 @@ class ApiService {
 
   async getRooms() {
     try {
-      const response = await fetch(`${API_URL}/rooms`);
+      const response = await fetch(`${API_URL}/api/rooms`);
       if (!response.ok) {
         throw new Error('Failed to fetch rooms');
       }
