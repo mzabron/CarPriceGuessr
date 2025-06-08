@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import socketService from '../services/socketService';
 import PlayerList from './PlayerList';
 import ChatBox from './ChatBox';
+import apiService from '../services/apiService';
 
 const GameLobby = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const GameLobby = () => {
   const [allPlayersReady, setAllPlayersReady] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(null);
+  const [cars, setCars] = useState([]);
 
   useEffect(() => {
     // Set initial host status from socket service
@@ -96,6 +98,10 @@ const GameLobby = () => {
   const handleStartGame = () => {
     if (isHost && allPlayersReady) {
       socketService.startGame();
+      fetchCars().then(cars => {
+        setCars(cars);
+        console.log('Fetched cars:', cars);
+      });
     }
   };
 
@@ -135,6 +141,13 @@ const GameLobby = () => {
       ...changes
     }));
   };
+
+  const fetchCars = async () => {
+      const fetchedCars = await apiService.getCars();
+      console.log(fetchedCars);
+      return fetchedCars;
+        // setCarJson = await fetchedCars.json();
+    };
 
   const renderGameSettings = () => {
     if (!gameSettings) return null;

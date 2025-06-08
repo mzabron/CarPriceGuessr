@@ -11,6 +11,7 @@ const Game = () => {
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [cars, setCars] = useState([]);
 
   useEffect(() => {
     // Listen for player updates
@@ -70,7 +71,9 @@ const Game = () => {
   return (
     <div className="h-screen flex">
       <PlayerList players={players} showReadyStatus={false} />
-      <GameContent />
+      <GameContent 
+      cars={cars}
+      setCars={setCars}/>
       <ChatBox 
         messages={messages}
         newMessage={newMessage}
