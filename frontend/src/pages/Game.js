@@ -5,13 +5,12 @@ import PlayerList from '../components/PlayerList';
 import ChatBox from '../components/ChatBox';
 import GameContent from '../components/GameContent';
 
-const Game = () => {
+const Game = ({ gameSettings }) => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [cars, setCars] = useState([]);
 
   useEffect(() => {
     // Listen for player updates
@@ -71,9 +70,8 @@ const Game = () => {
   return (
     <div className="h-screen flex">
       <PlayerList players={players} showReadyStatus={false} />
-      <GameContent 
-      cars={cars}
-      setCars={setCars}/>
+      <GameContent
+      gameSettings={gameSettings}/>
       <ChatBox 
         messages={messages}
         newMessage={newMessage}
