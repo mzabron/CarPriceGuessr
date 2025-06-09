@@ -70,8 +70,7 @@ const Game = ({ gameSettings }) => {
   return (
     <div className="h-screen flex">
       <PlayerList players={players} showReadyStatus={false} />
-      <GameContent
-      gameSettings={gameSettings}/>
+      <GameContent gameSettings={gameSettings} players={players} />
       <ChatBox 
         messages={messages}
         newMessage={newMessage}

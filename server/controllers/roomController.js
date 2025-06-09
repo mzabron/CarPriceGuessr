@@ -16,6 +16,8 @@ const generateRoomCode = () => {
   return code;
 };
 
+const roomVotes = {}; // { roomId: { votes: {playerId: carIndex}, timer: Timeout, carCount: N } }
+
 // socket handlers
 const setupRoomSocketHandlers = (io) => {
   ioInstance = io;
@@ -48,6 +50,24 @@ const setupRoomSocketHandlers = (io) => {
           if (player && player.isHost && room.players.every(p => p.isReady)) {
             room.gameStarted = true;
             io.to(`room-${socket.roomId}`).emit('game:start', { roomId: socket.roomId });
+
+            const ebayController = require('./ebayController');
+
+            ebayController.getCars(
+              { query: {} },
+              {
+                json: (carList) => {
+                  io.to(`room-${socket.roomId}`).emit('game:cars', carList);
+
+                  // --- Start voting phase automatically after sending cars ---
+                  const carCount = carList.itemSummaries ? carList.itemSummaries.length : 0;
+                  roomVotes[socket.roomId] = { votes: {}, carCount };
+                  roomVotes[socket.roomId].timer = setTimeout(() => finishVoting(socket.roomId), 15000);
+                  io.to(`room-${socket.roomId}`).emit('game:votingStarted');
+                },
+                status: () => ({ json: () => {} })
+              }
+            );
           }
         }
       }
@@ -100,7 +120,6 @@ const setupRoomSocketHandlers = (io) => {
         return socket.emit('error', { message: `Room with id ${roomId} is currently full` });
       }
 
-      // Check if the room is in game state before proceeding with join
       if (room.gameStarted && !data.rejoin) {
         const player = {
           id: socket.id,
@@ -289,6 +308,33 @@ const setupRoomSocketHandlers = (io) => {
         }
       }
     });
+
+    socket.on('game:startVoting', ({ roomId, carCount }) => {
+      roomVotes[roomId] = { votes: {}, carCount };
+      // Start 15s timer
+      roomVotes[roomId].timer = setTimeout(() => finishVoting(roomId), 15000);
+      io.to(`room-${roomId}`).emit('game:votingStarted');
+    });
+
+    socket.on('game:vote', ({ roomId, playerName, carIndex }) => {
+      if (!roomVotes[roomId]) return;
+      roomVotes[roomId].votes[playerName] = carIndex;
+      io.to(`room-${roomId}`).emit('game:votesUpdate', roomVotes[roomId].votes);
+    });
+
+    function finishVoting(roomId) {
+      const votes = roomVotes[roomId]?.votes || {};
+      const carCount = roomVotes[roomId]?.carCount || 0;
+      const tally = Array(carCount).fill(0);
+      Object.values(votes).forEach(idx => { if (typeof idx === 'number') tally[idx]++; });
+      const maxVotes = Math.max(...tally);
+      const topIndexes = tally.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
+      // Randomize if tie or no votes
+      const winningIndex = topIndexes.length > 0 ? topIndexes[Math.floor(Math.random() * topIndexes.length)] : Math.floor(Math.random() * carCount);
+      io.to(`room-${roomId}`).emit('game:votingResult', { winningIndex, votes: tally });
+      clearTimeout(roomVotes[roomId]?.timer);
+      delete roomVotes[roomId];
+    }
   });
 }
 
