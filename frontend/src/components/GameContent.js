@@ -18,9 +18,11 @@ const GameContent = ({ gameSettings }) => {
   }, [currentRound]);
 
   const getDisplayText = (car) => {
-    // Check Seller Notes (if exists and less than 50 chars)
-    if (car.sellerNotes && car.sellerNotes.length < 50) {
-      return car.sellerNotes;
+    // Show first 6 words of conditionDescription if it exists
+    if (car.conditionDescription) {
+      const words = car.conditionDescription.split(' ');
+      const shortDesc = words.slice(0, 6).join(' ');
+      return shortDesc + (words.length > 6 ? '...' : '');
     }
     // Check other fields in hierarchy
     const fields = [
@@ -33,7 +35,11 @@ const GameContent = ({ gameSettings }) => {
     ];
     
     for (const field of fields) {
-      if (car[field] && car[field] !== 'No Information') {
+      if (
+        car[field] &&
+        car[field] !== 'No Information' &&
+        car[field] !== '--'
+      ) {
         // Add descriptive text for cylinders and doors
         if (field === 'numberOfCylinders') {
           return `Cylinders number: ${car[field]}`;
@@ -75,7 +81,7 @@ const GameContent = ({ gameSettings }) => {
           {selectedCarIndex === null ? (
             // Selection Phase
             <div className="flex flex-col items-center gap-4">
-              <h2 className="text-2xl font-bold mb-4">Select a Car</h2>
+              <h2 className="text-2xl font-bold mb-4">Select a car to guess</h2>
               <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
                 {cars.map((car, index) => (
                   <button
@@ -200,4 +206,4 @@ const fetchCars = async () => {
   return fetchedCars;
 };
 
-export default GameContent; 
+export default GameContent;

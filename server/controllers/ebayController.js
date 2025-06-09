@@ -20,8 +20,9 @@ exports.getCars = async (req, res) => {
     // Request more items to have a larger pool for random selection
     const params = new URLSearchParams({
       category_ids: CARS_CATEGORY_ID,
-      filter: 'itemLocation.country:US',
-      limit: '4',
+      //filter: 'itemLocation.country:US',
+      filter: 'buyingOptions:{FIXED_PRICE}',
+      limit: '10',
       offset: `${randomOffset}`
     });
 
@@ -127,7 +128,6 @@ const fetchCarsWithDetails = async (params) => {
           engine: findAspect('Engine'),
           carType: findAspect('Car Type'),
           // Additional aspects
-          sellerNotes: findAspect('Seller Notes'),
           bodyType: findAspect('Body Type'),
           horsePower: findAspect('Horse Power'),
           numberOfCylinders: findAspect('Number of Cylinders'),
