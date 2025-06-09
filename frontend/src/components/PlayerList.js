@@ -2,7 +2,7 @@ import React from 'react';
 
 const PlayerList = ({ players, showReadyStatus = false }) => {
   return (
-    <div className="w-1/4 bg-gray-800 p-4 overflow-y-auto">
+    <div className="w-1/6 bg-gray-800 p-4 overflow-y-auto">
       <h2 className="text-2xl font-bold text-white mb-4">Players</h2>
       <div className="space-y-4">
         {players.map((player, index) => (

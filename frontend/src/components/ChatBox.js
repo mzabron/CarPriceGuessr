@@ -16,7 +16,7 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
   }, [messages]);
 
   return (
-    <div className="w-1/4 bg-gray-100 flex flex-col">
+    <div className="w-1/6 bg-gray-100 flex flex-col">
       <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-2">
           {messages.map((msg, index) => (

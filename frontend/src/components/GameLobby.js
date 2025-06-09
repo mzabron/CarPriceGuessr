@@ -239,56 +239,55 @@ const GameLobby = () => {
     <div className="h-screen flex">
       <PlayerList players={players} showReadyStatus={true} />
       
-      <div className="flex-1 bg-white">
-        {/* Game Settings */}
-        <div className="bg-gray-100 p-4">
-          <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
-            <span>Room Code: <span className="font-mono">{gameSettings?.roomCode}</span></span>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(gameSettings?.roomCode);
-              }}
-              className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Copy
-            </button>
+      <div className="flex-1 bg-white flex flex-col items-center justify-center">
+        <div className="w-full max-w-4xl flex flex-col items-center justify-center">
+          <div className="bg-gray-100 p-8 w-full rounded-xl shadow-lg">
+            <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
+              <span>Room Code: <span className="font-mono">{gameSettings?.roomCode}</span></span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(gameSettings?.roomCode);
+                }}
+                className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Copy
+              </button>
+            </div>
+            <h3 className="text-xl font-bold mb-4">Game Settings</h3>
+            {renderGameSettings()}
           </div>
-          <h3 className="text-xl font-bold mb-4">Game Settings</h3>
-          {renderGameSettings()}
-        </div>
-
-        {/* Game Controls */}
-        <div className="mt-auto p-4 flex justify-center items-center space-x-4">
-          <button
-            onClick={handleLeaveRoom}
-            className="px-6 py-3 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600"
-          >
-            Leave Room
-          </button>
-          <button
-            onClick={handleReadyToggle}
-            className={`px-6 py-3 rounded-lg font-bold ${
-              isReady
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-300 text-gray-700'
-            }`}
-          >
-            {isReady ? "Ready!" : "Click to be Ready"}
-          </button>
-          
-          {isHost && (
+          <div className="p-4 flex justify-center items-center space-x-4 mt-8">
             <button
-              onClick={handleStartGame}
-              disabled={!allPlayersReady}
+              onClick={handleLeaveRoom}
+              className="px-6 py-3 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600"
+            >
+              Leave Room
+            </button>
+            <button
+              onClick={handleReadyToggle}
               className={`px-6 py-3 rounded-lg font-bold ${
-                allPlayersReady
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                isReady
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-300 text-gray-700'
               }`}
             >
-              Start Game
+              {isReady ? "Ready!" : "Click to be Ready"}
             </button>
-          )}
+            
+            {isHost && (
+              <button
+                onClick={handleStartGame}
+                disabled={!allPlayersReady}
+                className={`px-6 py-3 rounded-lg font-bold ${
+                  allPlayersReady
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Start Game
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -302,4 +301,4 @@ const GameLobby = () => {
   );
 };
 
-export default GameLobby; 
+export default GameLobby;
