@@ -21,7 +21,7 @@ exports.getCars = async (req, res) => {
     const params = new URLSearchParams({
       category_ids: CARS_CATEGORY_ID,
       filter: 'itemLocation.country:US',
-      limit: '10',
+      limit: '4',
       offset: `${randomOffset}`
     });
 
@@ -125,7 +125,13 @@ const fetchCarsWithDetails = async (params) => {
           forSaleBy: findAspect('For Sale By'),
           fuelType: findAspect('Fuel Type'),
           engine: findAspect('Engine'),
-          carType: findAspect('Car Type')
+          carType: findAspect('Car Type'),
+          // Additional aspects
+          sellerNotes: findAspect('Seller Notes'),
+          bodyType: findAspect('Body Type'),
+          horsePower: findAspect('Horse Power'),
+          numberOfCylinders: findAspect('Number of Cylinders'),
+          numberOfDoors: findAspect('Number of Doors')
         };
       } catch (error) {
         console.error(`Error fetching details for item ${item.itemId}:`, error);
