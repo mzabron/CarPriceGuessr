@@ -4,9 +4,11 @@
   "description": "backend of car-price-guessr",
   "main": "index.js",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "mongoose": "^8.15.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "swagger-ui-express": "^5.0.1",
