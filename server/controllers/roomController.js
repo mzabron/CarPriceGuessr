@@ -3,6 +3,31 @@ let rooms = [];
 
 let ioInstance = null;
 
+function getSafeRooms(rooms) {
+  return rooms.map(room => ({
+    id: room.id,
+    code: room.code,
+    name: room.name,
+    players: room.players,
+    settings: room.settings,
+    // Do NOT include turnTimer, turnDeadline, or any other non-serializable fields!
+    currentTurnIndex: room.currentTurnIndex,
+    // add any other fields you want to expose
+  }));
+}
+
+function getSafeRoom(room) {
+  return {
+    id: room.id,
+    code: room.code,
+    name: room.name,
+    players: room.players,
+    settings: room.settings,
+    currentTurnIndex: room.currentTurnIndex,
+    // add any other fields you want to expose
+  };
+}
+
 // Generate a random room code
 const generateRoomCode = () => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -18,6 +43,36 @@ const generateRoomCode = () => {
 
 const roomVotes = {}; // { roomId: { votes: {playerId: carIndex}, timer: Timeout, carCount: N } }
 
+function startNextTurn(room) {
+  if (!room.players.length) return;
+
+  // Advance turn index
+  if (typeof room.currentTurnIndex !== 'number') room.currentTurnIndex = 0;
+  else room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+
+  const currentPlayer = room.players[room.currentTurnIndex];
+  const answerTime = room.settings.answerTime || 30;
+  const deadline = Date.now() + answerTime * 1000;
+  room.turnDeadline = deadline;
+
+  // Notify all clients whose turn it is
+  ioInstance.to(`room-${room.id}`).emit('game:turn', {
+    playerId: currentPlayer.id,
+    playerName: currentPlayer.name,
+    deadline,
+    answerTime
+  });
+
+  // Clear previous timer if any
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+
+  // Set timer for next turn
+  room.turnTimer = setTimeout(() => {
+    // Optionally: handle missed turn (e.g., skip, auto-action)
+    startNextTurn(room);
+  }, answerTime * 1000);
+}
+
 // socket handlers
 const setupRoomSocketHandlers = (io) => {
   ioInstance = io;
@@ -25,7 +80,7 @@ const setupRoomSocketHandlers = (io) => {
     console.log('A user connected: ', socket.id);
 
     // Send current rooms list to the connected client
-    socket.emit('rooms:list', rooms);
+    socket.emit('rooms:list', getSafeRooms(rooms));
 
     // Handle player ready status
     socket.on('playerReady', (isReady) => {
@@ -71,6 +126,18 @@ const setupRoomSocketHandlers = (io) => {
           }
         }
       }
+    });
+
+    socket.on('game:guess', (data) => {
+      const room = rooms.find(r => r.id === socket.roomId);
+      if (!room) return;
+      const currentPlayer = room.players[room.currentTurnIndex];
+      if (socket.id !== currentPlayer.id) {
+        return socket.emit('error', { message: 'Not your turn!' });
+      }
+      // Handle guess...
+      // After guess, move to next turn:
+      startNextTurn(room);
     });
 
     // Handle room settings update
@@ -184,7 +251,7 @@ const setupRoomSocketHandlers = (io) => {
       });
 
       // inform player they joined
-      socket.emit('rooms:joined', { room, player });
+      socket.emit('rooms:joined', { room: getSafeRoom(room), player });
 
       // inform players in room about new player
       io.to(roomChannel).emit('rooms:playerJoined', {
@@ -193,7 +260,7 @@ const setupRoomSocketHandlers = (io) => {
         players: room.players
       });
 
-      socket.emit('rooms:list', rooms);
+      socket.emit('rooms:list', getSafeRooms(rooms));
     });
 
     // handler do opuszczania pokoju
@@ -243,7 +310,7 @@ const setupRoomSocketHandlers = (io) => {
       }
       
       // informuj gracza ze wyszedl
-      socket.emit('rooms:left', { room, playerName });
+      socket.emit('rooms:left', { room: getSafeRoom(room), playerName });
       
       // informuj graczy w pokoju ze inny gracz wyszedl
       io.to(roomChannel).emit('rooms:playerLeft', {
@@ -334,6 +401,13 @@ const setupRoomSocketHandlers = (io) => {
       io.to(`room-${roomId}`).emit('game:votingResult', { winningIndex, votes: tally });
       clearTimeout(roomVotes[roomId]?.timer);
       delete roomVotes[roomId];
+
+      setTimeout(() => {
+        const room = rooms.find(r => r.id === roomId);
+        if (room) {
+          startNextTurn(room);
+        }
+      }, 2000); // 2 seconds
     }
   });
 }
@@ -367,9 +441,12 @@ exports.createRoom = (req, res) => {
         playersLimit: roomData.playersLimit || 4,
         rounds: roomData.rounds || 5,
         powerUps: roomData.powerUps || 2,
-        roundDuration: roomData.answerTime || 30,
+        answerTime: roomData.answerTime || 30,
         visibility: roomData.visibility || 'public'
-      }
+      },
+      currentTurnIndex: 0,
+      turnTimer: null,
+      turnDeadline: null,
     };
 
     console.log('Created new room object:', JSON.stringify(newRoom, null, 2));

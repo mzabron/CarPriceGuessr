@@ -16,7 +16,6 @@ function getPlayerColor(name, playerList) {
 const GameContent = ({ gameSettings, players = [] }) => {
   const { roomId } = useParams();
   const [cars, setCars] = useState([]);
-  const [currentRound, setCurrentRound] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedCarIndex, setSelectedCarIndex] = useState(null);
   const [voting, setVoting] = useState(false);
@@ -24,6 +23,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [votingTimeLeft, setVotingTimeLeft] = useState(15);
   const [winningIndex, setWinningIndex] = useState(null);
   const [showChosenText, setShowChosenText] = useState(false);
+  const [currentTurn, setCurrentTurn] = useState(null);
+  const [turnTimeLeft, setTurnTimeLeft] = useState(null);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -38,6 +39,39 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [sliderPrice, setSliderPrice] = useState(10000);
   const [selectedRange, setSelectedRange] = useState(PRICE_RANGES[0]);
   const [guessConfirmed, setGuessConfirmed] = useState(false);
+
+  useEffect(() => {
+    socketService.socket?.on('game:turn', (turnData) => {
+      setCurrentTurn(turnData);
+      // Calculate seconds left based on deadline
+      if (turnData.deadline) {
+        setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
+      } else {
+        setTurnTimeLeft(turnData.answerTime || 10);
+      }
+    });
+
+    return () => {
+      socketService.socket?.off('game:turn');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (turnTimeLeft === null) return;
+    if (turnTimeLeft <= 0) return;
+    const interval = setInterval(() => {
+      setTurnTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [turnTimeLeft]);
+
+
 
   useEffect(() => {
     socketService.socket?.on('game:cars', (carList) => {
@@ -257,7 +291,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
           className="ml-2 block rounded p-2"
           style={{
             whiteSpace: 'pre-line',
-            maxHeight: '4.5em',
+            maxHeight: '5em',
             overflowY: 'auto',
             scrollbarWidth: 'thin',
             scrollbarColor: '#a3a3a3 #f3f4f6',
@@ -469,10 +503,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex items-center gap-4 mb-2">
                     <span className="font-bold text-lg">
-                      Turn: <span className="text-blue-700">{players[0]?.name || "Player"}</span>
+                      Turn: <span className="text-blue-700">{currentTurn?.playerName || "..."}</span>
                     </span>
                     <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded text-lg font-mono">
-                      {gameSettings?.roundDuration || 10}s
+                      {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
