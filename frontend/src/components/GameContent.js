@@ -335,23 +335,35 @@ const GameContent = ({ gameSettings, players = [] }) => {
             </div>
           ) : winningIndex !== null || selectedCarIndex !== null ? (
             <div className="flex flex-col items-center">
-              {/* Car Title and Description */}
+              {/* Car Title */}
               <div className="text-2xl font-bold mb-2 text-center max-w-4xl">
                 {cars[getActiveCarIndex()]?.title || 'No Title'}
               </div>
-              <div className="text-lg mb-4 text-center max-w-4xl text-gray-600">
+              {/* Car Description: full width of image+details */}
+              <div className="w-full flex justify-center mb-4">
                 <div
-                  className="max-h-28 overflow-y-auto px-2"
+                  className="text-lg text-gray-600 max-w-[calc(900px+2rem+32rem)] w-full"
                   style={{
-                    whiteSpace: 'pre-line',
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#a3a3a3 #f3f4f6'
+                    textAlign: "left",
                   }}
                 >
-                  {cars[getActiveCarIndex()]?.shortDescription || 'No Description Available'}
+                  <div
+                    className="px-2"
+                    style={{
+                      whiteSpace: 'pre-line',
+                      maxHeight: '4.5em', // ~3 lines for text-lg
+                      overflowY: 'auto',
+                      scrollbarWidth: 'thin',
+                      scrollbarColor: '#a3a3a3 #f3f4f6',
+                      WebkitLineClamp: 3,
+                      display: '-webkit-box',
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {cars[getActiveCarIndex()]?.shortDescription || 'No Description Available'}
+                  </div>
                 </div>
               </div>
-
               {/* Image Carousel & Car Details Side by Side */}
               <div className="flex flex-row gap-8 w-full mb-4">
                 {/* Carousel - bigger width, not shrinking */}
@@ -395,6 +407,33 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
               {/* Guess the price section - ONLY visible in car details phase */}
               <div className="w-full mt-6">
+                {/* Turn Info & Timer (frontend only, demo logic) */}
+                <div className="flex flex-col items-center mt-4 mb-2">
+                  {/* Show current turn player and timer + Steal button */}
+                  <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-4">
+                      <span className="font-bold text-lg">
+                        {/* Demo: just show first player as current turn */}
+                        Turn: <span className="text-blue-700">{players[0]?.name || "Player"}</span>
+                      </span>
+                      <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded text-lg font-mono">
+                        {/* Demo: use answerTime from settings, count down from 10 */}
+                        {gameSettings?.roundDuration || 10}s
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="ml-8 px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xl shadow transition active:scale-95 focus:outline-none"
+                      style={{ minWidth: '120px' }}
+                      // onClick={handleSteal} // Add your handler here
+                    >
+                      Steal
+                    </button>
+                  </div>
+                </div>
+                {/* gap below the turn info */}
+                <div className="my-40"></div>
+                {/* Guess the price title */}
                 <div className="mb-4 font-extrabold text-2xl text-center">Guess the price:</div>
                 {/* Price Ranges */}
                 <div className="flex flex-wrap gap-3 mb-6 justify-center">
@@ -485,16 +524,22 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 </div>
                 <div className="flex justify-center">
                   <button
-                    onClick={handleConfirmGuess}
-                    className="mt-2 px-8 py-3 bg-green-600 text-white rounded-lg font-bold text-lg hover:bg-green-700 transition shadow"
+                    onClick={e => {
+                      handleConfirmGuess();
+                      // Click animation: scale and flash
+                      const btn = e.currentTarget;
+                      btn.classList.add('scale-95', 'ring', 'ring-green-400');
+                      setTimeout(() => {
+                        btn.classList.remove('scale-95', 'ring', 'ring-green-400');
+                      }, 180);
+                    }}
+                    className="mt-2 px-8 py-3 bg-green-600 text-white rounded-lg font-bold text-lg hover:bg-green-700 transition shadow active:scale-95 focus:outline-none"
                     disabled={!guessPrice || isNaN(Number(guessPrice))}
+                    style={{ transition: 'transform 0.15s, box-shadow 0.15s' }}
                   >
                     Confirm Guess
                   </button>
                 </div>
-                {guessConfirmed && (
-                  <div className="mt-2 text-green-700 font-bold text-lg text-center">Guess confirmed!</div>
-                )}
               </div>
             </div>
           ) : selectedCarIndex === null ? (
