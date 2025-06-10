@@ -413,7 +413,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   ))}
                 </div>
                 {/* Centered, big slider */}
-                <div className="flex items-center gap-6 mb-4 justify-center">
+                <div className="flex items-center gap-4 mb-4 justify-center">
+                  {/* Slider */}
                   <input
                     type="range"
                     min={getSliderMin()}
@@ -428,6 +429,29 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       borderRadius: "1rem",
                     }}
                   />
+                  {/* Left triangle arrow (decrease) */}
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-2 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center disabled:opacity-50"
+                    onClick={() => {
+                      let newValue = Number(sliderPrice) - 100;
+                      if (newValue < getSliderMin()) newValue = getSliderMin();
+                      setSliderPrice(newValue);
+                      setGuessPrice(newValue);
+                      // Auto-select range if needed
+                      const foundRange = PRICE_RANGES.find(r => newValue >= r.min && newValue <= r.max);
+                      if (foundRange && foundRange.label !== selectedRange.label) {
+                        setSelectedRange(foundRange);
+                      }
+                    }}
+                    aria-label="Decrease price"
+                    disabled={Number(sliderPrice) <= getSliderMin()}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" className="fill-gray-600">
+                      <polygon points="12,4 6,9 12,14" />
+                    </svg>
+                  </button>
+                  {/* Price input with $ */}
                   <input
                     type="text"
                     value={guessPrice}
@@ -437,6 +461,27 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     inputMode="numeric"
                   />
                   <span className="ml-1 font-semibold text-2xl">$</span>
+                  {/* Right triangle arrow (increase) */}
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-2 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                    onClick={() => {
+                      let newValue = Number(sliderPrice) + 100;
+                      if (newValue > getSliderMax()) newValue = getSliderMax();
+                      setSliderPrice(newValue);
+                      setGuessPrice(newValue);
+                      // Auto-select range if needed
+                      const foundRange = PRICE_RANGES.find(r => newValue >= r.min && newValue <= r.max);
+                      if (foundRange && foundRange.label !== selectedRange.label) {
+                        setSelectedRange(foundRange);
+                      }
+                    }}
+                    aria-label="Increase price"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" className="fill-gray-600">
+                      <polygon points="6,4 12,9 6,14" />
+                    </svg>
+                  </button>
                 </div>
                 <div className="flex justify-center">
                   <button
