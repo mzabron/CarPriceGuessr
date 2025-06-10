@@ -2,9 +2,9 @@ import React from 'react';
 
 const PlayerList = ({ players, showReadyStatus = false }) => {
   return (
-    <div className="w-1/6 bg-gray-800 p-4 overflow-y-auto">
+    <div className="h-full w-64 md:w-80 bg-gray-800 flex flex-col p-4 overflow-y-auto">
       <h2 className="text-2xl font-bold text-white mb-4">Players</h2>
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         {players.map((player, index) => (
           <div key={player.id} className="bg-gray-700 rounded-lg p-4 text-white">
             <div className="flex items-center justify-between">
@@ -29,4 +29,4 @@ const PlayerList = ({ players, showReadyStatus = false }) => {
   );
 };
 
-export default PlayerList; 
+export default PlayerList;

@@ -8,7 +8,6 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
     if (chatContainerRef.current) {
       const { scrollHeight, clientHeight, scrollTop } = chatContainerRef.current;
       const isScrolledNearBottom = scrollHeight - clientHeight - scrollTop < 100;
-      
       if (isScrolledNearBottom) {
         chatContainerRef.current.scrollTop = scrollHeight;
       }
@@ -16,14 +15,14 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
   }, [messages]);
 
   return (
-    <div className="w-1/6 bg-gray-100 flex flex-col">
+    <div className="h-full w-80 md:w-80 bg-gray-100 flex flex-col border-l border-gray-300">
       <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-2">
           {messages.map((msg, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`p-2 rounded shadow ${
-                msg.type === 'system' 
+                msg.type === 'system'
                   ? msg.text.includes('joined')
                     ? 'bg-green-50 text-green-600 italic'
                     : msg.text.includes('left') || msg.text.includes('disconnected')
@@ -68,4 +67,4 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
   );
 };
 
-export default ChatBox; 
+export default ChatBox;

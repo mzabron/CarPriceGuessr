@@ -19,57 +19,45 @@ const GameLobby = () => {
   const [tempSettings, setTempSettings] = useState(null);
 
   useEffect(() => {
-    // Set initial host status from socket service
     const currentUser = socketService.getCurrentUser();
     if (currentUser?.isHost) {
       setIsHost(true);
     }
 
-    // Listen for player updates
     socketService.socket?.on('playerList', (updatedPlayers) => {
-      console.log('Received updated player list:', updatedPlayers);
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
       setPlayers(sortedPlayers);
       checkAllPlayersReady(sortedPlayers);
-      
-      // Update local ready state based on current player's status
       const currentPlayer = updatedPlayers.find(p => p.id === socketService.socket?.id);
       if (currentPlayer) {
         setIsReady(currentPlayer.isReady);
       }
     });
 
-    // Listen for player left event
     socketService.socket?.on('rooms:playerLeft', ({ playerName, players: updatedPlayers }) => {
-      console.log('Player left:', playerName, 'Updated players:', updatedPlayers);
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
       setPlayers(sortedPlayers);
       checkAllPlayersReady(sortedPlayers);
     });
 
-    // Listen for game start
     socketService.socket?.on('game:start', ({ roomId }) => {
       navigate(`/game/${roomId}`);
     });
 
-    // Listen for chat messages
     socketService.socket?.on('chat:newMessage', (message) => {
       setMessages(prev => [...prev, message]);
     });
 
-    // Listen for initial room settings
     socketService.socket?.on('room:settings', (settings) => {
       setGameSettings(settings);
       setTempSettings(settings);
     });
 
-    // Listen for settings updates
     socketService.socket?.on('room:settingsUpdated', (settings) => {
       setGameSettings(settings);
       setTempSettings(settings);
     });
 
-    // Listen for host status changes
     socketService.socket?.on('hostStatus', (status) => {
       setIsHost(status);
     });
@@ -122,7 +110,6 @@ const GameLobby = () => {
 
   const handleSettingsUpdate = () => {
     if (!isHost || !tempSettings) return;
-    
     socketService.socket?.emit('room:updateSettings', {
       roomId: parseInt(roomId),
       settings: tempSettings
@@ -236,12 +223,11 @@ const GameLobby = () => {
   };
 
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       <PlayerList players={players} showReadyStatus={true} />
-      
-      <div className="flex-1 bg-white flex flex-col items-center justify-center">
+      <div className="flex-1 bg-white flex flex-col items-center justify-center overflow-auto">
         <div className="w-full max-w-4xl flex flex-col items-center justify-center">
-          <div className="bg-gray-100 p-8 w-full rounded-xl shadow-lg">
+          <div className="bg-gray-100 p-4 sm:p-8 w-full rounded-xl shadow-lg">
             <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
               <span>Room Code: <span className="font-mono">{gameSettings?.roomCode}</span></span>
               <button
@@ -256,7 +242,7 @@ const GameLobby = () => {
             <h3 className="text-xl font-bold mb-4">Game Settings</h3>
             {renderGameSettings()}
           </div>
-          <div className="p-4 flex justify-center items-center space-x-4 mt-8">
+          <div className="p-4 flex flex-wrap justify-center items-center space-x-0 sm:space-x-4 mt-8 gap-4">
             <button
               onClick={handleLeaveRoom}
               className="px-6 py-3 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600"
@@ -273,7 +259,6 @@ const GameLobby = () => {
             >
               {isReady ? "Ready!" : "Click to be Ready"}
             </button>
-            
             {isHost && (
               <button
                 onClick={handleStartGame}
@@ -290,7 +275,6 @@ const GameLobby = () => {
           </div>
         </div>
       </div>
-
       <ChatBox 
         messages={messages}
         newMessage={newMessage}
