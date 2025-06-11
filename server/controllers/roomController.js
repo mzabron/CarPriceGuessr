@@ -68,7 +68,22 @@ function startNextTurn(room) {
 
   // Set timer for next turn
   room.turnTimer = setTimeout(() => {
-    // Optionally: handle missed turn (e.g., skip, auto-action)
+    // On timeout, auto-submit the player's current guess (if any)
+    let priceToSend = 0;
+    if (room.pendingGuess && room.pendingGuess.playerId === currentPlayer.id) {
+      priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
+      ioInstance.to(`room-${room.id}`).emit('game:guessConfirmed', {
+        playerName: currentPlayer.name,
+        price: priceToSend
+      });
+      room.pendingGuess = null;
+    } else {
+      // If no guess was made, send 0
+      ioInstance.to(`room-${room.id}`).emit('game:guessConfirmed', {
+        playerName: currentPlayer.name,
+        price: 0
+      });
+    }
     startNextTurn(room);
   }, answerTime * 1000);
 }
@@ -323,7 +338,7 @@ const setupRoomSocketHandlers = (io) => {
       console.log(`${playerName} left room: ${room.name}`);
 
       // Broadcast updated room list to all clients
-      io.emit('rooms:list', rooms);
+      io.emit('rooms:list', getSafeRooms(rooms));
       console.log(rooms);
     });
 
@@ -370,7 +385,7 @@ const setupRoomSocketHandlers = (io) => {
             });
 
             // Broadcast updated room list to all clients
-            io.emit('rooms:list', rooms);
+            io.emit('rooms:list', getSafeRooms(rooms));
           }
         }
       }
@@ -409,6 +424,39 @@ const setupRoomSocketHandlers = (io) => {
         }
       }, 2000); // 2 seconds
     }
+
+    socket.on('game:confirmGuess', (data) => {
+      const room = rooms.find(r => r.id === socket.roomId);
+      if (!room) return;
+      const currentPlayer = room.players[room.currentTurnIndex];
+      if (socket.id !== currentPlayer.id) {
+        return socket.emit('error', { message: 'Not your turn!' });
+      }
+      // Store the guess for timeout fallback
+      room.pendingGuess = {
+        playerId: currentPlayer.id,
+        price: data.price
+      };
+      // Broadcast the guess to all players
+      io.to(`room-${room.id}`).emit('game:guessConfirmed', {
+        playerName: currentPlayer.name,
+        price: data.price
+      });
+      room.pendingGuess = null;
+      // Advance to next turn immediately
+      startNextTurn(room);
+    });
+
+    socket.on('game:updatePendingGuess', (data) => {
+      const room = rooms.find(r => r.id === socket.roomId);
+      if (!room) return;
+      const currentPlayer = room.players[room.currentTurnIndex];
+      if (!currentPlayer || currentPlayer.name !== data.playerName) return;
+      room.pendingGuess = {
+        playerId: currentPlayer.id,
+        price: data.price
+      };
+    });
   });
 }
 
@@ -456,7 +504,7 @@ exports.createRoom = (req, res) => {
 
     if (ioInstance) {
       console.log('Broadcasting updated room list to all clients');
-      ioInstance.emit('rooms:list', rooms);
+      ioInstance.emit('rooms:list', getSafeRooms(rooms));
     } else {
       console.warn('Socket.io instance not available - room list not broadcasted');
     }
@@ -493,7 +541,7 @@ exports.deleteRoom = (req, res) => {
   
   // Broadcast updated room list
   if (ioInstance) {
-    ioInstance.emit('rooms:list', rooms);
+    ioInstance.emit('rooms:list', getSafeRooms(rooms));
   }
   
   res.status(204).send();

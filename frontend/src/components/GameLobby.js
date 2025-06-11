@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import socketService from '../services/socketService';
 import PlayerList from './PlayerList';
 import ChatBox from './ChatBox';
-import apiService from '../services/apiService';
 
 const GameLobby = () => {
   const navigate = useNavigate();
@@ -167,8 +166,8 @@ const GameLobby = () => {
             <div>
               <label className="block mb-2">Answer Time</label>
               <select
-                value={tempSettings.roundDuration}
-                onChange={(e) => handleSettingsChange({ roundDuration: parseInt(e.target.value) })}
+                value={tempSettings.answerTime}
+                onChange={(e) => handleSettingsChange({ answerTime: parseInt(e.target.value) })}
                 className="w-full p-2 border rounded"
               >
                 {[10, 20, 30, 40, 50, 60].map(duration => (
@@ -205,7 +204,7 @@ const GameLobby = () => {
           <div>Rounds: {gameSettings.rounds}</div>
           <div>Max Players: {gameSettings.playersLimit}</div>
           <div>Power-ups: {gameSettings.powerUps}</div>
-          <div>Answer Time: {gameSettings.roundDuration}s</div>
+          <div>Answer Time: {gameSettings.answerTime}s</div>
           <div>Room Type: {gameSettings.visibility}</div>
         </div>
         {isHost && (

@@ -25,6 +25,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [showChosenText, setShowChosenText] = useState(false);
   const [currentTurn, setCurrentTurn] = useState(null);
   const [turnTimeLeft, setTurnTimeLeft] = useState(null);
+  const [lastGuess, setLastGuess] = useState(null);
+  const [guessSubmitted, setGuessSubmitted] = useState(false);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -109,11 +111,23 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setTimeout(() => setShowChosenText(false), 2000);
     });
 
+    // Listen for guess result/confirmation from backend
+    socketService.socket?.on('game:guessResult', (data) => {
+      setLastGuess({ playerName: data.playerName, price: data.price });
+      setGuessSubmitted(false);
+    });
+    socketService.socket?.on('game:guessConfirmed', (data) => {
+      setLastGuess({ playerName: data.playerName, price: data.price });
+      setGuessSubmitted(false);
+    });
+
     return () => {
       socketService.socket?.off('game:cars');
       socketService.socket?.off('game:votingStarted');
       socketService.socket?.off('game:votesUpdate');
       socketService.socket?.off('game:votingResult');
+      socketService.socket?.off('game:guessResult');
+      socketService.socket?.off('game:guessConfirmed');
     };
   }, []);
 
@@ -229,11 +243,6 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
   };
 
-  const handleConfirmGuess = () => {
-    setGuessConfirmed(true);
-    setTimeout(() => setGuessConfirmed(false), 1500);
-  };
-
   const renderCarDetailsGrid = (car) => (
     <div className="w-full max-w-2xl mb-2 text-sm md:text-base">
       <div className="grid grid-cols-2 gap-2 mb-1">
@@ -305,6 +314,47 @@ const GameContent = ({ gameSettings, players = [] }) => {
       </div>
     </div>
   );
+
+  // Auto-submit guess if timer runs out and it's your turn
+  useEffect(() => {
+    if (
+      turnTimeLeft === 0 &&
+      currentTurn?.playerName === playerName &&
+      !guessSubmitted &&
+      currentTurn &&
+      guessPrice !== '' &&
+      !isNaN(Number(guessPrice))
+    ) {
+      submitGuess();
+    }
+    // eslint-disable-next-line
+  }, [turnTimeLeft, currentTurn]);
+
+  function submitGuess() {
+    if (guessPrice === '' || isNaN(Number(guessPrice))) return;
+    setGuessSubmitted(true);
+    socketService.socket.emit('game:confirmGuess', {
+      roomId,
+      playerName,
+      price: Number(guessPrice),
+    });
+    // Do not setLastGuess here; let the backend event handle it for all players
+  }
+
+  useEffect(() => {
+    if (
+      currentTurn?.playerName === playerName &&
+      guessPrice &&
+      !isNaN(Number(guessPrice))
+    ) {
+      socketService.socket.emit('game:updatePendingGuess', {
+        roomId,
+        playerName,
+        price: Number(guessPrice)
+      });
+    }
+    // eslint-disable-next-line
+  }, [guessPrice, currentTurn]);
 
   return (
     <div className="flex-1 bg-white p-2 sm:p-4 h-full">
@@ -523,26 +573,45 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       type="button"
                       className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none"
                       style={{ minWidth: '100px' }}
+                      disabled
                     >
                       Steal
                     </button>
                     <button
                       onClick={e => {
-                        handleConfirmGuess();
+                        if (currentTurn?.playerName !== playerName || guessSubmitted) return;
+                        submitGuess();
                         const btn = e.currentTarget;
                         btn.classList.add('scale-95', 'ring', 'ring-green-400');
                         setTimeout(() => {
                           btn.classList.remove('scale-95', 'ring', 'ring-green-400');
                         }, 180);
                       }}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold text-base hover:bg-green-700 transition shadow active:scale-95 focus:outline-none"
-                      disabled={!guessPrice || isNaN(Number(guessPrice))}
-                      style={{ transition: 'transform 0.15s, box-shadow 0.15s' }}
+                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${
+                        currentTurn?.playerName === playerName && !guessSubmitted
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                      disabled={
+                        guessPrice === '' ||
+                        isNaN(Number(guessPrice)) ||
+                        currentTurn?.playerName !== playerName ||
+                        guessSubmitted
+                      }
+                      style={{ transition: 'transform 0.15s, box-shadow 0.15s', minWidth: '140px' }}
                     >
                       Confirm Guess
                     </button>
                   </div>
                 </div>
+                {/* Last guess message next to timer */}
+                {lastGuess && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm text-gray-700 font-semibold">
+                      {lastGuess.playerName} guess was ${lastGuess.price}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ) : selectedCarIndex === null ? (
