@@ -15,13 +15,13 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
   }, [messages]);
 
   return (
-    <div className="h-full w-80 md:w-80 bg-gray-100 flex flex-col border-l border-gray-300">
-      <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
-        <div className="space-y-2">
+    <div className="h-full w-60 md:w-72 xl:w-80 bg-gray-100 flex flex-col border-l border-gray-300">
+      <div ref={chatContainerRef} className="flex-1 p-2 overflow-y-auto thin-scrollbar">
+        <div className="space-y-1">
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`p-2 rounded shadow ${
+              className={`p-1.5 rounded shadow-sm text-sm ${
                 msg.type === 'system'
                   ? msg.text.includes('joined')
                     ? 'bg-green-50 text-green-600 italic'
@@ -46,18 +46,18 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
           ))}
         </div>
       </div>
-      <form onSubmit={onSendMessage} className="p-4 bg-gray-200">
-        <div className="flex space-x-2">
+      <form onSubmit={onSendMessage} className="p-2 bg-gray-200">
+        <div className="flex space-x-1">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 px-3 py-2 rounded border"
+            className="flex-1 px-2 py-1 text-sm rounded border"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
           >
             Send
           </button>

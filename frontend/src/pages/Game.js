@@ -68,7 +68,7 @@ const Game = ({ gameSettings }) => {
   };
 
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex flex-row overflow-hidden">
       <PlayerList players={players} showReadyStatus={false} />
       <GameContent gameSettings={gameSettings} players={players} />
       <ChatBox 

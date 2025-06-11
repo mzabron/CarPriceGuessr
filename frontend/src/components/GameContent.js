@@ -235,9 +235,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const renderCarDetailsGrid = (car) => (
-    <div className="w-full max-w-2xl mb-4 text-lg">
-      <div className="grid grid-cols-2 gap-4 mb-2">
-        <div className="flex flex-col items-start gap-2">
+    <div className="w-full max-w-2xl mb-2 text-sm md:text-base">
+      <div className="grid grid-cols-2 gap-2 mb-1">
+        <div className="flex flex-col items-start gap-1">
           <div>
             <span className="font-semibold">Make:</span>
             <span className="ml-2">{car?.make || 'No Information'}</span>
@@ -259,7 +259,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
             <span className="ml-2">{car?.mileage || 'No Information'}</span>
           </div>
         </div>
-        <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-col items-start gap-1">
           <div>
             <span className="font-semibold">Engine:</span>
             <span className="ml-2">{car?.engine || 'No Information'}</span>
@@ -285,17 +285,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
           </div>
         </div>
       </div>
-      <div className="mt-2">
+      <div className="mt-1">
         <span className="font-semibold">Condition Description:</span>
         <span
-          className="ml-2 block rounded p-2"
+          className="ml-2 block rounded p-1"
           style={{
             whiteSpace: 'pre-line',
-            maxHeight: '5em',
+            maxHeight: '3em',
             overflowY: 'auto',
             scrollbarWidth: 'thin',
             scrollbarColor: '#a3a3a3 #f3f4f6',
-            WebkitLineClamp: 3,
+            WebkitLineClamp: 2,
             display: '-webkit-box',
             WebkitBoxOrient: 'vertical',
           }}
@@ -307,13 +307,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
   );
 
   return (
-    <div className="flex-1 bg-white p-2 sm:p-4">
+    <div className="flex-1 bg-white p-2 sm:p-4 h-full">
       <div className="h-full flex flex-col max-w-screen-xl mx-auto">
-        <div className="flex-1 bg-gray-100 rounded-lg p-2 sm:p-4 overflow-auto">
+        <div className="flex-1 bg-gray-100 rounded-lg p-2 sm:p-4 overflow-y-auto thin-scrollbar">
           {voting ? (
             <div>
-              <h2 className="text-2xl font-bold mb-4">Voting Phase ({votingTimeLeft}s left)</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+              <h2 className="text-xl font-bold mb-3">Voting Phase ({votingTimeLeft}s left)</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl mx-auto">
                 {cars.map((car, idx) => {
                   const voters = Object.entries(votes)
                     .filter(([_, v]) => v === idx)
@@ -322,13 +322,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <button
                       key={idx}
                       onClick={() => handleVote(idx)}
-                      className={`w-full p-6 sm:p-8 rounded-xl border-2 text-left text-xl font-semibold shadow transition-all duration-150 ${
+                      className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${
                         votes[playerName] === idx ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
                       }`}
-                      style={{ minHeight: '110px' }}
+                      style={{ minHeight: '90px' }}
                     >
                       {getDisplayText(car)}
-                      <div className="flex flex-wrap gap-2 mt-4">
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {voters.map((name) => (
                           <span key={name} className={`font-bold ${getPlayerColor(name, playerNames)}`}>
                             {name}
@@ -342,18 +342,18 @@ const GameContent = ({ gameSettings, players = [] }) => {
             </div>
           ) : showChosenText && winningIndex !== null ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <h2 className="text-4xl font-extrabold text-green-700 mb-8">
+              <h2 className="text-3xl font-extrabold text-green-700 mb-4">
                 {getDisplayText(cars[winningIndex])} was chosen!
               </h2>
             </div>
           ) : winningIndex !== null || selectedCarIndex !== null ? (
             <div className="flex flex-col items-center w-full">
-              <div className="text-2xl font-bold mb-2 text-center max-w-4xl">
+              <div className="text-xl font-bold mb-1 text-center max-w-4xl">
                 {cars[getActiveCarIndex()]?.title || 'No Title'}
               </div>
-              <div className="w-full flex justify-center mb-4">
+              <div className="w-full flex justify-center mb-2">
                 <div
-                  className="text-lg text-gray-600 max-w-4xl w-full"
+                  className="text-base text-gray-600 max-w-4xl w-full"
                   style={{
                     textAlign: "left",
                   }}
@@ -362,11 +362,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     className="px-2"
                     style={{
                       whiteSpace: 'pre-line',
-                      maxHeight: '4.5em',
+                      maxHeight: '3em',
                       overflowY: 'auto',
                       scrollbarWidth: 'thin',
                       scrollbarColor: '#a3a3a3 #f3f4f6',
-                      WebkitLineClamp: 3,
+                      WebkitLineClamp: 2,
                       display: '-webkit-box',
                       WebkitBoxOrient: 'vertical',
                     }}
@@ -376,13 +376,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 </div>
               </div>
               {/* Responsive image/details block */}
-              <div className="flex flex-col lg:flex-row gap-6 w-full mb-4">
+              <div className="flex flex-col lg:flex-row gap-3 w-full mb-2">
                 {/* Carousel */}
                 <div className="w-full lg:w-1/2 flex-shrink-0 relative mx-auto">
-                  <div className="aspect-video relative">
+                  <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh]" style={{ maxHeight: '35vh' }}>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-4 rounded-l hover:bg-opacity-75 z-10"
+                      className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-l hover:bg-opacity-75 z-10"
                     >
                       ←
                     </button>
@@ -390,27 +390,26 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       src={cars[getActiveCarIndex()]?.thumbnailImages?.[currentImageIndex]?.imageUrl}
                       alt="Car"
                       className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
-                      style={{ maxHeight: '60vh' }}
                     />
                     <button
                       onClick={handleNextImage}
-                      className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-4 rounded-r hover:bg-opacity-75 z-10"
+                      className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r hover:bg-opacity-75 z-10"
                     >
                       →
                     </button>
                     <div
-                      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-2 justify-center w-full px-4"
+                      className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-1 justify-center w-full px-4"
                       style={{
                         pointerEvents: 'auto',
                         maxWidth: '95%',
-                        rowGap: '4px',
+                        rowGap: '2px',
                       }}
                     >
                       {cars[getActiveCarIndex()]?.thumbnailImages?.map((_, index) => (
                         <button
                           key={index}
                           onClick={() => setCurrentImageIndex(index)}
-                          className={`w-3 h-3 rounded-full ${
+                          className={`w-2 h-2 rounded-full ${
                             index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
                           }`}
                           style={{
@@ -428,14 +427,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
 
               {/* Guess the price section - moved directly under car images/details */}
-              <div className="w-full mt-2">
-                <div className="mb-4 font-extrabold text-2xl text-center">Guess the price:</div>
-                <div className="flex flex-wrap gap-3 mb-6 justify-center">
+              <div className="w-full mt-1">
+                <div className="mb-2 font-bold text-lg text-center">Guess the price:</div>
+                <div className="flex flex-wrap gap-2 mb-3 justify-center">
                   {PRICE_RANGES.map((range) => (
                     <button
                       key={range.label}
                       onClick={() => handleRangeClick(range)}
-                      className={`px-6 py-3 rounded-lg border text-lg transition-all duration-100 ${
+                      className={`px-4 py-2 rounded-lg border text-sm transition-all duration-100 ${
                         selectedRange.label === range.label
                           ? 'bg-blue-200 border-blue-400 font-bold scale-105'
                           : 'bg-white border-gray-300 hover:bg-blue-50'
@@ -445,7 +444,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     </button>
                   ))}
                 </div>
-                <div className="flex flex-col md:flex-row items-center gap-4 mb-4 justify-center">
+                <div className="flex flex-col md:flex-row items-center gap-2 mb-3 justify-center">
                   <input
                     type="range"
                     min={getSliderMin()}
@@ -453,16 +452,16 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     step={100}
                     value={sliderPrice}
                     onChange={handleSliderChange}
-                    className="w-full md:w-[600px] accent-blue-500 h-12"
+                    className="w-full md:w-[500px] accent-blue-500 h-8"
                     style={{
                       accentColor: "#2563eb",
-                      height: "3rem",
-                      borderRadius: "1rem",
+                      height: "2rem",
+                      borderRadius: "0.5rem",
                     }}
                   />
                   <button
                     type="button"
-                    className="ml-2 px-2 py-2 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center disabled:opacity-50"
+                    className="ml-1 px-2 py-1 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center disabled:opacity-50"
                     onClick={() => {
                       let newValue = Number(sliderPrice) - 100;
                       if (newValue < getSliderMin()) newValue = getSliderMin();
@@ -476,7 +475,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     aria-label="Decrease price"
                     disabled={Number(sliderPrice) <= getSliderMin()}
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" className="fill-gray-600">
+                    <svg width="16" height="16" viewBox="0 0 18 18" className="fill-gray-600">
                       <polygon points="12,4 6,9 12,14" />
                     </svg>
                   </button>
@@ -484,14 +483,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     type="text"
                     value={guessPrice}
                     onChange={handleInputChange}
-                    className="w-32 md:w-40 border-2 border-blue-400 rounded-lg px-4 py-2 text-2xl font-bold text-right shadow"
+                    className="w-28 md:w-36 border-2 border-blue-400 rounded-lg px-3 py-1 text-xl font-bold text-right shadow"
                     placeholder="Enter price"
                     inputMode="numeric"
                   />
-                  <span className="ml-1 font-semibold text-2xl">$</span>
+                  <span className="ml-1 font-semibold text-xl">$</span>
                   <button
                     type="button"
-                    className="ml-2 px-2 py-2 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                    className="ml-1 px-2 py-1 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                     onClick={() => {
                       let newValue = Number(sliderPrice) + 100;
                       if (newValue > getSliderMax()) newValue = getSliderMax();
@@ -504,26 +503,26 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     }}
                     aria-label="Increase price"
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18" className="fill-gray-600">
+                    <svg width="16" height="16" viewBox="0 0 18 18" className="fill-gray-600">
                       <polygon points="6,4 12,9 6,14" />
                     </svg>
                   </button>
                 </div>
                 {/* Who's turn, steal, confirm guess */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-4 mb-2">
-                    <span className="font-bold text-lg">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-bold text-base">
                       Turn: <span className="text-blue-700">{currentTurn?.playerName || "..."}</span>
                     </span>
-                    <span className="px-3 py-1 bg-blue-200 text-blue-800 rounded text-lg font-mono">
+                    <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-base font-mono">
                       {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xl shadow transition active:scale-95 focus:outline-none"
-                      style={{ minWidth: '120px' }}
+                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none"
+                      style={{ minWidth: '100px' }}
                     >
                       Steal
                     </button>
@@ -536,7 +535,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           btn.classList.remove('scale-95', 'ring', 'ring-green-400');
                         }, 180);
                       }}
-                      className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold text-xl hover:bg-green-700 transition shadow active:scale-95 focus:outline-none"
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg font-bold text-base hover:bg-green-700 transition shadow active:scale-95 focus:outline-none"
                       disabled={!guessPrice || isNaN(Number(guessPrice))}
                       style={{ transition: 'transform 0.15s, box-shadow 0.15s' }}
                     >
@@ -547,14 +546,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
             </div>
           ) : selectedCarIndex === null ? (
-            <div className="flex flex-col items-center gap-4">
-              <h2 className="text-2xl font-bold mb-4">Select a car to guess</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+            <div className="flex flex-col items-center gap-3">
+              <h2 className="text-xl font-bold mb-2">Select a car to guess</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
                 {cars.map((car, index) => (
                   <button
                     key={index}
                     onClick={() => handleCarSelect(index)}
-                    className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-shadow text-lg font-medium text-center min-h-[100px] flex items-center justify-center"
+                    className="p-3 bg-white rounded-lg shadow hover:shadow-lg transition-shadow text-base font-medium text-center min-h-[80px] flex items-center justify-center"
                   >
                     {getDisplayText(car)}
                   </button>
