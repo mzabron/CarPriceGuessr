@@ -13,15 +13,13 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
       }
     }
   }, [messages]);
-
   return (
-    <div className="h-full w-60 md:w-72 xl:w-80 bg-gray-100 flex flex-col border-l border-gray-300">
+    <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-gray-100 flex flex-col border-l border-gray-300">
       <div ref={chatContainerRef} className="flex-1 p-2 overflow-y-auto thin-scrollbar">
         <div className="space-y-1">
-          {messages.map((msg, index) => (
-            <div
+          {messages.map((msg, index) => (            <div
               key={index}
-              className={`p-1.5 rounded shadow-sm text-sm ${
+              className={`p-1.5 rounded shadow-sm text-xs sm:text-sm break-words ${
                 msg.type === 'system'
                   ? msg.text.includes('joined')
                     ? 'bg-green-50 text-green-600 italic'

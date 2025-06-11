@@ -14,6 +14,7 @@ module.exports = {
       spacing: {
         '128': '32rem',
         '144': '36rem',
+        '68': '17rem',
       },
       maxHeight: {
         '1/4': '25vh',
