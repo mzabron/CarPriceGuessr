@@ -1,42 +1,38 @@
-let users = [
-  {
-    id: 1,
-    name: "lpc-10"
-  },
-  {
-    id: 2,
-    name: "bober kurwa"
-  }
-];
+const User = require('../models/User');
 
-exports.getUsers = (req, res) => {
-  res.json(users)
+// GET /api/users
+exports.getUsers = async (req, res) => {
+  const users = await User.find({}); 
+  res.json(users);
 };
 
-exports.createUser = (req, res) => {
-  const { name } = req.body;
-  const newUser = {
-    id: users.length + 1,
-    name
+// POST /api/users
+exports.createUser = async (req, res) => {
+  const { name, password } = req.body;
+
+  if (!name || !password) {
+    return res.status(400).json({ message: 'Name and password are required' });
   }
-  users.push(newUser);
-  res.status(201).json(newUser);
-}
 
-// createUser TODO:
-// dodanie error handling
-// sprawdzanie czy user istnieje
-// czy input jest poprawny
-// generowanie unikalnego id
+  const existingUser = await User.findOne({ name });
+  if (existingUser) {
+    return res.status(409).json({ message: 'User already exists' });
+  }
 
-exports.deleteUser = (req, res) => {
+  const newUser = new User({ name, password });
+  await newUser.save();
+
+  res.status(201).json({ id: newUser._id, name: newUser.name, password: newUser.password });
+};
+
+// DELETE /api/users/:id
+exports.deleteUser = async (req, res) => {
   const { id } = req.params;
-  const userIndex = users.findIndex(user => user.id === parseInt(id));
+  const deletedUser = await User.findByIdAndDelete(id);
 
-  if (userIndex === -1) {
+  if (!deletedUser) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  users.splice(userIndex, 1);
   res.status(204).send();
-}
+};
