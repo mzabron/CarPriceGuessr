@@ -398,7 +398,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     >
                       →
                     </button>
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    <div
+                      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-2 justify-center w-full px-4"
+                      style={{
+                        pointerEvents: 'auto',
+                        maxWidth: '95%',
+                        rowGap: '4px',
+                      }}
+                    >
                       {cars[getActiveCarIndex()]?.thumbnailImages?.map((_, index) => (
                         <button
                           key={index}
@@ -406,6 +413,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           className={`w-3 h-3 rounded-full ${
                             index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
                           }`}
+                          style={{
+                            flex: '0 0 auto',
+                          }}
                         />
                       ))}
                     </div>
