@@ -248,7 +248,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const renderCarDetailsGrid = (car) => (
-    <div className="w-full max-w-2xl mb-2 text-sm md:text-base">
+    <div className="w-full max-w-2xl mb-2 text-sm md:text-base" style={{ maxHeight: '15.5em', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#a3a3a3 #f3f4f6' }}>
       <div className="grid grid-cols-2 gap-2 mb-1">
         <div className="flex flex-col items-start gap-1">
           <div>
@@ -304,13 +304,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
           className="ml-2 block rounded p-1"
           style={{
             whiteSpace: 'pre-line',
-            maxHeight: '3em',
-            overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#a3a3a3 #f3f4f6',
-            WebkitLineClamp: 2,
-            display: '-webkit-box',
-            WebkitBoxOrient: 'vertical',
+            // No maxHeight, no overflow, no scrollbar for description
           }}
         >
           {car?.conditionDescription || 'No Information'}
@@ -416,13 +410,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     className="px-2"
                     style={{
                       whiteSpace: 'pre-line',
-                      maxHeight: '3em',
+                      maxHeight: '6em',
                       overflowY: 'auto',
                       scrollbarWidth: 'thin',
                       scrollbarColor: '#a3a3a3 #f3f4f6',
-                      WebkitLineClamp: 2,
-                      display: '-webkit-box',
-                      WebkitBoxOrient: 'vertical',
                     }}
                   >
                     {cars[getActiveCarIndex()]?.shortDescription || 'No Description Available'}
@@ -575,6 +566,24 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
                         <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{marginRight: 4}}>{lastGuess.playerName}</span> guess was ${lastGuess.price}
+                        {(() => {
+                          // Compare guess to actual car price
+                          const car = cars[getActiveCarIndex()];
+                          let actualPrice = car?.price;
+                          if (actualPrice && typeof actualPrice === 'string') {
+                            // Try to extract number from string like "12345 USD"
+                            const match = actualPrice.match(/([\d,.]+)/);
+                            if (match) actualPrice = match[1].replace(/,/g, '');
+                          }
+                          actualPrice = Number(actualPrice);
+                          const guess = Number(lastGuess.price);
+                          if (!isNaN(actualPrice) && !isNaN(guess)) {
+                            if (guess < actualPrice) return <span className="ml-1 text-blue-700">and it was too low</span>;
+                            if (guess > actualPrice) return <span className="ml-1 text-red-700">and it was too high</span>;
+                            if (guess === actualPrice) return <span className="ml-1 text-green-700">and it was correct!</span>;
+                          }
+                          return null;
+                        })()}
                       </span>
                     )}
                   </div>
