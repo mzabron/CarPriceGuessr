@@ -320,6 +320,14 @@ const setupRoomSocketHandlers = (io) => {
       
       // Check if room is empty and delete it if so
       if (room.players.length === 0) {
+        // Clean up per-room state before deleting the room
+        if (room.turnTimer) clearTimeout(room.turnTimer);
+        if (roomVotes[roomId]) {
+          clearTimeout(roomVotes[roomId].timer);
+          delete roomVotes[roomId];
+        }
+        if (room.pendingGuess) room.pendingGuess = null;
+        
         rooms = rooms.filter(r => r.id !== roomId);
         console.log(`Room ${roomId} deleted because it's empty`);
       }
@@ -373,6 +381,14 @@ const setupRoomSocketHandlers = (io) => {
 
             // Check if room is empty and delete it if so
             if (room.players.length === 0) {
+              // Clean up per-room state before deleting the room
+              if (room.turnTimer) clearTimeout(room.turnTimer);
+              if (roomVotes[roomId]) {
+                clearTimeout(roomVotes[roomId].timer);
+                delete roomVotes[roomId];
+              }
+              if (room.pendingGuess) room.pendingGuess = null;
+              // Add any other per-room state cleanup here
               rooms = rooms.filter(r => r.id !== roomId);
               console.log(`Room ${roomId} deleted because it's empty`);
             }

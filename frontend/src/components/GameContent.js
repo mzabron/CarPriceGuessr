@@ -51,6 +51,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
       } else {
         setTurnTimeLeft(turnData.answerTime || 10);
       }
+      // Clear last guess if this is the first turn OR if roundId/gameId changes
+      if (turnData.turnNumber === 1 || turnData.roundId !== currentTurn?.roundId || turnData.gameId !== currentTurn?.gameId) {
+        setLastGuess(null);
+      }
     });
 
     return () => {
@@ -562,11 +566,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-3 mb-1">
                     <span className="font-bold text-base">
-                      Turn: <span className="text-blue-700">{currentTurn?.playerName || "..."}</span>
+                      Turn: <span className={getPlayerColor(currentTurn?.playerName, playerNames)}>{currentTurn?.playerName || "..."}</span>
                     </span>
                     <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-base font-mono">
                       {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
                     </span>
+                    {/* Last guess message next to timer */}
+                    {lastGuess && (
+                      <span className="text-sm font-semibold ml-2 flex items-center">
+                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{marginRight: 4}}>{lastGuess.playerName}</span> guess was ${lastGuess.price}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <button
@@ -604,14 +614,6 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     </button>
                   </div>
                 </div>
-                {/* Last guess message next to timer */}
-                {lastGuess && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-gray-700 font-semibold">
-                      {lastGuess.playerName} guess was ${lastGuess.price}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           ) : selectedCarIndex === null ? (
