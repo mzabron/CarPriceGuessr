@@ -4,4 +4,37 @@
 
 body {
   @apply bg-gray-50;
+  overflow: hidden; /* Prevent scrollbar on full page */
+}
+
+/* Custom thin scrollbar styles */
+@layer utilities {
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* For Firefox */
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  
+  /* Hide scrollbar when not in use */
+  .thin-scrollbar:not(:hover)::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
 }

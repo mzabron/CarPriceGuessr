@@ -56,6 +56,19 @@ class ApiService {
       throw error;
     }
   }
+
+  async getCars() {
+    try {
+      const response = await fetch(`${API_URL}/cars`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch cars');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching cars:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ApiService(); 

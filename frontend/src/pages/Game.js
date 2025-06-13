@@ -5,7 +5,7 @@ import PlayerList from '../components/PlayerList';
 import ChatBox from '../components/ChatBox';
 import GameContent from '../components/GameContent';
 
-const Game = () => {
+const Game = ({ gameSettings }) => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [players, setPlayers] = useState([]);
@@ -68,9 +68,9 @@ const Game = () => {
   };
 
   return (
-    <div className="h-screen flex">
+    <div className="h-screen flex flex-row overflow-hidden">
       <PlayerList players={players} showReadyStatus={false} />
-      <GameContent />
+      <GameContent gameSettings={gameSettings} players={players} />
       <ChatBox 
         messages={messages}
         newMessage={newMessage}
