@@ -18,7 +18,8 @@ const io = new Server(server, {
   path: '/ws',
   cors: {
     origin: 'https://tlarysz.lab.kis.agh.edu.pl',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true,
   }
 });
 
