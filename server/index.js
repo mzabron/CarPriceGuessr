@@ -46,4 +46,4 @@ server.listen(60123, () => {
   console.log('Server listening on port 60123');
 })
 
-connectDB();
+// connectDB();
