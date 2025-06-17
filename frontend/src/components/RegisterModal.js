@@ -40,7 +40,8 @@ const RegisterModal = ({ onClose, onRegister, onLogin }) => {
     if (!password.trim()) return setError('Password is required');
 
     try {
-      const response = await fetch('http://localhost:8080/api/users/login', {
+      const response = await fetch('/api/users/login', {
+      // const response = await fetch('http://localhost:8080/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), password: password.trim() }),

@@ -16,26 +16,24 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    // origin: '*',
-    origin: 'http://192.168.0.59',
+    origin: 'https://tlarysz.lab.kis.agh.edu.pl',
     methods: ['GET', 'POST']
   }
 });
 
 app.use(cors({
-  // origin: 'http://localhost:3000',
-  origin: 'http://192.168.0.59',
+  origin: 'https://tlarysz.lab.kis.agh.edu.pl/',
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.use('/users', userRoutes);
-app.use('/rooms', roomRoutes);
-app.use('/cars', gameRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/cars', gameRoutes);
 
 setupRoomSocketHandlers(io);
 
