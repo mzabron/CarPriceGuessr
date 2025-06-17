@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 
-const RegisterModal = ({ onClose, onRegister }) => {
+const RegisterModal = ({ onClose, onRegister, onLogin }) => {
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleRegister = async () => {
     setError('');
-    
-    if (!name.trim()) {
-      setError('Nickname is required');
-      return;
-    }
+
+    if (!name.trim()) return setError('Nickname is required');
+    if (!password.trim()) return setError('Password is required');
 
     try {
       // const response = await fetch('http://localhost:8080/api/users', {
@@ -23,62 +21,95 @@ const RegisterModal = ({ onClose, onRegister }) => {
         body: JSON.stringify({ name: name.trim() }),
       });
 
+      const data = await response.json();
+
       if (response.status === 201) {
-        const user = await response.json();
-        onRegister(user);
-        onClose();
+        if (typeof onRegister === 'function') onRegister(data);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to register');
+        throw new Error(data.message || 'Failed to register');
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message || 'Failed to register. Please try again.');
+    } catch (err) {
+      setError(err.message || 'Failed to register. Please try again.');
+    }
+  };
+
+  const handleLogin = async () => {
+    setError('');
+
+    if (!name.trim()) return setError('Nickname is required');
+    if (!password.trim()) return setError('Password is required');
+
+    try {
+      const response = await fetch('http://localhost:8080/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), password: password.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 200) {
+        if (typeof onLogin === 'function') onLogin(data);
+      } else {
+        throw new Error(data.message || 'Invalid login or password');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to login. Please try again.');
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Choose Your Nickname</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full p-2 border rounded"
-              placeholder="Enter your nickname"
-              minLength="3"
-              maxLength="20"
-            />
-          </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg relative">
+        {/* Cancel button in top right */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-2 right-2 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 text-3xl font-bold text-gray-600 hover:text-white shadow transition focus:outline-none focus:ring-2 focus:ring-red-400 leading-none p-0"
+          aria-label="Close"
+        >
+          <span style={{ transform: 'translateY(-2px)' }}>×</span>
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Login or Register</h2>
 
-          {error && (
-            <div className="text-red-500 text-sm mt-2">
-              {error}
-            </div>
-          )}
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 border rounded"
+            placeholder="Enter your login"
+          />
 
-          <div className="flex justify-end space-x-4 mt-6">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border rounded"
+            placeholder="Enter your password"
+          />
+
+          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+
+          <div className="flex justify-center space-x-4 mt-6">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              onClick={handleLogin}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              disabled={!name.trim() || !password.trim()}
             >
-              Cancel
+              Login
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleRegister}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              disabled={!name.trim()}
+              disabled={!name.trim() || !password.trim()}
             >
-              Save Nickname
+              Register
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -1,42 +1,46 @@
-let users = [
-  {
-    id: 1,
-    name: "lpc-10"
-  },
-  {
-    id: 2,
-    name: "bober kurwa"
-  }
-];
+const User = require('../models/User');
 
-exports.getUsers = (req, res) => {
-  res.json(users)
+// Rejestracja nowego użytkownika
+exports.createUser = async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) {
+      return res.status(400).json({ message: 'Name and password required' });
+    }
+
+    const existingUser = await User.findOne({ name });
+    if (existingUser) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
+
+    const newUser = new User({ name, password });
+    await newUser.save();
+
+    res.status(201).json({ id: newUser._id, name: newUser.name });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
-exports.createUser = (req, res) => {
-  const { name } = req.body;
-  const newUser = {
-    id: users.length + 1,
-    name
+// Logowanie użytkownika
+exports.loginUser = async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) {
+      return res.status(400).json({ message: 'Name and password required' });
+    }
+
+    const user = await User.findOne({ name });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid login or password' });
+    }
+
+    if (user.password !== password) {
+      return res.status(401).json({ message: 'Invalid login or password' });
+    }
+
+    res.status(200).json({ id: user._id, name: user.name });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
-  users.push(newUser);
-  res.status(201).json(newUser);
-}
-
-// createUser TODO:
-// dodanie error handling
-// sprawdzanie czy user istnieje
-// czy input jest poprawny
-// generowanie unikalnego id
-
-exports.deleteUser = (req, res) => {
-  const { id } = req.params;
-  const userIndex = users.findIndex(user => user.id === parseInt(id));
-
-  if (userIndex === -1) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-
-  users.splice(userIndex, 1);
-  res.status(204).send();
-}
+};

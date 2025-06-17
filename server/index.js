@@ -10,6 +10,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
 const swaggerDocument = yaml.load('./docs/swagger.yaml');
+const connectDB = require('./db');
 
 const app = express();
 const server = createServer(app);
@@ -46,3 +47,5 @@ server.listen(8080, () => {
   console.log('Server listening on port 8080');
   console.log('Swagger documentation available at http://localhost:8080/api-docs');
 })
+
+connectDB();
