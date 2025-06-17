@@ -13,7 +13,7 @@ const RegisterModal = ({ onClose, onRegister, onLogin }) => {
 
     try {
       // const response = await fetch('http://localhost:8080/api/users', {
-      const response = await fetch('/api/users', {
+      const response = await fetch('https://api-tlarysz.lab.kis.agh.edu.pl/api/users', {
       method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ const RegisterModal = ({ onClose, onRegister, onLogin }) => {
     if (!password.trim()) return setError('Password is required');
 
     try {
-      const response = await fetch('/api/users/login', {
+      const response = await fetch('https://api-tlarysz.lab.kis.agh.edu.pl/api/users/login', {
       // const response = await fetch('http://localhost:8080/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
