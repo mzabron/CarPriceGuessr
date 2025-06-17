@@ -57,8 +57,17 @@ const RegisterModal = ({ onClose, onRegister, onLogin }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">Account Access</h2>
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg relative">
+        {/* Cancel button in top right */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-2 right-2 w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 hover:bg-red-500 text-3xl font-bold text-gray-600 hover:text-white shadow transition focus:outline-none focus:ring-2 focus:ring-red-400 leading-none p-0"
+          aria-label="Close"
+        >
+          <span style={{ transform: 'translateY(-2px)' }}>×</span>
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Login or Register</h2>
 
         <div className="space-y-4">
           <input
@@ -80,13 +89,6 @@ const RegisterModal = ({ onClose, onRegister, onLogin }) => {
           {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
           <div className="flex justify-center space-x-4 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Cancel
-            </button>
             <button
               type="button"
               onClick={handleLogin}

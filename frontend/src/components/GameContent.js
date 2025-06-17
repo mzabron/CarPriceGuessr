@@ -565,7 +565,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
-                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{marginRight: 4}}>{lastGuess.playerName}</span> guess was ${lastGuess.price}
+                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{marginRight: 4}}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
                         {(() => {
                           // Compare guess to actual car price
                           const car = cars[getActiveCarIndex()];
@@ -578,8 +578,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           actualPrice = Number(actualPrice);
                           const guess = Number(lastGuess.price);
                           if (!isNaN(actualPrice) && !isNaN(guess)) {
-                            if (guess < actualPrice) return <span className="ml-1 text-blue-700">and it was too low</span>;
-                            if (guess > actualPrice) return <span className="ml-1 text-red-700">and it was too high</span>;
+                            if (guess < actualPrice) return <span className="ml-1 text-black">and it was too <span className="text-blue-700 font-bold">low</span></span>;
+                            if (guess > actualPrice) return <span className="ml-1 text-black">and it was too <span className="text-red-700 font-bold">high</span></span>;
                             if (guess === actualPrice) return <span className="ml-1 text-green-700">and it was correct!</span>;
                           }
                           return null;
