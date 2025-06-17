@@ -22,7 +22,7 @@ const io = new Server(server, {
 });
 
 app.use(cors({
-  origin: 'https://tlarysz.lab.kis.agh.edu.pl/',
+  origin: 'https://tlarysz.lab.kis.agh.edu.pl', // This is the client-facing URL
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -41,9 +41,8 @@ app.get('/', (req, res) => {
   res.send("hello");
 })
 
-server.listen(8080, () => {
-  console.log('Server listening on port 8080');
-  console.log('Swagger documentation available at http://localhost:8080/api-docs');
+server.listen(60123, () => {
+  console.log('Server listening on port 60123');
 })
 
 connectDB();
