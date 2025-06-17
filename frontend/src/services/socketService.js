@@ -4,12 +4,12 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.currentUser = null;
-  }
-
-  connect() {
+  }  connect() {
     if (!this.socket) {
-      // this.socket = io('http://localhost:8080');
-      this.socket = io('http://api-tlarysz.lab.kis.agh.edu.pl');
+      // this.socket = io('http://localhost:8080', { path: '/ws' });
+      this.socket = io('https://api-tlarysz.lab.kis.agh.edu.pl', {
+        path: '/ws'
+      });
       this.setupEventListeners();
     }
     return this.socket;

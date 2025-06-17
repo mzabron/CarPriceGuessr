@@ -15,6 +15,7 @@ const connectDB = require('./db');
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
+  path: '/ws',
   cors: {
     origin: 'https://tlarysz.lab.kis.agh.edu.pl',
     methods: ['GET', 'POST']
