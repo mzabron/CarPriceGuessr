@@ -1,6 +1,9 @@
 // Store rooms in memory
 let rooms = [];
 
+let cars = null;
+let carPrice = null;
+
 let ioInstance = null;
 
 function getSafeRooms(rooms) {
@@ -72,6 +75,8 @@ function startNextTurn(room) {
     let priceToSend = 0;
     if (room.pendingGuess && room.pendingGuess.playerId === currentPlayer.id) {
       priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
+      
+      // here i should put method to check if user won
       ioInstance.to(`room-${room.id}`).emit('game:guessConfirmed', {
         playerName: currentPlayer.name,
         price: priceToSend
@@ -128,12 +133,10 @@ const setupRoomSocketHandlers = (io) => {
               {
                 json: (carList) => {
                   io.to(`room-${socket.roomId}`).emit('game:cars', carList);
+                  cars = carList || { itemSummaries: [] };
 
                   // --- Start voting phase automatically after sending cars ---
-                  const carCount = carList.itemSummaries ? carList.itemSummaries.length : 0;
-                  roomVotes[socket.roomId] = { votes: {}, carCount };
-                  roomVotes[socket.roomId].timer = setTimeout(() => finishVoting(socket.roomId), 15000);
-                  io.to(`room-${socket.roomId}`).emit('game:votingStarted');
+                  startVotingPhase(socket);
                 },
                 status: () => ({ json: () => {} })
               }
@@ -142,6 +145,23 @@ const setupRoomSocketHandlers = (io) => {
         }
       }
     });
+
+    socket.on('game:nextRound', () => {
+      carPrice = null; // Reset car price for the next round
+      startVotingPhase(socket);
+      // Reset votes for the next round
+      if (roomVotes[socket.roomId]) {
+        clearTimeout(roomVotes[socket.roomId].timer);
+      }
+    });
+        
+
+    function startVotingPhase(socket) {
+      const carCount = cars.itemSummaries ? cars.itemSummaries.length : 0;
+      roomVotes[socket.roomId] = { votes: {}, carCount };
+      roomVotes[socket.roomId].timer = setTimeout(() => finishVoting(socket.roomId), 15000);
+      io.to(`room-${socket.roomId}`).emit('game:votingStarted');
+    }
 
     socket.on('game:guess', (data) => {
       const room = rooms.find(r => r.id === socket.roomId);
@@ -430,6 +450,7 @@ const setupRoomSocketHandlers = (io) => {
       // Randomize if tie or no votes
       const winningIndex = topIndexes.length > 0 ? topIndexes[Math.floor(Math.random() * topIndexes.length)] : Math.floor(Math.random() * carCount);
       io.to(`room-${roomId}`).emit('game:votingResult', { winningIndex, votes: tally });
+      carPrice = cars.itemSummaries[winningIndex]?.price || 0;
       clearTimeout(roomVotes[roomId]?.timer);
       delete roomVotes[roomId];
 
@@ -439,6 +460,19 @@ const setupRoomSocketHandlers = (io) => {
           startNextTurn(room);
         }
       }, 2000); // 2 seconds
+    }
+
+    function getDeviation(guess, actualPrice) {
+      if (actualPrice && typeof actualPrice === 'string') {
+        // Try to extract number from string like "12345 USD"
+        const match = actualPrice.match(/([\d,.]+)/);
+        if (match) actualPrice = match[1].replace(/,/g, '');
+      }
+      actualPrice = Number(actualPrice);
+      guess = Number(guess);
+      if (actualPrice === 0) return 0;
+      console.log('deviation: ', Math.abs((guess - actualPrice) / actualPrice) * 100);
+      return Math.abs((guess - actualPrice) / actualPrice) * 100;
     }
 
     socket.on('game:confirmGuess', (data) => {
@@ -456,7 +490,8 @@ const setupRoomSocketHandlers = (io) => {
       // Broadcast the guess to all players
       io.to(`room-${room.id}`).emit('game:guessConfirmed', {
         playerName: currentPlayer.name,
-        price: data.price
+        price: data.price,
+        deviation: getDeviation(data.price, carPrice),
       });
       room.pendingGuess = null;
       // Advance to next turn immediately
