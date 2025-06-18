@@ -1,13 +1,14 @@
 import { io } from 'socket.io-client';
 
+const API_URL = 'https://api-tlarysz.lab.kis.agh.edu.pl';
+
 class SocketService {
   constructor() {
     this.socket = null;
     this.currentUser = null;
   }  connect() {
     if (!this.socket) {
-      // this.socket = io('http://localhost:8080', { path: '/ws' });
-      this.socket = io('https://api-tlarysz.lab.kis.agh.edu.pl', {
+      this.socket = io(API_URL, {
         path: '/ws'
       });
       this.setupEventListeners();

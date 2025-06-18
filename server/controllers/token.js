@@ -1,8 +1,7 @@
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
-console.log(process.env.CLIENT_ID)
-const SCOPES = 'https://api.ebay.com/oauth/api_scope'; // Required scope for most public APIs
+const SCOPES = 'https://api.ebay.com/oauth/api_scope';
 
 let currentAccessToken = null;
 let tokenExpiryTime = 0;
@@ -10,7 +9,7 @@ let tokenExpiryTime = 0;
 async function fetchNewApplicationToken() {
   try {
     const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-    const tokenUrl = 'https://api.ebay.com/identity/v1/oauth2/token'; // Or sandbox URL: https://api.sandbox.ebay.com/identity/v1/oauth2/token
+    const tokenUrl = 'https://api.ebay.com/identity/v1/oauth2/token';
     
     const response = await fetch(tokenUrl, {
       method: "POST",
@@ -26,7 +25,7 @@ async function fetchNewApplicationToken() {
     }
     const json = await response.json();
     const { access_token, expires_in } = json;
-    // console.log(json);
+
     // expires_in is in seconds, convert to milliseconds and add to current time
     tokenExpiryTime = Date.now() + (expires_in * 1000);
     console.log('Successfully fetched new eBay access token. Expires in:', expires_in / 60, 'minutes');

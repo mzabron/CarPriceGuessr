@@ -14,17 +14,19 @@ const connectDB = require('./db');
 
 const app = express();
 const server = createServer(app);
+
+const URL = 'https://tlarysz.lab.kis.agh.edu.pl';
 const io = new Server(server, {
   path: '/ws',
   cors: {
-    origin: 'https://tlarysz.lab.kis.agh.edu.pl',
+    origin: URL,
     methods: ['GET', 'POST'],
     credentials: true,
   }
 });
 
 app.use(cors({
-  origin: 'https://tlarysz.lab.kis.agh.edu.pl', // This is the client-facing URL
+  origin: URL,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
