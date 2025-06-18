@@ -10,6 +10,8 @@ async function fetchNewApplicationToken() {
   try {
     const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const tokenUrl = 'https://api.ebay.com/identity/v1/oauth2/token';
+
+    console.log("credentials: " + credentials);
     
     const response = await fetch(tokenUrl, {
       method: "POST",
@@ -19,11 +21,15 @@ async function fetchNewApplicationToken() {
       },
       body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`
     })
+
+    console.log("response: " + response);
     
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
     }
     const json = await response.json();
+
+    console.log("json: " + json);
     const { access_token, expires_in } = json;
 
     // expires_in is in seconds, convert to milliseconds and add to current time
@@ -45,6 +51,7 @@ async function getApplicationAccessToken() {
     console.log('eBay access token is expired or nearing expiration. Refreshing...');
     await fetchNewApplicationToken(); // Await the refresh
   }
+  console.log('current access token: ' + currentAccessToken);
   return currentAccessToken;
 }
 
