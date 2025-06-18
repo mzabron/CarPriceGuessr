@@ -89,12 +89,12 @@ class SocketService {
   // Game events
   startGame() {
     if (!this.socket) return;
-    this.socket.emit('game:start');
+    this.socket.emit('game:startRound');
   }
 
   onGameStart(callback) {
     if (!this.socket) return;
-    this.socket.on('game:start', callback);
+    this.socket.on('game:startRound', callback);
   }
 
   // Cleanup listeners

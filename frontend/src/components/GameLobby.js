@@ -39,7 +39,7 @@ const GameLobby = () => {
       checkAllPlayersReady(sortedPlayers);
     });
 
-    socketService.socket?.on('game:start', ({ roomId }) => {
+    socketService.socket?.on('game:startRound', ({ roomId }) => {
       navigate(`/game/${roomId}`);
     });
 
@@ -64,7 +64,7 @@ const GameLobby = () => {
     return () => {
       socketService.socket?.off('playerList');
       socketService.socket?.off('rooms:playerLeft');
-      socketService.socket?.off('game:start');
+      socketService.socket?.off('game:startRound');
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');

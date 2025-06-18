@@ -3,6 +3,8 @@ let rooms = [];
 
 let cars = null;
 let carPrice = null;
+let roundNumber = 0; // Current round number
+const correctGuessTreshold = 5; // %
 
 let ioInstance = null;
 
@@ -117,14 +119,20 @@ const setupRoomSocketHandlers = (io) => {
     });
 
     // Handle game start
-    socket.on('game:start', () => {
+    socket.on('game:startRound', () => {
       if (socket.roomId) {
         const room = rooms.find(r => r.id === socket.roomId);
         if (room) {
           const player = room.players.find(p => p.id === socket.id);
           if (player && player.isHost && room.players.every(p => p.isReady)) {
+            if (roundNumber >= room.settings.rounds) {
+              finishGame(room);
+              return;
+            }
             room.gameStarted = true;
-            io.to(`room-${socket.roomId}`).emit('game:start', { roomId: socket.roomId });
+            io.to(`room-${socket.roomId}`).emit('game:startRound', { roomId: socket.roomId });
+
+            roundNumber += 1;
 
             const ebayController = require('./ebayController');
 
@@ -146,15 +154,13 @@ const setupRoomSocketHandlers = (io) => {
       }
     });
 
-    socket.on('game:nextRound', () => {
-      carPrice = null; // Reset car price for the next round
-      startVotingPhase(socket);
-      // Reset votes for the next round
-      if (roomVotes[socket.roomId]) {
-        clearTimeout(roomVotes[socket.roomId].timer);
-      }
-    });
-        
+    function finishGame(room) {
+      socket.emit('game:finishGame', {
+        message: `Game finished! Final scores: ${room.players.map(p => `${p.name}: ${p.points}`).join(', ')}`,
+        players: room.players
+      });
+    };
+
 
     function startVotingPhase(socket) {
       const carCount = cars.itemSummaries ? cars.itemSummaries.length : 0;
@@ -240,7 +246,7 @@ const setupRoomSocketHandlers = (io) => {
         io.to(`room-${roomId}`).emit('playerList', room.players);
 
         // Redirect to game immediately
-        socket.emit('game:start', { roomId });
+        socket.emit('game:startRound', { roomId });
 
         // Notify others
         io.to(`room-${roomId}`).emit('chat:newMessage', {
@@ -471,6 +477,7 @@ const setupRoomSocketHandlers = (io) => {
       actualPrice = Number(actualPrice);
       guess = Number(guess);
       if (actualPrice === 0) return 0;
+      console.log('actualPrice: ', actualPrice);
       console.log('deviation: ', Math.abs((guess - actualPrice) / actualPrice) * 100);
       return Math.abs((guess - actualPrice) / actualPrice) * 100;
     }
@@ -494,8 +501,20 @@ const setupRoomSocketHandlers = (io) => {
         deviation: getDeviation(data.price, carPrice),
       });
       room.pendingGuess = null;
-      // Advance to next turn immediately
-      startNextTurn(room);
+      if (getDeviation(data.price, carPrice) < correctGuessTreshold) {
+        
+        // If the guess is correct enough, award points
+        currentPlayer.points += 1;
+        io.to(`room-${room.id}`).emit('game:finishRound', {
+          playerName: currentPlayer.name,
+          price: data.price,
+          actualPrice: carPrice,
+          roundNumber,
+        });
+      } else {
+        // Advance to next turn immediately
+        startNextTurn(room);
+      }
     });
 
     socket.on('game:updatePendingGuess', (data) => {

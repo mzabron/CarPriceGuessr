@@ -27,6 +27,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [turnTimeLeft, setTurnTimeLeft] = useState(null);
   const [lastGuess, setLastGuess] = useState(null);
   const [guessSubmitted, setGuessSubmitted] = useState(false);
+  const [showRoundModal, setShowRoundModal] = useState(false);
+  const [roundResult, setRoundResult] = useState(null);
+  const [finishedGame, setFinishedGame] = useState(false);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -123,6 +126,21 @@ const GameContent = ({ gameSettings, players = [] }) => {
     socketService.socket?.on('game:guessConfirmed', (data) => {
       setLastGuess({ playerName: data.playerName, price: data.price });
       setGuessSubmitted(false);
+    });
+
+    socketService.socket?.on('game:finishRound', (data) => {
+      setRoundResult(data);
+      setShowRoundModal(true);
+      setCurrentTurn(null);
+      setTurnTimeLeft(null);
+      setLastGuess(null);
+      setGuessSubmitted(false);
+      setGuessConfirmed(false);
+      setSelectedCarIndex(null);
+    });
+
+    socketService.socket?.on('game:finishGame', () => {
+      setFinishedGame(true);
     });
 
     return () => {
@@ -354,10 +372,51 @@ const GameContent = ({ gameSettings, players = [] }) => {
     // eslint-disable-next-line
   }, [guessPrice, currentTurn]);
 
+  useEffect(() => {
+  if (showRoundModal) {
+    const timer = setTimeout(() => {
+      setShowRoundModal(false);
+      setRoundResult(null);
+      socketService.socket.emit('game:startRound', { roomId });
+    }, 4000); // 4 seconds
+    return () => clearTimeout(timer);
+  }
+}, [showRoundModal]);
+
   return (
     <div className="flex-1 bg-white p-2 sm:p-4 h-full">
       <div className="h-full flex flex-col max-w-screen-xl mx-auto">
         <div className="flex-1 bg-gray-100 rounded-lg p-2 sm:p-4 overflow-y-auto thin-scrollbar">
+          {showRoundModal && roundResult && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white rounded-lg p-6 shadow-lg text-center max-w-md w-full">
+                <h2 className="text-2xl font-bold mb-2">Round Finished!</h2>
+                <p className="mb-2">
+                  <span className="font-semibold">{roundResult.playerName}</span> guessed <span className="font-semibold">${roundResult.price}</span>
+                </p>
+                <p className="mb-2">
+                  Actual price: <span className="font-semibold">${roundResult.actualPrice}</span>
+                </p>
+                <button
+                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold"
+                  onClick={() => {
+                    setShowRoundModal(false);
+                    setRoundResult(null);
+                    socketService.socket.emit('game:startRound', { roomId });
+                  }}
+                >
+                  Next Round
+                </button>
+              </div>
+            </div>
+          )}
+          {finishedGame ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <h2 className="text-3xl font-extrabold text-green-700 mb-4">
+                Game Over! Thanks for playing!
+              </h2>
+              </div>
+              ) : null}
           {voting ? (
             <div>
               <h2 className="text-xl font-bold mb-3">Voting Phase ({votingTimeLeft}s left)</h2>
@@ -454,9 +513,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                         <button
                           key={index}
                           onClick={() => setCurrentImageIndex(index)}
-                          className={`w-2 h-2 rounded-full ${
-                            index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                          }`}
+                          className={`w-2 h-2 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                            }`}
                           style={{
                             flex: '0 0 auto',
                           }}
@@ -479,11 +537,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <button
                       key={range.label}
                       onClick={() => handleRangeClick(range)}
-                      className={`px-4 py-2 rounded-lg border text-sm transition-all duration-100 ${
-                        selectedRange.label === range.label
+                      className={`px-4 py-2 rounded-lg border text-sm transition-all duration-100 ${selectedRange.label === range.label
                           ? 'bg-blue-200 border-blue-400 font-bold scale-105'
                           : 'bg-white border-gray-300 hover:bg-blue-50'
-                      }`}
+                        }`}
                     >
                       {range.label}
                     </button>
@@ -565,7 +622,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
-                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{marginRight: 4}}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
+                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
                         {(() => {
                           // Compare guess to actual car price
                           const car = cars[getActiveCarIndex()];
@@ -606,11 +663,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           btn.classList.remove('scale-95', 'ring', 'ring-green-400');
                         }, 180);
                       }}
-                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${
-                        currentTurn?.playerName === playerName && !guessSubmitted
+                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${currentTurn?.playerName === playerName && !guessSubmitted
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
+                        }`}
                       disabled={
                         guessPrice === '' ||
                         isNaN(Number(guessPrice)) ||
@@ -672,9 +728,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`w-3 h-3 rounded-full ${
-                          index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                        }`}
+                        className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                          }`}
                       />
                     ))}
                   </div>
