@@ -3,7 +3,6 @@ let rooms = [];
 
 let cars = null;
 let carPrice = null;
-let roundNumber = 0; // Current round number
 const correctGuessTreshold = 5; // %
 
 let ioInstance = null;
@@ -17,6 +16,7 @@ function getSafeRooms(rooms) {
     settings: room.settings,
     // Do NOT include turnTimer, turnDeadline, or any other non-serializable fields!
     currentTurnIndex: room.currentTurnIndex,
+    currentRoundIndex: room.currentRoundIndex,
     // add any other fields you want to expose
   }));
 }
@@ -29,6 +29,7 @@ function getSafeRoom(room) {
     players: room.players,
     settings: room.settings,
     currentTurnIndex: room.currentTurnIndex,
+    currentRoundIndex: room.currentRoundIndex,
     // add any other fields you want to expose
   };
 }
@@ -125,14 +126,14 @@ const setupRoomSocketHandlers = (io) => {
         if (room) {
           const player = room.players.find(p => p.id === socket.id);
           if (player && player.isHost && room.players.every(p => p.isReady)) {
-            if (roundNumber >= room.settings.rounds) {
+            if (room.currentRoundIndex >= room.settings.rounds) {
               finishGame(room);
               return;
             }
             room.gameStarted = true;
             io.to(`room-${socket.roomId}`).emit('game:startRound', { roomId: socket.roomId });
 
-            roundNumber += 1;
+            room.currentRoundIndex += 1;
 
             const ebayController = require('./ebayController');
 
@@ -155,6 +156,7 @@ const setupRoomSocketHandlers = (io) => {
     });
 
     function finishGame(room) {
+      room.currentRoundIndex = 0;
       socket.emit('game:finishGame', {
         message: `Game finished! Final scores: ${room.players.map(p => `${p.name}: ${p.points}`).join(', ')}`,
         players: room.players
@@ -353,6 +355,7 @@ const setupRoomSocketHandlers = (io) => {
           delete roomVotes[roomId];
         }
         if (room.pendingGuess) room.pendingGuess = null;
+        if (room.currentRoundIndex) room.currentRoundIndex = 0;
         
         rooms = rooms.filter(r => r.id !== roomId);
         console.log(`Room ${roomId} deleted because it's empty`);
@@ -509,7 +512,6 @@ const setupRoomSocketHandlers = (io) => {
           playerName: currentPlayer.name,
           price: data.price,
           actualPrice: carPrice,
-          roundNumber,
         });
       } else {
         // Advance to next turn immediately
@@ -562,6 +564,7 @@ exports.createRoom = (req, res) => {
         answerTime: roomData.answerTime || 30,
         visibility: roomData.visibility || 'public'
       },
+      currentRoundIndex: 0,
       currentTurnIndex: 0,
       turnTimer: null,
       turnDeadline: null,
