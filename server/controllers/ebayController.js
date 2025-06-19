@@ -1,5 +1,5 @@
 const { getApplicationAccessToken } = require('./token');
-import { HttpsProxyAgent } from 'https-proxy-agent';
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const PROXY_URL = 'https://proxy-production-65cd.up.railway.app';
 
