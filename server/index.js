@@ -44,4 +44,4 @@ server.listen(8080, () => {
   console.log('Swagger documentation available at http://localhost:8080/api-docs');
 })
 
-connectDB();
+// connectDB();
