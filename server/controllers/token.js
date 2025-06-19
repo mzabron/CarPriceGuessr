@@ -1,6 +1,6 @@
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
-const PROXY_URL = 'https://proxy-production-65cd.up.railway.app';
+const PROXY_URL = 'https://centerbeam.proxy.rlwy.net:11859';
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;

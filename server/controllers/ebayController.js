@@ -1,7 +1,7 @@
 const { getApplicationAccessToken } = require('./token');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
-const PROXY_URL = 'https://proxy-production-65cd.up.railway.app';
+const PROXY_URL = 'https://centerbeam.proxy.rlwy.net:11859';
 
 const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
 const MARKETPLACE_ID = 'EBAY_US';
