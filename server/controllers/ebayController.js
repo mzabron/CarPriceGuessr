@@ -1,4 +1,7 @@
 const { getApplicationAccessToken } = require('./token');
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+const PROXY_URL = 'https://proxy-production-65cd.up.railway.app';
 
 const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
 const MARKETPLACE_ID = 'EBAY_US';
@@ -15,7 +18,7 @@ const shuffleArray = (array) => {
 
 exports.getCars = async (req, res) => {
   try {
-    
+
     const randomOffset = Math.floor(Math.random() * 90) * 10;
     // Request more items to have a larger pool for random selection
     const params = new URLSearchParams({
@@ -44,6 +47,8 @@ exports.getCars = async (req, res) => {
 const fetchCarsWithDetails = async (params) => {
   try {
     const accessToken = await getApplicationAccessToken();
+
+    const agent = new HttpsProxyAgent(PROXY_URL);
     
     const searchResponse = await fetch(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
       method: "GET",
@@ -52,6 +57,7 @@ const fetchCarsWithDetails = async (params) => {
         'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
         'Content-Type': 'application/json'
       },
+      agent: agent,
     });
 
     if (!searchResponse.ok) {
