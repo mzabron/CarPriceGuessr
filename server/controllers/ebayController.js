@@ -1,7 +1,19 @@
 const { getApplicationAccessToken } = require('./token');
 const { HttpsProxyAgent } = require('https-proxy-agent');
+const { fs } = require('fs');
 
 const PROXY_URL = 'https://centerbeam.proxy.rlwy.net:11859';
+
+const CA_CERT_PATH = './custom-ca.pem';
+
+let cert;
+try {
+  cert = fs.readFileSync(CA_CERT_PATH);
+  console.log(`Successfully loaded CA certificate from: ${CA_CERT_PATH}`);
+} catch (error) {
+  console.error(`ERROR: Could not load Ca certificate from ${CA_CERT_PATH}`, error);
+  process.exit(1);
+}
 
 const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
 const MARKETPLACE_ID = 'EBAY_US';
@@ -58,6 +70,7 @@ const fetchCarsWithDetails = async (params) => {
         'Content-Type': 'application/json'
       },
       agent: agent,
+      ca: cert,
     });
 
     if (!searchResponse.ok) {

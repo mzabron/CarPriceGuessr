@@ -1,6 +1,9 @@
 const { HttpsProxyAgent } = require('https-proxy-agent');
+const { fs } = require('fs');
 
 const PROXY_URL = 'https://centerbeam.proxy.rlwy.net:11859';
+
+const CA_CERT_PATH = './custom-ca.pem';
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -9,6 +12,15 @@ const SCOPES = 'https://api.ebay.com/oauth/api_scope';
 
 let currentAccessToken = null;
 let tokenExpiryTime = 0;
+
+let cert;
+try {
+  cert = fs.readFileSync(CA_CERT_PATH);
+  console.log(`Successfully loaded CA certificate from: ${CA_CERT_PATH}`);
+} catch (error) {
+  console.error(`ERROR: Could not load Ca certificate from ${CA_CERT_PATH}`, error);
+  process.exit(1);
+}
 
 async function fetchNewApplicationToken() {
   try {
@@ -28,6 +40,7 @@ async function fetchNewApplicationToken() {
       },
       body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`,
       agent: agent,
+      ca: cert,
     })
 
     console.log("response: " + response);
