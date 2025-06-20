@@ -1,5 +1,8 @@
+const axios = require('axios');
+
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const address = '10.156.207.123';
 
 const SCOPES = 'https://api.ebay.com/oauth/api_scope';
 
@@ -13,13 +16,14 @@ async function fetchNewApplicationToken() {
 
     console.log("credentials: " + credentials);
     
-    const response = await fetch(tokenUrl, {
-      method: "POST",
+    const data = `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`;
+
+    const response = await axios.post(tokenUrl, data, {
+      localAddress: address,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         "Authorization": `Basic ${credentials}`
       },
-      body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`
     })
 
     console.log("response: " + response);
