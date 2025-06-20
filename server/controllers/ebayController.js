@@ -60,11 +60,7 @@ const fetchCarsWithDetails = async (params) => {
       },
     });
 
-    if (!searchResponse.ok) {
-      throw new Error(`eBay API search request failed: ${searchResponse.status}`);
-    }
-
-    const searchData = await searchResponse.json();
+    const searchData = await searchResponse.data;
     
     if (!searchData?.itemSummaries?.length) {
       console.warn('No cars found in search results');
@@ -82,13 +78,7 @@ const fetchCarsWithDetails = async (params) => {
           },
         });
 
-        if (!detailResponse.ok) {
-          console.error(`Failed to fetch details for item ${item.itemId}`);
-          return null;
-        }
-
-        const detailData = await detailResponse.json();
-        console.log('Detail data for item:', detailData);
+        const detailData = await detailResponse.data;
 
         // Function to find value in localizedAspects
         const findAspect = (name) => {

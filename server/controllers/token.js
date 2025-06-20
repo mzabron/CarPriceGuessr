@@ -29,16 +29,9 @@ async function fetchNewApplicationToken() {
         "Authorization": `Basic ${credentials}`
       },
     })
-
-    console.log("response: " + response);
     
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-    const json = await response.json();
-
-    console.log("json: " + json);
-    const { access_token, expires_in } = json;
+    const tokenData = response.data;
+    const { access_token, expires_in } = tokenData;
 
     // expires_in is in seconds, convert to milliseconds and add to current time
     tokenExpiryTime = Date.now() + (expires_in * 1000);
@@ -46,8 +39,23 @@ async function fetchNewApplicationToken() {
     console.log(access_token);
     currentAccessToken = access_token;
   } catch (error) {
-    console.error('Error getting application access token:', error.response ? error.response.data : error.message);
-    throw new Error('Failed to fetch eBay application token');
+    console.error('Error getting application access token:', error.message);
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+      console.error('Response data (error):', error.response.data); // This will be the error object from eBay
+    } else if (error.request) {
+      // The request was made but no response was received
+      // `error.request` is an instance of XMLHttpRequest in the browser and an http.ClientRequest in node.js
+      console.error('No response received from server.');
+      console.error(error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Error setting up request:', error.message);
+    }
+    throw error; // Re-throw to propagate the error if needed
   }
 }
 
