@@ -1,5 +1,7 @@
 import { io } from 'socket.io-client';
 
+const API_URL = 'https://api-tlarysz.lab.kis.agh.edu.pl';
+
 class SocketService {
   constructor() {
     this.socket = null;
@@ -8,7 +10,9 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:8080');
+      this.socket = io(API_URL, {
+        path: '/ws'
+      });
       this.setupEventListeners();
     }
     return this.socket;

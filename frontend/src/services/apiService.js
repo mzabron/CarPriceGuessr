@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://api-tlarysz.lab.kis.agh.edu.pl';
 
 class ApiService {
   async createRoom(roomConfig) {

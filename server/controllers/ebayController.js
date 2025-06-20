@@ -1,8 +1,14 @@
+const axios = require('axios');
+const https = require('https');
 const { getApplicationAccessToken } = require('./token');
 
 const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
 const MARKETPLACE_ID = 'EBAY_US';
 const CARS_CATEGORY_ID = '6001';
+
+const agent = new https.Agent({
+  localAddress: '10.156.207.123',
+})
 
 // Function to shuffle array using Fisher-Yates algorithm
 const shuffleArray = (array) => {
@@ -45,8 +51,8 @@ const fetchCarsWithDetails = async (params) => {
   try {
     const accessToken = await getApplicationAccessToken();
     
-    const searchResponse = await fetch(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
-      method: "GET",
+    const searchResponse = await axios.get(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
+      httpsAgent: agent,
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
@@ -54,11 +60,7 @@ const fetchCarsWithDetails = async (params) => {
       },
     });
 
-    if (!searchResponse.ok) {
-      throw new Error(`eBay API search request failed: ${searchResponse.status}`);
-    }
-
-    const searchData = await searchResponse.json();
+    const searchData = await searchResponse.data;
     
     if (!searchData?.itemSummaries?.length) {
       console.warn('No cars found in search results');
@@ -67,8 +69,8 @@ const fetchCarsWithDetails = async (params) => {
 
     const itemDetailsPromises = searchData.itemSummaries.map(async (item) => {
       try {
-        const detailResponse = await fetch(`${EBAY_API_BASE_URL}/item/${item.itemId}`, {
-          method: "GET",
+        const detailResponse = await axios.get(`${EBAY_API_BASE_URL}/item/${item.itemId}`, {
+          httpsAgent: agent,
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
@@ -76,13 +78,7 @@ const fetchCarsWithDetails = async (params) => {
           },
         });
 
-        if (!detailResponse.ok) {
-          console.error(`Failed to fetch details for item ${item.itemId}`);
-          return null;
-        }
-
-        const detailData = await detailResponse.json();
-        console.log('Detail data for item:', detailData);
+        const detailData = await detailResponse.data;
 
         // Function to find value in localizedAspects
         const findAspect = (name) => {

@@ -14,20 +14,26 @@ const connectDB = require('./db');
 
 const app = express();
 const server = createServer(app);
+
+const URL = 'https://tlarysz.lab.kis.agh.edu.pl';
 const io = new Server(server, {
+  path: '/ws',
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: URL,
+    methods: ['GET', 'POST'],
+    credentials: true,
   }
 });
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: URL,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
@@ -39,9 +45,8 @@ app.get('/', (req, res) => {
   res.send("hello");
 })
 
-server.listen(8080, () => {
-  console.log('Server listening on port 8080');
-  console.log('Swagger documentation available at http://localhost:8080/api-docs');
+server.listen(60123, () => {
+  console.log('Server listening on port 60123');
 })
 
-connectDB();
+// connectDB();
