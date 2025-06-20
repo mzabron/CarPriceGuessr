@@ -30,8 +30,8 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/api/users', userRoutes);
-app.use('/rooms', roomRoutes);
-app.use('/cars', gameRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/cars', gameRoutes);
 
 setupRoomSocketHandlers(io);
 

@@ -16,7 +16,7 @@ class ApiService {
       
       console.log('Formatted request body:', requestBody);
 
-      const response = await fetch(`${API_URL}/rooms`, {
+      const response = await fetch(`${API_URL}/api/rooms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +46,7 @@ class ApiService {
 
   async getRooms() {
     try {
-      const response = await fetch(`${API_URL}/rooms`);
+      const response = await fetch(`${API_URL}/api/rooms`);
       if (!response.ok) {
         throw new Error('Failed to fetch rooms');
       }
@@ -59,7 +59,7 @@ class ApiService {
 
   async getCars() {
     try {
-      const response = await fetch(`${API_URL}/cars`);
+      const response = await fetch(`${API_URL}/api/cars`);
       if (!response.ok) {
         throw new Error('Failed to fetch cars');
       }
