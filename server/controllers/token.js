@@ -1,10 +1,3 @@
-const { HttpsProxyAgent } = require('https-proxy-agent');
-const { fs } = require('fs');
-
-const PROXY_URL = 'https://centerbeam.proxy.rlwy.net:11859';
-
-const CA_CERT_PATH = './custom-ca.pem';
-
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
@@ -13,20 +6,8 @@ const SCOPES = 'https://api.ebay.com/oauth/api_scope';
 let currentAccessToken = null;
 let tokenExpiryTime = 0;
 
-let cert;
-try {
-  cert = fs.readFileSync(CA_CERT_PATH);
-  console.log(`Successfully loaded CA certificate from: ${CA_CERT_PATH}`);
-} catch (error) {
-  console.error(`ERROR: Could not load Ca certificate from ${CA_CERT_PATH}`, error);
-  process.exit(1);
-}
-
 async function fetchNewApplicationToken() {
   try {
-
-    const agent = new HttpsProxyAgent(PROXY_URL);
-
     const credentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const tokenUrl = 'https://api.ebay.com/identity/v1/oauth2/token';
 
@@ -38,9 +19,7 @@ async function fetchNewApplicationToken() {
         "Content-Type": "application/x-www-form-urlencoded",
         "Authorization": `Basic ${credentials}`
       },
-      body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`,
-      agent: agent,
-      ca: cert,
+      body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPES)}`
     })
 
     console.log("response: " + response);
@@ -50,7 +29,7 @@ async function fetchNewApplicationToken() {
     }
     const json = await response.json();
 
-    console.log("Successfully received API response from eBay (via proxy): " + json);
+    console.log("json: " + json);
     const { access_token, expires_in } = json;
 
     // expires_in is in seconds, convert to milliseconds and add to current time
