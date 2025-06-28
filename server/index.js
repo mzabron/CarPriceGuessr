@@ -1,19 +1,22 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
+const { createServer } = require('node:http');
+const { Server } = require('socket.io');
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('yamljs');
+
 const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 const { setupRoomSocketHandlers } = require('./controllers/roomController');
-const { createServer } = require('node:http')
-const { Server } = require('socket.io');
-const cors = require('cors');
-const swaggerUi = require('swagger-ui-express');
-const yaml = require('yamljs');
+
+const sequelize = require('./db');
 const swaggerDocument = yaml.load('./docs/swagger.yaml');
-const connectDB = require('./db');
 
 const app = express();
 const server = createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -39,9 +42,14 @@ app.get('/', (req, res) => {
   res.send("hello");
 })
 
-server.listen(8080, () => {
+server.listen(8080, async () => {
   console.log('Server listening on port 8080');
   console.log('Swagger documentation available at http://localhost:8080/api-docs');
-})
-
-connectDB();
+  
+  try {
+    await sequelize.sync(); 
+    console.log('Connected to SQLite database');
+  } catch (err) {
+    console.error('Failed to connect to database:', err.message);
+  }
+});
