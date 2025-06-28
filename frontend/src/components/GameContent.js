@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import socketService from '../services/socketService';
 
@@ -30,6 +30,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [showRoundModal, setShowRoundModal] = useState(false);
   const [roundResult, setRoundResult] = useState(null);
   const [finishedGame, setFinishedGame] = useState(false);
+  const [roundModalTimer, setRoundModalTimer] = useState(10);
+  const [modalTimerRef, setModalTimerRef] = useState(null);
+  const [countdownTimerRef, setCountdownTimerRef] = useState(null);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -45,6 +48,23 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [selectedRange, setSelectedRange] = useState(PRICE_RANGES[0]);
   const [guessConfirmed, setGuessConfirmed] = useState(false);
 
+  // Helper function to close round modal and clear timers
+  const closeRoundModal = useCallback(() => {
+    if (showRoundModal) {
+      setShowRoundModal(false);
+      setRoundResult(null);
+      setRoundModalTimer(10);
+      if (modalTimerRef) {
+        clearTimeout(modalTimerRef);
+        setModalTimerRef(null);
+      }
+      if (countdownTimerRef) {
+        clearInterval(countdownTimerRef);
+        setCountdownTimerRef(null);
+      }
+    }
+  }, [showRoundModal, modalTimerRef, countdownTimerRef]);
+
   useEffect(() => {
     socketService.socket?.on('game:turn', (turnData) => {
       setCurrentTurn(turnData);
@@ -58,12 +78,15 @@ const GameContent = ({ gameSettings, players = [] }) => {
       if (turnData.turnNumber === 1 || turnData.roundId !== currentTurn?.roundId || turnData.gameId !== currentTurn?.gameId) {
         setLastGuess(null);
       }
+      
+      // Close round modal when a new turn starts (new round in progress)
+      closeRoundModal();
     });
 
     return () => {
       socketService.socket?.off('game:turn');
     };
-  }, []);
+  }, [closeRoundModal]);
 
   useEffect(() => {
     if (turnTimeLeft === null) return;
@@ -87,6 +110,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCars(carList.itemSummaries || []);
       setCurrentImageIndex(0);
       setSelectedCarIndex(null);
+      
+      // Close round modal when new cars are received (new round started)
+      closeRoundModal();
     });
 
     socketService.socket?.on('game:votingStarted', () => {
@@ -95,6 +121,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(null);
       setVotingTimeLeft(15);
       setShowChosenText(false);
+      
+      // Close round modal when voting starts (new round in progress)
+      closeRoundModal();
       const interval = setInterval(() => {
         setVotingTimeLeft(t => {
           if (t <= 1) {
@@ -131,6 +160,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     socketService.socket?.on('game:finishRound', (data) => {
       setRoundResult(data);
       setShowRoundModal(true);
+      setRoundModalTimer(10); // Reset timer to 10 seconds
       setCurrentTurn(null);
       setTurnTimeLeft(null);
       setLastGuess(null);
@@ -143,6 +173,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setFinishedGame(true);
     });
 
+    socketService.socket?.on('game:requestNextRound', (data) => {
+      // When any player requests next round, close modal for everyone and clear timers
+      closeRoundModal();
+      
+      // If current player is host, start the next round
+      const currentPlayer = players.find(p => p.name === playerName);
+      if (currentPlayer && currentPlayer.isHost) {
+        socketService.socket.emit('game:startRound', { roomId });
+      }
+    });
+
     return () => {
       socketService.socket?.off('game:cars');
       socketService.socket?.off('game:votingStarted');
@@ -150,8 +191,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:votingResult');
       socketService.socket?.off('game:guessResult');
       socketService.socket?.off('game:guessConfirmed');
+      socketService.socket?.off('game:finishRound');
+      socketService.socket?.off('game:finishGame');
+      socketService.socket?.off('game:requestNextRound');
     };
-  }, []);
+  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId]);
 
   useEffect(() => {
     if (winningIndex !== null && cars[winningIndex]?.thumbnailImages) {
@@ -373,15 +417,49 @@ const GameContent = ({ gameSettings, players = [] }) => {
   }, [guessPrice, currentTurn]);
 
   useEffect(() => {
-  if (showRoundModal) {
-    const timer = setTimeout(() => {
-      setShowRoundModal(false);
-      setRoundResult(null);
+    if (showRoundModal) {
+      const timer = setTimeout(() => {
+        setShowRoundModal(false);
+        setRoundResult(null);
+        socketService.socket.emit('game:startRound', { roomId });
+      }, 10000); // 10 seconds
+      setModalTimerRef(timer);
+      
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setRoundModalTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      setCountdownTimerRef(countdownInterval);
+      
+      return () => {
+        clearTimeout(timer);
+        clearInterval(countdownInterval);
+        setModalTimerRef(null);
+        setCountdownTimerRef(null);
+      };
+    }
+  }, [showRoundModal, roomId]);
+
+  const handleNextRound = () => {
+    // Use the helper function to close modal and clear timers
+    closeRoundModal();
+    
+    // Check if current player is host
+    const currentPlayer = players.find(p => p.name === playerName);
+    if (currentPlayer && currentPlayer.isHost) {
+      // Host starts the round
       socketService.socket.emit('game:startRound', { roomId });
-    }, 4000); // 4 seconds
-    return () => clearTimeout(timer);
-  }
-}, [showRoundModal]);
+    } else {
+      // Non-host requests next round - emit to all players including host
+      socketService.socket.emit('game:requestNextRound', { roomId, playerName });
+    }
+  };
 
   return (
     <div className="flex-1 bg-white p-2 sm:p-4 h-full">
@@ -390,22 +468,34 @@ const GameContent = ({ gameSettings, players = [] }) => {
           {showRoundModal && roundResult && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="bg-white rounded-lg p-6 shadow-lg text-center max-w-md w-full">
-                <h2 className="text-2xl font-bold mb-2">Round Finished!</h2>
-                <p className="mb-2">
-                  <span className="font-semibold">{roundResult.playerName}</span> guessed <span className="font-semibold">${roundResult.price}</span>
-                </p>
-                <p className="mb-2">
-                  Actual price: <span className="font-semibold">${roundResult.actualPrice}</span>
-                </p>
+                <h2 className="text-2xl font-bold mb-4">Round Finished!</h2>
+                {roundResult.playerName ? (
+                  <>
+                    <p className="mb-2">
+                      <span className="font-semibold">{roundResult.playerName}</span> guessed <span className="font-semibold">${roundResult.price}</span>
+                    </p>
+                    <p className="mb-4">
+                      Actual price: <span className="font-semibold">${roundResult.actualPrice}</span>
+                    </p>
+                    {roundResult.accuracyPoints && roundResult.turnBonus && (
+                      <div className="mb-4 p-3 bg-green-50 rounded-lg">
+                        <p className="text-sm font-semibold text-green-800 mb-2">Points Breakdown:</p>
+                        <div className="text-sm text-green-700">
+                          <p>Accuracy: {roundResult.accuracyPoints} points</p>
+                          <p>Turn Bonus: {roundResult.turnBonus} points ({roundResult.turnsPlayed} turns × 5)</p>
+                          <p className="font-bold border-t pt-1 mt-1">Total: {roundResult.pointsAwarded} points</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="mb-4 text-gray-600">{roundResult.message || "Round ended with no winner"}</p>
+                )}
                 <button
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold"
-                  onClick={() => {
-                    setShowRoundModal(false);
-                    setRoundResult(null);
-                    socketService.socket.emit('game:startRound', { roomId });
-                  }}
+                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                  onClick={handleNextRound}
                 >
-                  Next Round
+                  Next Round ({roundModalTimer}s)
                 </button>
               </div>
             </div>

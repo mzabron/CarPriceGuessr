@@ -49,12 +49,34 @@ const generateRoomCode = () => {
 
 const roomVotes = {}; // { roomId: { votes: {playerId: carIndex}, timer: Timeout, carCount: N } }
 
+function getDeviation(guess, actualPrice) {
+  if (actualPrice && typeof actualPrice === 'string') {
+    // Try to extract number from string like "12345 USD"
+    const match = actualPrice.match(/([\d,.]+)/);
+    if (match) actualPrice = match[1].replace(/,/g, '');
+  }
+  actualPrice = Number(actualPrice);
+  guess = Number(guess);
+  if (actualPrice === 0) return 0;
+  console.log('actualPrice: ', actualPrice);
+  console.log('deviation: ', Math.abs((guess - actualPrice) / actualPrice) * 100);
+  return Math.abs((guess - actualPrice) / actualPrice) * 100;
+}
+
 function startNextTurn(room) {
   if (!room.players.length) return;
 
-  // Advance turn index
-  if (typeof room.currentTurnIndex !== 'number') room.currentTurnIndex = 0;
-  else room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+  // Initialize round turn counter if not exists
+  if (typeof room.currentRoundTurns !== 'number') {
+    room.currentRoundTurns = 0;
+  }
+
+  // Advance turn index - start from -1 so first turn is player 0
+  if (typeof room.currentTurnIndex !== 'number') room.currentTurnIndex = -1;
+  room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+
+  // Increment turn counter AFTER advancing turn index
+  room.currentRoundTurns++;
 
   const currentPlayer = room.players[room.currentTurnIndex];
   const answerTime = room.settings.answerTime || 30;
@@ -79,17 +101,42 @@ function startNextTurn(room) {
     if (room.pendingGuess && room.pendingGuess.playerId === currentPlayer.id) {
       priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
       
-      // here i should put method to check if user won
+      // Check if user won
+      const deviation = getDeviation(priceToSend, carPrice);
       ioInstance.to(`room-${room.id}`).emit('game:guessConfirmed', {
         playerName: currentPlayer.name,
-        price: priceToSend
+        price: priceToSend,
+        deviation: deviation
       });
       room.pendingGuess = null;
+      
+      if (deviation < correctGuessTreshold) {
+        // Calculate points based on accuracy and turn count
+        const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5))); // 80-100 points based on deviation
+        const turnBonus = room.currentRoundTurns * 5; // +5 per turn
+        const totalPoints = accuracyPoints + turnBonus;
+        
+        currentPlayer.points += totalPoints;
+        ioInstance.to(`room-${room.id}`).emit('playerList', room.players);
+        ioInstance.to(`room-${room.id}`).emit('game:finishRound', {
+          playerName: currentPlayer.name,
+          price: priceToSend,
+          actualPrice: carPrice,
+          pointsAwarded: totalPoints,
+          accuracyPoints: accuracyPoints,
+          turnBonus: turnBonus,
+          turnsPlayed: room.currentRoundTurns,
+          deviation: deviation
+        });
+        room.currentRoundTurns = 0; // Reset for next round
+        return;
+      }
     } else {
       // If no guess was made, send 0
       ioInstance.to(`room-${room.id}`).emit('game:guessConfirmed', {
         playerName: currentPlayer.name,
-        price: 0
+        price: 0,
+        deviation: 100
       });
     }
     startNextTurn(room);
@@ -131,6 +178,12 @@ const setupRoomSocketHandlers = (io) => {
               return;
             }
             room.gameStarted = true;
+            
+            // Reset turn counter for new round
+            room.currentRoundTurns = 0;
+            // Reset turn index so first turn starts with player 0
+            room.currentTurnIndex = -1;
+            
             io.to(`room-${socket.roomId}`).emit('game:startRound', { roomId: socket.roomId });
 
             room.currentRoundIndex += 1;
@@ -471,20 +524,6 @@ const setupRoomSocketHandlers = (io) => {
       }, 2000); // 2 seconds
     }
 
-    function getDeviation(guess, actualPrice) {
-      if (actualPrice && typeof actualPrice === 'string') {
-        // Try to extract number from string like "12345 USD"
-        const match = actualPrice.match(/([\d,.]+)/);
-        if (match) actualPrice = match[1].replace(/,/g, '');
-      }
-      actualPrice = Number(actualPrice);
-      guess = Number(guess);
-      if (actualPrice === 0) return 0;
-      console.log('actualPrice: ', actualPrice);
-      console.log('deviation: ', Math.abs((guess - actualPrice) / actualPrice) * 100);
-      return Math.abs((guess - actualPrice) / actualPrice) * 100;
-    }
-
     socket.on('game:confirmGuess', (data) => {
       const room = rooms.find(r => r.id === socket.roomId);
       if (!room) return;
@@ -492,27 +531,54 @@ const setupRoomSocketHandlers = (io) => {
       if (socket.id !== currentPlayer.id) {
         return socket.emit('error', { message: 'Not your turn!' });
       }
+      
+      // Initialize round turn counter if not exists
+      if (typeof room.currentRoundTurns !== 'number') {
+        room.currentRoundTurns = 0;
+      }
+      
       // Store the guess for timeout fallback
       room.pendingGuess = {
         playerId: currentPlayer.id,
         price: data.price
       };
+      
+      // Calculate deviation
+      const deviation = getDeviation(data.price, carPrice);
+      
       // Broadcast the guess to all players
       io.to(`room-${room.id}`).emit('game:guessConfirmed', {
         playerName: currentPlayer.name,
         price: data.price,
-        deviation: getDeviation(data.price, carPrice),
+        deviation: deviation,
       });
       room.pendingGuess = null;
-      if (getDeviation(data.price, carPrice) < correctGuessTreshold) {
+      
+      if (deviation < correctGuessTreshold) {
+        // Calculate points based on accuracy and turn count
+        const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5))); // 80-100 points based on deviation
+        const turnBonus = room.currentRoundTurns * 5; // +5 per turn (currentRoundTurns already includes current turn)
+        const totalPoints = accuracyPoints + turnBonus;
         
         // If the guess is correct enough, award points
-        currentPlayer.points += 1;
+        currentPlayer.points += totalPoints;
+        
+        // Update player list for all players to show new scores
+        io.to(`room-${room.id}`).emit('playerList', room.players);
+        
         io.to(`room-${room.id}`).emit('game:finishRound', {
           playerName: currentPlayer.name,
           price: data.price,
           actualPrice: carPrice,
+          pointsAwarded: totalPoints,
+          accuracyPoints: accuracyPoints,
+          turnBonus: turnBonus,
+          turnsPlayed: room.currentRoundTurns,
+          deviation: deviation
         });
+        
+        // Reset turn counter for next round
+        room.currentRoundTurns = 0;
       } else {
         // Advance to next turn immediately
         startNextTurn(room);
@@ -528,6 +594,12 @@ const setupRoomSocketHandlers = (io) => {
         playerId: currentPlayer.id,
         price: data.price
       };
+    });
+
+    socket.on('game:requestNextRound', (data) => {
+      const { roomId, playerName } = data;
+      // Broadcast to all players in the room that someone requested next round
+      io.to(`room-${roomId}`).emit('game:requestNextRound', { playerName });
     });
   });
 }
@@ -565,7 +637,7 @@ exports.createRoom = (req, res) => {
         visibility: roomData.visibility || 'public'
       },
       currentRoundIndex: 0,
-      currentTurnIndex: 0,
+      currentTurnIndex: -1,
       turnTimer: null,
       turnDeadline: null,
     };
