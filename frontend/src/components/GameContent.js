@@ -73,11 +73,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCurrentTurn(turnData);
       setStealUsedThisRound(turnData.stealUsedThisRound || false);
       // Calculate seconds left based on deadline
-      if (turnData.deadline) {
-        setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
-      } else {
-        setTurnTimeLeft(turnData.answerTime || 10);
-      }
+      // if (turnData.deadline) {
+      // setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
+       // console.log(`turnTimeLeft: ${Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000))} seconds initally`);
+      // } else {
+      setTurnTimeLeft(turnData.answerTime || 10);
+      // console.log('turnTimeLeft: ', turnData.answerTime || 10, 'seconds (default)');
+      // }
       // Clear last guess if this is the first turn OR if roundId/gameId changes
       if (turnData.turnNumber === 1 || turnData.roundId !== currentTurn?.roundId || turnData.gameId !== currentTurn?.gameId) {
         setLastGuess(null);
