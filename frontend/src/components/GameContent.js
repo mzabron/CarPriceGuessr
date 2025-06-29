@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 
 const PLAYER_COLORS = [
@@ -15,6 +15,7 @@ function getPlayerColor(name, playerList) {
 
 const GameContent = ({ gameSettings, players = [] }) => {
   const { roomId } = useParams();
+  const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedCarIndex, setSelectedCarIndex] = useState(null);
@@ -29,10 +30,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [guessSubmitted, setGuessSubmitted] = useState(false);
   const [showRoundModal, setShowRoundModal] = useState(false);
   const [roundResult, setRoundResult] = useState(null);
-  const [finishedGame, setFinishedGame] = useState(false);
   const [roundModalTimer, setRoundModalTimer] = useState(10);
   const [modalTimerRef, setModalTimerRef] = useState(null);
   const [countdownTimerRef, setCountdownTimerRef] = useState(null);
+  const [stealUsedThisRound, setStealUsedThisRound] = useState(false);
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -68,6 +71,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   useEffect(() => {
     socketService.socket?.on('game:turn', (turnData) => {
       setCurrentTurn(turnData);
+      setStealUsedThisRound(turnData.stealUsedThisRound || false);
       // Calculate seconds left based on deadline
       if (turnData.deadline) {
         setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
@@ -83,8 +87,15 @@ const GameContent = ({ gameSettings, players = [] }) => {
       closeRoundModal();
     });
 
+    socketService.socket?.on('game:stealUsed', (data) => {
+      setStealUsedThisRound(true);
+      // You could add a notification here about who used the steal
+      console.log(`${data.stealingPlayer} used a steal! Now it's their turn.`);
+    });
+
     return () => {
       socketService.socket?.off('game:turn');
+      socketService.socket?.off('game:stealUsed');
     };
   }, [closeRoundModal]);
 
@@ -121,6 +132,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(null);
       setVotingTimeLeft(15);
       setShowChosenText(false);
+      setStealUsedThisRound(false); // Reset steal usage for new round
       
       // Close round modal when voting starts (new round in progress)
       closeRoundModal();
@@ -169,8 +181,19 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setSelectedCarIndex(null);
     });
 
-    socketService.socket?.on('game:finishGame', () => {
-      setFinishedGame(true);
+    socketService.socket?.on('game:finishGame', (data) => {
+      // Navigate to Results page with game data
+      navigate('/results', {
+        state: {
+          gameData: {
+            players: data.players,
+            roomId: data.roomId,
+            roomCode: data.roomCode,
+            roomName: data.roomName,
+            gameHistory: data.gameHistory
+          }
+        }
+      });
     });
 
     socketService.socket?.on('game:requestNextRound', (data) => {
@@ -195,7 +218,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:finishGame');
       socketService.socket?.off('game:requestNextRound');
     };
-  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId]);
+  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
 
   useEffect(() => {
     if (winningIndex !== null && cars[winningIndex]?.thumbnailImages) {
@@ -461,6 +484,47 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
   };
 
+  const handleSteal = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    
+    // Check if player has steals remaining
+    if (!currentPlayer || currentPlayer.stealsRemaining <= 0) {
+      alert('You have no steals remaining!');
+      return;
+    }
+    
+    // Check if steal was already used this round
+    if (stealUsedThisRound) {
+      alert('Steal has already been used this round!');
+      return;
+    }
+    
+    // Check if it's already their turn
+    if (currentTurn?.playerName === playerName) {
+      alert('It is already your turn!');
+      return;
+    }
+    
+    // Emit steal event
+    socketService.socket.emit('game:useSteal', { roomId });
+  };
+
+  const getCurrentPlayerSteals = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    return currentPlayer ? currentPlayer.stealsRemaining : 0;
+  };
+
+  const canUseSteal = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    return (
+      currentPlayer &&
+      currentPlayer.stealsRemaining > 0 &&
+      !stealUsedThisRound &&
+      currentTurn?.playerName !== playerName &&
+      currentTurn // Make sure there is an active turn
+    );
+  };
+
   return (
     <div className="flex-1 bg-white p-2 sm:p-4 h-full">
       <div className="h-full flex flex-col max-w-screen-xl mx-auto">
@@ -495,18 +559,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
                   onClick={handleNextRound}
                 >
-                  Next Round ({roundModalTimer}s)
+                  {roundResult.isLastRound && roundResult.playerName ? 
+                    `View Results (${roundModalTimer}s)` : 
+                    `Next Round (${roundModalTimer}s)`
+                  }
                 </button>
               </div>
             </div>
           )}
-          {finishedGame ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <h2 className="text-3xl font-extrabold text-green-700 mb-4">
-                Game Over! Thanks for playing!
-              </h2>
-              </div>
-              ) : null}
           {voting ? (
             <div>
               <h2 className="text-xl font-bold mb-3">Voting Phase ({votingTimeLeft}s left)</h2>
@@ -585,6 +645,18 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       alt="Car"
                       className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
                     />
+                    <button
+                      onClick={() => {
+                        setFullscreenImageIndex(currentImageIndex);
+                        setShowFullscreenImage(true);
+                      }}
+                      className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
+                      title="View fullscreen"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                      </svg>
+                    </button>
                     <button
                       onClick={handleNextImage}
                       className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r hover:bg-opacity-75 z-10"
@@ -737,11 +809,25 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none"
+                      onClick={handleSteal}
+                      className={`px-6 py-2 rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none ${
+                        canUseSteal()
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                       style={{ minWidth: '100px' }}
-                      disabled
+                      disabled={!canUseSteal()}
+                      title={
+                        stealUsedThisRound 
+                          ? 'Steal already used this round'
+                          : getCurrentPlayerSteals() <= 0 
+                            ? 'No steals remaining'
+                            : currentTurn?.playerName === playerName
+                              ? 'Already your turn'
+                              : `Steal (${getCurrentPlayerSteals()} left)`
+                      }
                     >
-                      Steal
+                      Steal {getCurrentPlayerSteals() > 0 ? `(${getCurrentPlayerSteals()})` : ''}
                     </button>
                     <button
                       onClick={e => {
@@ -830,6 +916,46 @@ const GameContent = ({ gameSettings, players = [] }) => {
           )}
         </div>
       </div>
+      
+      {/* Fullscreen image viewer */}
+      {showFullscreenImage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
+          <div className="relative w-full h-full max-w-5xl max-h-[90vh]">
+            <button
+              onClick={() => setShowFullscreenImage(false)}
+              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-300 z-20"
+              title="Close fullscreen"
+            >
+              ×
+            </button>
+            <button
+              onClick={() => {
+                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                setFullscreenImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
+              }}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              title="Previous image"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => {
+                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                setFullscreenImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              title="Next image"
+            >
+              ›
+            </button>
+            <img
+              src={cars[getActiveCarIndex()]?.thumbnailImages?.[fullscreenImageIndex]?.imageUrl}
+              alt="Fullscreen Car"
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

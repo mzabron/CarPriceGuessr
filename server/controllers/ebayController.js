@@ -59,6 +59,7 @@ const fetchCarsWithDetails = async (params) => {
     }
 
     const searchData = await searchResponse.json();
+    console.log('Search results sample item:', searchData?.itemSummaries?.[0]);
     
     if (!searchData?.itemSummaries?.length) {
       console.warn('No cars found in search results');
@@ -82,7 +83,8 @@ const fetchCarsWithDetails = async (params) => {
         }
 
         const detailData = await detailResponse.json();
-        console.log('Detail data for item:', detailData);
+        console.log('Detail data for item:', item.itemId, 'keys:', Object.keys(detailData));
+        console.log('itemWebUrl in detail data:', detailData.itemWebUrl);
 
         // Function to find value in localizedAspects
         const findAspect = (name) => {
@@ -104,6 +106,7 @@ const fetchCarsWithDetails = async (params) => {
           title: detailData.title,
           shortDescription: detailData.shortDescription,
           price: item.price ? `${item.price.value} ${item.price.currency}` : null,
+          itemWebUrl: detailData.itemWebUrl || item.itemWebUrl || `https://www.ebay.com/itm/${item.itemId}`,
           
           // Condition
           condition: detailData.condition,
