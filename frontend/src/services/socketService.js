@@ -8,7 +8,9 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:8080');
+      this.socket = io('https://api-tlarysz.lab.kis.agh.edu.pl', {
+        path: '/ws',
+      });
       this.setupEventListeners();
     }
     return this.socket;
