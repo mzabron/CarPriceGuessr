@@ -15,7 +15,7 @@ const connectDB = require('./db');
 const app = express();
 const server = createServer(app);
 
-const URL = 'https://tlarysz.lab.kis.agh.edu.pl/';
+const URL = 'https://tlarysz.lab.kis.agh.edu.pl';
 const io = new Server(server, {
   path: '/ws',
   cors: {
@@ -45,8 +45,8 @@ app.get('/', (req, res) => {
   res.send("hello");
 })
 
-server.listen(8080, () => {
-  console.log('Server listening on port 8080');
+server.listen(60123, () => {
+  console.log('Server listening on port 60123');
 })
 
-connectDB();
+// connectDB();

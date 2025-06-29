@@ -1,8 +1,14 @@
+const axios = require('axios');
+const https = require('https');
 const { getApplicationAccessToken } = require('./token');
 
 const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
 const MARKETPLACE_ID = 'EBAY_US';
 const CARS_CATEGORY_ID = '6001';
+
+const agent = new https.Agent({
+  localAddress: '10.156.207.123'
+});
 
 // Function to shuffle array using Fisher-Yates algorithm
 const shuffleArray = (array) => {
@@ -44,21 +50,19 @@ exports.getCars = async (req, res) => {
 const fetchCarsWithDetails = async (params) => {
   try {
     const accessToken = await getApplicationAccessToken();
+
+    console.log('Using eBay access token:', accessToken);
     
-    const searchResponse = await fetch(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
-      method: "GET",
+    const searchResponse = await axios.get(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
         'Content-Type': 'application/json'
       },
+      httpsAgent: agent,
     });
 
-    if (!searchResponse.ok) {
-      throw new Error(`eBay API search request failed: ${searchResponse.status}`);
-    }
-
-    const searchData = await searchResponse.json();
+    const searchData = searchResponse.data;
     console.log('Search results sample item:', searchData?.itemSummaries?.[0]);
     
     if (!searchData?.itemSummaries?.length) {
@@ -68,21 +72,16 @@ const fetchCarsWithDetails = async (params) => {
 
     const itemDetailsPromises = searchData.itemSummaries.map(async (item) => {
       try {
-        const detailResponse = await fetch(`${EBAY_API_BASE_URL}/item/${item.itemId}`, {
-          method: "GET",
+        const detailResponse = await axios.get(`${EBAY_API_BASE_URL}/item/${item.itemId}`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
             'Content-Type': 'application/json'
           },
+          httpsAgent: agent,
         });
 
-        if (!detailResponse.ok) {
-          console.error(`Failed to fetch details for item ${item.itemId}`);
-          return null;
-        }
-
-        const detailData = await detailResponse.json();
+        const detailData = detailResponse.data
         console.log('Detail data for item:', item.itemId, 'keys:', Object.keys(detailData));
         console.log('itemWebUrl in detail data:', detailData.itemWebUrl);
 
