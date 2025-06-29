@@ -12,20 +12,26 @@ const gameRoutes = require('./routes/gameRoutes');
 const { setupRoomSocketHandlers } = require('./controllers/roomController');
 
 const sequelize = require('./db');
+
 const swaggerDocument = yaml.load('./docs/swagger.yaml');
 
 const app = express();
 const server = createServer(app);
 
+const URL = 'http://localhost:3000';
 const io = new Server(server, {
+  path: '/ws',
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: URL,
+    methods: ['GET', 'POST'],
+    credentials: true,
   }
 });
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: URL,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
@@ -40,7 +46,7 @@ setupRoomSocketHandlers(io);
 
 app.get('/', (req, res) => {
   res.send("hello");
-})
+});
 
 server.listen(8080, async () => {
   console.log('Server listening on port 8080');
