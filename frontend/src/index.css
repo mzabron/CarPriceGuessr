@@ -9,6 +9,14 @@ body {
 
 /* Custom thin scrollbar styles */
 @layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
   .thin-scrollbar::-webkit-scrollbar {
     width: 4px;
     height: 4px;

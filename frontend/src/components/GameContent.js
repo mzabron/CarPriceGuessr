@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 
 const PLAYER_COLORS = [
@@ -15,6 +15,7 @@ function getPlayerColor(name, playerList) {
 
 const GameContent = ({ gameSettings, players = [] }) => {
   const { roomId } = useParams();
+  const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedCarIndex, setSelectedCarIndex] = useState(null);
@@ -29,7 +30,6 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [guessSubmitted, setGuessSubmitted] = useState(false);
   const [showRoundModal, setShowRoundModal] = useState(false);
   const [roundResult, setRoundResult] = useState(null);
-  const [finishedGame, setFinishedGame] = useState(false);
   const [roundModalTimer, setRoundModalTimer] = useState(10);
   const [modalTimerRef, setModalTimerRef] = useState(null);
   const [countdownTimerRef, setCountdownTimerRef] = useState(null);
@@ -179,8 +179,19 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setSelectedCarIndex(null);
     });
 
-    socketService.socket?.on('game:finishGame', () => {
-      setFinishedGame(true);
+    socketService.socket?.on('game:finishGame', (data) => {
+      // Navigate to Results page with game data
+      navigate('/results', {
+        state: {
+          gameData: {
+            players: data.players,
+            roomId: data.roomId,
+            roomCode: data.roomCode,
+            roomName: data.roomName,
+            gameHistory: data.gameHistory
+          }
+        }
+      });
     });
 
     socketService.socket?.on('game:requestNextRound', (data) => {
@@ -205,7 +216,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:finishGame');
       socketService.socket?.off('game:requestNextRound');
     };
-  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId]);
+  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
 
   useEffect(() => {
     if (winningIndex !== null && cars[winningIndex]?.thumbnailImages) {
@@ -546,18 +557,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
                   onClick={handleNextRound}
                 >
-                  Next Round ({roundModalTimer}s)
+                  {roundResult.isLastRound && roundResult.playerName ? 
+                    `View Results (${roundModalTimer}s)` : 
+                    `Next Round (${roundModalTimer}s)`
+                  }
                 </button>
               </div>
             </div>
           )}
-          {finishedGame ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <h2 className="text-3xl font-extrabold text-green-700 mb-4">
-                Game Over! Thanks for playing!
-              </h2>
-              </div>
-              ) : null}
           {voting ? (
             <div>
               <h2 className="text-xl font-bold mb-3">Voting Phase ({votingTimeLeft}s left)</h2>
