@@ -33,6 +33,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [roundModalTimer, setRoundModalTimer] = useState(10);
   const [modalTimerRef, setModalTimerRef] = useState(null);
   const [countdownTimerRef, setCountdownTimerRef] = useState(null);
+  const [stealUsedThisRound, setStealUsedThisRound] = useState(false);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -68,6 +69,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   useEffect(() => {
     socketService.socket?.on('game:turn', (turnData) => {
       setCurrentTurn(turnData);
+      setStealUsedThisRound(turnData.stealUsedThisRound || false);
       // Calculate seconds left based on deadline
       if (turnData.deadline) {
         setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
@@ -83,8 +85,15 @@ const GameContent = ({ gameSettings, players = [] }) => {
       closeRoundModal();
     });
 
+    socketService.socket?.on('game:stealUsed', (data) => {
+      setStealUsedThisRound(true);
+      // You could add a notification here about who used the steal
+      console.log(`${data.stealingPlayer} used a steal! Now it's their turn.`);
+    });
+
     return () => {
       socketService.socket?.off('game:turn');
+      socketService.socket?.off('game:stealUsed');
     };
   }, [closeRoundModal]);
 
@@ -121,6 +130,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(null);
       setVotingTimeLeft(15);
       setShowChosenText(false);
+      setStealUsedThisRound(false); // Reset steal usage for new round
       
       // Close round modal when voting starts (new round in progress)
       closeRoundModal();
@@ -461,6 +471,47 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
   };
 
+  const handleSteal = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    
+    // Check if player has steals remaining
+    if (!currentPlayer || currentPlayer.stealsRemaining <= 0) {
+      alert('You have no steals remaining!');
+      return;
+    }
+    
+    // Check if steal was already used this round
+    if (stealUsedThisRound) {
+      alert('Steal has already been used this round!');
+      return;
+    }
+    
+    // Check if it's already their turn
+    if (currentTurn?.playerName === playerName) {
+      alert('It is already your turn!');
+      return;
+    }
+    
+    // Emit steal event
+    socketService.socket.emit('game:useSteal', { roomId });
+  };
+
+  const getCurrentPlayerSteals = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    return currentPlayer ? currentPlayer.stealsRemaining : 0;
+  };
+
+  const canUseSteal = () => {
+    const currentPlayer = players.find(p => p.name === playerName);
+    return (
+      currentPlayer &&
+      currentPlayer.stealsRemaining > 0 &&
+      !stealUsedThisRound &&
+      currentTurn?.playerName !== playerName &&
+      currentTurn // Make sure there is an active turn
+    );
+  };
+
   return (
     <div className="flex-1 bg-white p-2 sm:p-4 h-full">
       <div className="h-full flex flex-col max-w-screen-xl mx-auto">
@@ -737,11 +788,25 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none"
+                      onClick={handleSteal}
+                      className={`px-6 py-2 rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none ${
+                        canUseSteal()
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                       style={{ minWidth: '100px' }}
-                      disabled
+                      disabled={!canUseSteal()}
+                      title={
+                        stealUsedThisRound 
+                          ? 'Steal already used this round'
+                          : getCurrentPlayerSteals() <= 0 
+                            ? 'No steals remaining'
+                            : currentTurn?.playerName === playerName
+                              ? 'Already your turn'
+                              : `Steal (${getCurrentPlayerSteals()} left)`
+                      }
                     >
-                      Steal
+                      Steal {getCurrentPlayerSteals() > 0 ? `(${getCurrentPlayerSteals()})` : ''}
                     </button>
                     <button
                       onClick={e => {
