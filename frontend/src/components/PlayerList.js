@@ -22,6 +22,11 @@ const PlayerList = ({ players, showReadyStatus = false }) => {
             <div className="mt-1 text-gray-300 text-sm">
               Points: {player.points || 0}
             </div>
+            {typeof player.stealsRemaining === 'number' && (
+              <div className="mt-1 text-gray-300 text-sm">
+                Steals: {player.stealsRemaining}
+              </div>
+            )}
           </div>
         ))}
       </div>

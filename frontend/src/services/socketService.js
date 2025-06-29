@@ -8,7 +8,9 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:8080');
+      this.socket = io('http://localhost:8080', {
+        path: '/ws',
+      });
       this.setupEventListeners();
     }
     return this.socket;

@@ -23,6 +23,9 @@ const GameLobby = () => {
       setIsHost(true);
     }
 
+    // Request current room state when component mounts
+    socketService.socket?.emit('room:requestState', { roomId: parseInt(roomId) });
+
     socketService.socket?.on('playerList', (updatedPlayers) => {
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
       setPlayers(sortedPlayers);
@@ -30,6 +33,7 @@ const GameLobby = () => {
       const currentPlayer = updatedPlayers.find(p => p.id === socketService.socket?.id);
       if (currentPlayer) {
         setIsReady(currentPlayer.isReady);
+        setIsHost(currentPlayer.isHost);
       }
     });
 
