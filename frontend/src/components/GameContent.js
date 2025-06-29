@@ -34,6 +34,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [modalTimerRef, setModalTimerRef] = useState(null);
   const [countdownTimerRef, setCountdownTimerRef] = useState(null);
   const [stealUsedThisRound, setStealUsedThisRound] = useState(false);
+  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
 
   const PRICE_RANGES = [
     { label: '0 - 100k', min: 0, max: 100000 },
@@ -644,6 +646,18 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
                     />
                     <button
+                      onClick={() => {
+                        setFullscreenImageIndex(currentImageIndex);
+                        setShowFullscreenImage(true);
+                      }}
+                      className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
+                      title="View fullscreen"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                      </svg>
+                    </button>
+                    <button
                       onClick={handleNextImage}
                       className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r hover:bg-opacity-75 z-10"
                     >
@@ -902,6 +916,46 @@ const GameContent = ({ gameSettings, players = [] }) => {
           )}
         </div>
       </div>
+      
+      {/* Fullscreen image viewer */}
+      {showFullscreenImage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
+          <div className="relative w-full h-full max-w-5xl max-h-[90vh]">
+            <button
+              onClick={() => setShowFullscreenImage(false)}
+              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-300 z-20"
+              title="Close fullscreen"
+            >
+              ×
+            </button>
+            <button
+              onClick={() => {
+                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                setFullscreenImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
+              }}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              title="Previous image"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => {
+                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                setFullscreenImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              title="Next image"
+            >
+              ›
+            </button>
+            <img
+              src={cars[getActiveCarIndex()]?.thumbnailImages?.[fullscreenImageIndex]?.imageUrl}
+              alt="Fullscreen Car"
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
