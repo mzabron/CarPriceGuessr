@@ -11,7 +11,7 @@ const CreateGameModal = ({ onClose, user }) => {
     maxPlayers: 4,
     powerUps: 2,
     rounds: 5,
-    roundDuration: 30
+    answerTime: 30
   });
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -164,8 +164,8 @@ const CreateGameModal = ({ onClose, user }) => {
           <div>
             <label className="block mb-2">Answer Time (seconds)</label>
             <select
-              name="roundDuration"
-              value={formData.roundDuration}
+              name="answerTime"
+              value={formData.answerTime}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >
