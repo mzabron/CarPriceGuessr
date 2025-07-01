@@ -98,6 +98,11 @@ const Results = () => {
                       {player.stealsRemaining !== undefined && (
                         <div className="text-sm text-gray-600">
                           Steals remaining: {player.stealsRemaining}
+                          {player.stealsRemaining > 0 && (
+                            <span className="ml-2 text-green-600 font-semibold">
+                              (+{player.stealsRemaining * 5} bonus points)
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

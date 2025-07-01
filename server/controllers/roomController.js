@@ -188,6 +188,13 @@ const setupRoomSocketHandlers = (io) => {
             }
             room.gameStarted = true;
             
+            // Reset points when starting a new game (first round)
+            if (room.currentRoundIndex === 0) {
+              room.players.forEach(player => {
+                player.points = 0;
+              });
+            }
+            
             // Reset turn counter for new round
             room.currentRoundTurns = 0;
             // Reset turn index so first turn starts with player 0
@@ -223,6 +230,14 @@ const setupRoomSocketHandlers = (io) => {
 
     function finishGame(room) {
       room.currentRoundIndex = 0;
+      
+      // Add bonus points for remaining steals (+5 per remaining steal)
+      room.players.forEach(player => {
+        const stealBonus = player.stealsRemaining * 5;
+        player.points += stealBonus;
+        console.log(`${player.name} gets ${stealBonus} bonus points for ${player.stealsRemaining} remaining steals`);
+      });
+      
       console.log('Finishing game - sending game history:', room.gameHistory);
       // Broadcast to ALL players in the room, not just the requesting socket
       ioInstance.to(`room-${room.id}`).emit('game:finishGame', {
@@ -261,7 +276,13 @@ const setupRoomSocketHandlers = (io) => {
       const room = rooms.find(r => r.id === roomId);
       
       if (room) {
-        room.settings = { ...room.settings, ...settings };
+        // Validate that powerUps don't exceed rounds
+        const updatedSettings = { ...room.settings, ...settings };
+        if (updatedSettings.powerUps > updatedSettings.rounds) {
+          updatedSettings.powerUps = updatedSettings.rounds;
+        }
+        
+        room.settings = updatedSettings;
         io.to(`room-${roomId}`).emit('room:settingsUpdated', room.settings);
       }
     });
@@ -775,6 +796,7 @@ const setupRoomSocketHandlers = (io) => {
         room.players.forEach(player => {
           player.isReady = false;
           player.stealsRemaining = room.settings.powerUps;
+          player.points = 0; // Reset points for new game
         });
         
         // Clear any active timers

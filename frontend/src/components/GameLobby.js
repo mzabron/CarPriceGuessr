@@ -121,10 +121,19 @@ const GameLobby = () => {
   };
 
   const handleSettingsChange = (changes) => {
-    setTempSettings(prev => ({
-      ...prev,
-      ...changes
-    }));
+    setTempSettings(prev => {
+      const updated = {
+        ...prev,
+        ...changes
+      };
+      
+      // If rounds are being changed and powerUps exceed the new rounds count, adjust powerUps
+      if (changes.rounds !== undefined && updated.powerUps > changes.rounds) {
+        updated.powerUps = changes.rounds;
+      }
+      
+      return updated;
+    });
   };
 
   const renderGameSettings = () => {
