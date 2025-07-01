@@ -38,9 +38,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
 
   const PRICE_RANGES = [
-    { label: '0 - 100k', min: 0, max: 100000 },
-    { label: '100k - 200k', min: 100000, max: 200000 },
-    { label: '200k - 300k', min: 200000, max: 300000 },
+    { label: '0 - 20k', min: 0, max: 20000 },
+    { label: '20k - 100k', min: 20000, max: 100000 },
+    { label: '100k - 300k', min: 100000, max: 300000 },
     { label: 'Over 300k', min: 300000, max: 1000000 }
   ];
 
@@ -123,6 +123,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCars(carList.itemSummaries || []);
       setCurrentImageIndex(0);
       setSelectedCarIndex(null);
+      
+      // Reset price guessing state for new round
+      setGuessPrice('');
+      setSliderPrice(10000);
+      setSelectedRange(PRICE_RANGES[0]);
       
       // Close round modal when new cars are received (new round started)
       closeRoundModal();
@@ -302,12 +307,18 @@ const GameContent = ({ gameSettings, players = [] }) => {
     if (value > sliderMax) value = sliderMax;
     setSliderPrice(value);
     setGuessPrice(value);
-    const foundRange = PRICE_RANGES.find(
-      r =>
-        (value === sliderMin && r.label === selectedRange.label) ||
-        (value === sliderMax && r.label === selectedRange.label) ||
-        (value > r.min && value < r.max)
-    );
+    const foundRange = PRICE_RANGES.find((r, index) => {
+      // Special cases for slider boundaries
+      if (value === sliderMin && r.label === selectedRange.label) return true;
+      if (value === sliderMax && r.label === selectedRange.label) return true;
+      
+      // For the last range, just check if value is >= min
+      if (index === PRICE_RANGES.length - 1) {
+        return value >= r.min;
+      }
+      // For other ranges, check if value is within the range
+      return value >= r.min && value < r.max;
+    });
     if (foundRange && foundRange.label !== selectedRange.label) {
       setSelectedRange(foundRange);
     }
@@ -328,7 +339,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
     setGuessPrice(value);
     setSliderPrice(Number(value));
     const price = Number(value);
-    const foundRange = PRICE_RANGES.find(r => price >= r.min && price < r.max);
+    const foundRange = PRICE_RANGES.find((r, index) => {
+      // For the last range, just check if price is >= min
+      if (index === PRICE_RANGES.length - 1) {
+        return price >= r.min;
+      }
+      // For other ranges, check if price is within the range
+      return price >= r.min && price < r.max;
+    });
     if (foundRange && foundRange.label !== selectedRange.label) {
       setSelectedRange(foundRange);
     }
@@ -730,16 +748,23 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     className="ml-1 px-2 py-1 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center disabled:opacity-50"
                     onClick={() => {
                       let newValue = Number(sliderPrice) - 100;
-                      if (newValue < getSliderMin()) newValue = getSliderMin();
+                      if (newValue < 0) newValue = 0; // Only prevent going below 0
                       setSliderPrice(newValue);
                       setGuessPrice(newValue);
-                      const foundRange = PRICE_RANGES.find(r => newValue >= r.min && newValue <= r.max);
+                      const foundRange = PRICE_RANGES.find((r, index) => {
+                        // For the last range, just check if newValue is >= min
+                        if (index === PRICE_RANGES.length - 1) {
+                          return newValue >= r.min;
+                        }
+                        // For other ranges, check if newValue is within the range
+                        return newValue >= r.min && newValue < r.max;
+                      });
                       if (foundRange && foundRange.label !== selectedRange.label) {
                         setSelectedRange(foundRange);
                       }
                     }}
                     aria-label="Decrease price"
-                    disabled={Number(sliderPrice) <= getSliderMin()}
+                    disabled={Number(sliderPrice) <= 0}
                   >
                     <svg width="16" height="16" viewBox="0 0 18 18" className="fill-gray-600">
                       <polygon points="12,4 6,9 12,14" />
@@ -762,7 +787,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       if (newValue > getSliderMax()) newValue = getSliderMax();
                       setSliderPrice(newValue);
                       setGuessPrice(newValue);
-                      const foundRange = PRICE_RANGES.find(r => newValue >= r.min && newValue <= r.max);
+                      const foundRange = PRICE_RANGES.find((r, index) => {
+                        // For the last range, just check if newValue is >= min
+                        if (index === PRICE_RANGES.length - 1) {
+                          return newValue >= r.min;
+                        }
+                        // For other ranges, check if newValue is within the range
+                        return newValue >= r.min && newValue < r.max;
+                      });
                       if (foundRange && foundRange.label !== selectedRange.label) {
                         setSelectedRange(foundRange);
                       }

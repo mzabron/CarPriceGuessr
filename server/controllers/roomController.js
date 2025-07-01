@@ -63,6 +63,68 @@ function getDeviation(guess, actualPrice) {
   return Math.abs((guess - actualPrice) / actualPrice) * 100;
 }
 
+// Queue management functions
+function initializePlayerQueue(room) {
+  // Create a shuffled array of player IDs for the first round
+  const playerIds = room.players.map(p => p.id);
+  room.playerQueue = shuffleArray([...playerIds]);
+  room.currentQueueIndex = 0;
+  console.log('Initialized player queue for room', room.id, ':', room.playerQueue);
+}
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function shiftQueueForNextRound(room) {
+  // Move the first player to the end of the queue
+  if (room.playerQueue.length > 0) {
+    const firstPlayer = room.playerQueue.shift();
+    room.playerQueue.push(firstPlayer);
+    room.currentQueueIndex = 0;
+    console.log('Shifted queue for next round in room', room.id, ':', room.playerQueue);
+  }
+}
+
+function handleStealInQueue(room, stealingPlayerId) {
+  // Remove the stealing player from their current position and add to end
+  const stealingPlayerIndex = room.playerQueue.indexOf(stealingPlayerId);
+  if (stealingPlayerIndex !== -1) {
+    room.playerQueue.splice(stealingPlayerIndex, 1);
+    room.playerQueue.push(stealingPlayerId);
+    
+    // Adjust current queue index if needed
+    if (stealingPlayerIndex < room.currentQueueIndex) {
+      room.currentQueueIndex--;
+    }
+    
+    console.log('Updated queue after steal in room', room.id, ':', room.playerQueue);
+  }
+}
+
+function getCurrentPlayerFromQueue(room) {
+  if (!room.playerQueue || room.playerQueue.length === 0) {
+    return null;
+  }
+  
+  const currentPlayerId = room.playerQueue[room.currentQueueIndex];
+  return room.players.find(p => p.id === currentPlayerId);
+}
+
+function advanceQueueToNextPlayer(room) {
+  if (!room.playerQueue || room.playerQueue.length === 0) {
+    return null;
+  }
+  
+  room.currentQueueIndex = (room.currentQueueIndex + 1) % room.playerQueue.length;
+  return getCurrentPlayerFromQueue(room);
+}
+
 function startNextTurn(room) {
   if (!room.players.length) return;
 
@@ -76,17 +138,27 @@ function startNextTurn(room) {
     room.stealUsedThisRound = false;
   }
 
-  // Advance turn index - start from -1 so first turn is player 0
-  if (typeof room.currentTurnIndex !== 'number') room.currentTurnIndex = -1;
-  room.currentTurnIndex = (room.currentTurnIndex + 1) % room.players.length;
+  // Initialize or validate player queue
+  if (!room.playerQueue || room.playerQueue.length === 0) {
+    initializePlayerQueue(room);
+  }
 
-  // Increment turn counter AFTER advancing turn index
+  // Get current player from queue
+  const currentPlayer = getCurrentPlayerFromQueue(room);
+  if (!currentPlayer) {
+    console.error('No current player found in queue for room', room.id);
+    return;
+  }
+
+  // Increment turn counter
   room.currentRoundTurns++;
 
-  const currentPlayer = room.players[room.currentTurnIndex];
   const answerTime = room.settings.answerTime || 30;
   const deadline = Date.now() + answerTime * 1000;
   room.turnDeadline = deadline;
+
+  // Update currentTurnIndex for compatibility with existing code
+  room.currentTurnIndex = room.players.findIndex(p => p.id === currentPlayer.id);
 
   // Notify all clients whose turn it is
   ioInstance.to(`room-${room.id}`).emit('game:turn', {
@@ -94,7 +166,9 @@ function startNextTurn(room) {
     playerName: currentPlayer.name,
     deadline,
     answerTime,
-    stealUsedThisRound: room.stealUsedThisRound
+    stealUsedThisRound: room.stealUsedThisRound,
+    queuePosition: room.currentQueueIndex + 1,
+    totalPlayers: room.playerQueue.length
   });
 
   // Clear previous timer if any
@@ -119,11 +193,15 @@ function startNextTurn(room) {
       if (deviation < correctGuessTreshold) {
         // Calculate points based on accuracy and turn count
         const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5))); // 80-100 points based on deviation
-        const turnBonus = room.currentRoundTurns * 5; // +5 per turn
+        const turnBonus = room.currentRoundTurns * 5; // +5 per turn (currentRoundTurns already includes current turn)
         const totalPoints = accuracyPoints + turnBonus;
         
         currentPlayer.points += totalPoints;
+        
+        // Update player list for all players to show new scores
         ioInstance.to(`room-${room.id}`).emit('playerList', room.players);
+        
+        // End round with success
         ioInstance.to(`room-${room.id}`).emit('game:finishRound', {
           playerName: currentPlayer.name,
           price: priceToSend,
@@ -148,6 +226,9 @@ function startNextTurn(room) {
         deviation: 100
       });
     }
+    
+    // Advance to next player in queue
+    advanceQueueToNextPlayer(room);
     startNextTurn(room);
   }, answerTime * 1000);
 }
@@ -188,10 +269,20 @@ const setupRoomSocketHandlers = (io) => {
             }
             room.gameStarted = true;
             
+            // Reset points when starting a new game (first round)
+            if (room.currentRoundIndex === 0) {
+              room.players.forEach(player => {
+                player.points = 0;
+              });
+              // Initialize player queue for the first round (randomized)
+              initializePlayerQueue(room);
+            } else {
+              // Shift queue for subsequent rounds
+              shiftQueueForNextRound(room);
+            }
+            
             // Reset turn counter for new round
             room.currentRoundTurns = 0;
-            // Reset turn index so first turn starts with player 0
-            room.currentTurnIndex = -1;
             // Reset steal usage for new round
             room.stealUsedThisRound = false;
             // Initialize game history if it doesn't exist
@@ -223,6 +314,14 @@ const setupRoomSocketHandlers = (io) => {
 
     function finishGame(room) {
       room.currentRoundIndex = 0;
+      
+      // Add bonus points for remaining steals (+5 per remaining steal)
+      room.players.forEach(player => {
+        const stealBonus = player.stealsRemaining * 5;
+        player.points += stealBonus;
+        console.log(`${player.name} gets ${stealBonus} bonus points for ${player.stealsRemaining} remaining steals`);
+      });
+      
       console.log('Finishing game - sending game history:', room.gameHistory);
       // Broadcast to ALL players in the room, not just the requesting socket
       ioInstance.to(`room-${room.id}`).emit('game:finishGame', {
@@ -261,7 +360,13 @@ const setupRoomSocketHandlers = (io) => {
       const room = rooms.find(r => r.id === roomId);
       
       if (room) {
-        room.settings = { ...room.settings, ...settings };
+        // Validate that powerUps don't exceed rounds
+        const updatedSettings = { ...room.settings, ...settings };
+        if (updatedSettings.powerUps > updatedSettings.rounds) {
+          updatedSettings.powerUps = updatedSettings.rounds;
+        }
+        
+        room.settings = updatedSettings;
         io.to(`room-${roomId}`).emit('room:settingsUpdated', room.settings);
       }
     });
@@ -313,6 +418,12 @@ const setupRoomSocketHandlers = (io) => {
         };
 
         room.players.push(player);
+        
+        // Add new player to the end of the queue
+        if (room.playerQueue) {
+          room.playerQueue.push(player.id);
+        }
+        
         socket.join(`room-${roomId}`);
         socket.roomId = roomId;
 
@@ -572,9 +683,17 @@ const setupRoomSocketHandlers = (io) => {
     socket.on('game:confirmGuess', (data) => {
       const room = rooms.find(r => r.id === socket.roomId);
       if (!room) return;
-      const currentPlayer = room.players[room.currentTurnIndex];
-      if (socket.id !== currentPlayer.id) {
+      
+      // Use queue system to get current player
+      const currentPlayer = getCurrentPlayerFromQueue(room);
+      if (!currentPlayer || socket.id !== currentPlayer.id) {
         return socket.emit('error', { message: 'Not your turn!' });
+      }
+      
+      // Clear the active turn timer
+      if (room.turnTimer) {
+        clearTimeout(room.turnTimer);
+        room.turnTimer = null;
       }
       
       // Initialize round turn counter if not exists
@@ -628,7 +747,8 @@ const setupRoomSocketHandlers = (io) => {
         // Reset turn counter for next round
         room.currentRoundTurns = 0;
       } else {
-        // Advance to next turn immediately
+        // Advance to next player in queue
+        advanceQueueToNextPlayer(room);
         startNextTurn(room);
       }
     });
@@ -636,8 +756,11 @@ const setupRoomSocketHandlers = (io) => {
     socket.on('game:updatePendingGuess', (data) => {
       const room = rooms.find(r => r.id === socket.roomId);
       if (!room) return;
-      const currentPlayer = room.players[room.currentTurnIndex];
+      
+      // Use queue system to get current player
+      const currentPlayer = getCurrentPlayerFromQueue(room);
       if (!currentPlayer || currentPlayer.name !== data.playerName) return;
+      
       room.pendingGuess = {
         playerId: currentPlayer.id,
         price: data.price
@@ -663,7 +786,7 @@ const setupRoomSocketHandlers = (io) => {
       }
       
       // Check if it's already their turn
-      const currentPlayer = room.players[room.currentTurnIndex];
+      const currentPlayer = getCurrentPlayerFromQueue(room);
       if (currentPlayer && currentPlayer.id === socket.id) {
         return socket.emit('error', { message: 'It is already your turn!' });
       }
@@ -672,17 +795,24 @@ const setupRoomSocketHandlers = (io) => {
       stealingPlayer.stealsRemaining--;
       room.stealUsedThisRound = true;
       
-      // Find the stealing player's index and set it as current turn
-      const stealingPlayerIndex = room.players.findIndex(p => p.id === socket.id);
-      room.currentTurnIndex = stealingPlayerIndex;
-      
       // Clear existing turn timer
       if (room.turnTimer) clearTimeout(room.turnTimer);
+      
+      // Update queue: the stealing player will go to the end after their guess
+      // But for now, make them the current player temporarily
+      const originalQueueIndex = room.currentQueueIndex;
+      const stealingPlayerQueueIndex = room.playerQueue.indexOf(stealingPlayer.id);
+      
+      // Temporarily set the current queue position to the stealing player
+      room.currentQueueIndex = stealingPlayerQueueIndex;
       
       // Set new turn with stealing player
       const answerTime = room.settings.answerTime || 30;
       const deadline = Date.now() + answerTime * 1000;
       room.turnDeadline = deadline;
+      
+      // Update currentTurnIndex for compatibility
+      room.currentTurnIndex = room.players.findIndex(p => p.id === stealingPlayer.id);
       
       // Notify all clients about the steal and new turn
       ioInstance.to(`room-${room.id}`).emit('game:stealUsed', {
@@ -695,7 +825,9 @@ const setupRoomSocketHandlers = (io) => {
         playerName: stealingPlayer.name,
         deadline,
         answerTime,
-        stealUsedThisRound: room.stealUsedThisRound
+        stealUsedThisRound: room.stealUsedThisRound,
+        queuePosition: stealingPlayerQueueIndex + 1,
+        totalPlayers: room.playerQueue.length
       });
       
       // Update player list to show new steal counts
@@ -749,6 +881,12 @@ const setupRoomSocketHandlers = (io) => {
             deviation: 100
           });
         }
+        
+        // After steal guess, handle queue: move stealing player to end and restore original flow
+        handleStealInQueue(room, stealingPlayer.id);
+        // Restore original queue position and continue
+        room.currentQueueIndex = originalQueueIndex;
+        advanceQueueToNextPlayer(room);
         startNextTurn(room);
       }, answerTime * 1000);
     });
@@ -775,6 +913,7 @@ const setupRoomSocketHandlers = (io) => {
         room.players.forEach(player => {
           player.isReady = false;
           player.stealsRemaining = room.settings.powerUps;
+          player.points = 0; // Reset points for new game
         });
         
         // Clear any active timers
@@ -839,7 +978,8 @@ exports.createRoom = (req, res) => {
       turnTimer: null,
       turnDeadline: null,
       stealUsedThisRound: false, // Initialize steal tracking
-      gameHistory: [] // Track cars chosen in each round
+      gameHistory: [], // Track cars chosen in each round
+      playerQueue: [] // Queue for turn order (array of player IDs)
     };
 
     console.log('Created new room object:', JSON.stringify(newRoom, null, 2));

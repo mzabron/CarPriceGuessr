@@ -79,12 +79,21 @@ const CreateGameModal = ({ onClose, user }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'visibility' ? value : 
-              name === 'roomName' ? value :
-              Number(value)
-    }));
+    const numericValue = name === 'visibility' || name === 'roomName' ? value : Number(value);
+    
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: numericValue
+      };
+      
+      // If rounds are being changed and powerUps exceed the new rounds count, adjust powerUps
+      if (name === 'rounds' && updated.powerUps > numericValue) {
+        updated.powerUps = numericValue;
+      }
+      
+      return updated;
+    });
   };
 
   return (
