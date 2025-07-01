@@ -122,6 +122,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCurrentImageIndex(0);
       setSelectedCarIndex(null);
       
+      // Reset price guessing state for new round
+      setGuessPrice('');
+      setSliderPrice(10000);
+      setSelectedRange(PRICE_RANGES[0]);
+      
       // Close round modal when new cars are received (new round started)
       closeRoundModal();
     });
