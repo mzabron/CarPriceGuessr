@@ -39,6 +39,11 @@ const Game = ({ gameSettings }) => {
       setMessages(prev => [...prev, message]);
     });
 
+    // Listen for chat history
+    socketService.socket?.on('chat:history', (chatHistory) => {
+      setMessages(chatHistory);
+    });
+
     // Request current player list when component mounts
     socketService.socket?.emit('rooms:join', { 
       roomId: parseInt(roomId),
@@ -52,6 +57,7 @@ const Game = ({ gameSettings }) => {
       socketService.socket?.off('rooms:playerLeft');
       socketService.socket?.off('rooms:playerJoined');
       socketService.socket?.off('chat:newMessage');
+      socketService.socket?.off('chat:history');
     };
   }, [roomId]);
 

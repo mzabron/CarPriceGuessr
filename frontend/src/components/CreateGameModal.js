@@ -35,6 +35,12 @@ const CreateGameModal = ({ onClose, user }) => {
       return;
     }
 
+    // Validate that all numeric fields have valid values
+    if (formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === '') {
+      setError('All fields must be filled out');
+      return;
+    }
+
     // Validate powerUps against rounds
     if (formData.powerUps > formData.rounds) {
       setError('Number of power-ups cannot exceed number of rounds');
@@ -79,17 +85,30 @@ const CreateGameModal = ({ onClose, user }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericValue = name === 'visibility' || name === 'roomName' ? value : Number(value);
+    
+    // Handle numeric fields properly - allow empty strings for easier editing
+    let processedValue;
+    if (name === 'visibility' || name === 'roomName') {
+      processedValue = value;
+    } else {
+      // For numeric fields, preserve empty string instead of converting to 0
+      if (value === '') {
+        processedValue = '';
+      } else {
+        const numVal = Number(value);
+        processedValue = isNaN(numVal) ? '' : numVal;
+      }
+    }
     
     setFormData(prev => {
       const updated = {
         ...prev,
-        [name]: numericValue
+        [name]: processedValue
       };
       
       // If rounds are being changed and powerUps exceed the new rounds count, adjust powerUps
-      if (name === 'rounds' && updated.powerUps > numericValue) {
-        updated.powerUps = numericValue;
+      if (name === 'rounds' && typeof processedValue === 'number' && updated.powerUps > processedValue) {
+        updated.powerUps = processedValue;
       }
       
       return updated;
@@ -202,7 +221,7 @@ const CreateGameModal = ({ onClose, user }) => {
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
-              disabled={!formData.roomName.trim() || isCreating}
+              disabled={!formData.roomName.trim() || isCreating || formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === ''}
             >
               {isCreating ? 'Creating...' : 'Create Game'}
             </button>
