@@ -113,6 +113,29 @@ const GameLobby = () => {
 
   const handleSettingsUpdate = () => {
     if (!isHost || !tempSettings) return;
+    
+    // Validate that all fields have valid numeric values
+    if (tempSettings.rounds === '' || tempSettings.playersLimit === '' || tempSettings.powerUps === '' || tempSettings.answerTime === '') {
+      alert('All fields must be filled out with valid values');
+      return;
+    }
+
+    // Validate ranges
+    if (tempSettings.rounds < 1 || tempSettings.rounds > 10) {
+      alert('Rounds must be between 1 and 10');
+      return;
+    }
+    
+    if (tempSettings.playersLimit < 2 || tempSettings.playersLimit > 10) {
+      alert('Max players must be between 2 and 10');
+      return;
+    }
+    
+    if (tempSettings.powerUps < 0 || tempSettings.powerUps > tempSettings.rounds) {
+      alert('Power-ups must be between 0 and the number of rounds');
+      return;
+    }
+    
     socketService.socket?.emit('room:updateSettings', {
       roomId: parseInt(roomId),
       settings: tempSettings
@@ -136,6 +159,36 @@ const GameLobby = () => {
     });
   };
 
+  const handleNumericInputChange = (field, value) => {
+    // Allow empty string for easier editing
+    if (value === '') {
+      setTempSettings(prev => ({ ...prev, [field]: '' }));
+      return;
+    }
+    
+    const numVal = parseInt(value);
+    if (isNaN(numVal)) return;
+
+    // Apply field-specific validation
+    let validatedValue = numVal;
+    switch (field) {
+      case 'rounds':
+        validatedValue = Math.min(Math.max(numVal, 1), 10);
+        break;
+      case 'playersLimit':
+        validatedValue = Math.min(Math.max(numVal, 2), 10);
+        break;
+      case 'powerUps':
+        const maxPowerUps = typeof tempSettings.rounds === 'number' ? tempSettings.rounds : 10;
+        validatedValue = Math.min(Math.max(numVal, 0), maxPowerUps);
+        break;
+      default:
+        break;
+    }
+
+    handleSettingsChange({ [field]: validatedValue });
+  };
+
   const renderGameSettings = () => {
     if (!gameSettings) return null;
 
@@ -148,7 +201,7 @@ const GameLobby = () => {
               <input
                 type="number"
                 value={tempSettings.rounds}
-                onChange={(e) => handleSettingsChange({ rounds: parseInt(e.target.value) })}
+                onChange={(e) => handleNumericInputChange('rounds', e.target.value)}
                 min="1"
                 max="10"
                 className="w-full p-2 border rounded"
@@ -159,7 +212,7 @@ const GameLobby = () => {
               <input
                 type="number"
                 value={tempSettings.playersLimit}
-                onChange={(e) => handleSettingsChange({ playersLimit: parseInt(e.target.value) })}
+                onChange={(e) => handleNumericInputChange('playersLimit', e.target.value)}
                 min="2"
                 max="10"
                 className="w-full p-2 border rounded"
@@ -170,7 +223,7 @@ const GameLobby = () => {
               <input
                 type="number"
                 value={tempSettings.powerUps}
-                onChange={(e) => handleSettingsChange({ powerUps: parseInt(e.target.value) })}
+                onChange={(e) => handleNumericInputChange('powerUps', e.target.value)}
                 min="0"
                 max={tempSettings.rounds}
                 className="w-full p-2 border rounded"
