@@ -49,6 +49,30 @@ const generateRoomCode = () => {
 
 const roomVotes = {}; // { roomId: { votes: {playerId: carIndex}, timer: Timeout, carCount: N } }
 
+// Helper function to send system messages and store them in chat history
+function sendSystemMessage(roomId, text, type = 'system') {
+  const room = rooms.find(r => r.id === roomId);
+  if (room) {
+    const message = {
+      player: 'System',
+      text: text,
+      timestamp: new Date(),
+      type: type
+    };
+    
+    // Store in chat history
+    if (!room.chatHistory) {
+      room.chatHistory = [];
+    }
+    room.chatHistory.push(message);
+    
+    // Broadcast to all players in the room
+    if (ioInstance) {
+      ioInstance.to(`room-${roomId}`).emit('chat:newMessage', message);
+    }
+  }
+}
+
 function getDeviation(guess, actualPrice) {
   if (actualPrice && typeof actualPrice === 'string') {
     // Try to extract number from string like "12345 USD"
@@ -293,12 +317,7 @@ const setupRoomSocketHandlers = (io) => {
             room.currentRoundIndex += 1;
 
             // Send round announcement to chat
-            io.to(`room-${socket.roomId}`).emit('chat:newMessage', {
-              player: 'System',
-              text: `Round ${room.currentRoundIndex}/${room.settings.rounds}`,
-              timestamp: new Date(),
-              type: 'round'
-            });
+            sendSystemMessage(socket.roomId, `Round ${room.currentRoundIndex}/${room.settings.rounds}`, 'round');
 
             const ebayController = require('./ebayController');
 
@@ -382,11 +401,24 @@ const setupRoomSocketHandlers = (io) => {
     // Handle chat messages
     socket.on('chat:message', (data) => {
       const { roomId, message, playerName } = data;
-      io.to(`room-${roomId}`).emit('chat:newMessage', {
-        player: playerName,
-        text: message,
-        timestamp: new Date()
-      });
+      const room = rooms.find(r => r.id === roomId);
+      
+      if (room) {
+        const chatMessage = {
+          player: playerName,
+          text: message,
+          timestamp: new Date()
+        };
+        
+        // Store message in room's chat history
+        if (!room.chatHistory) {
+          room.chatHistory = [];
+        }
+        room.chatHistory.push(chatMessage);
+        
+        // Broadcast to all players in the room
+        io.to(`room-${roomId}`).emit('chat:newMessage', chatMessage);
+      }
     });
 
     // handler do dolaczania do pokoju
@@ -408,6 +440,12 @@ const setupRoomSocketHandlers = (io) => {
         socket.roomId = roomId;
         io.to(`room-${roomId}`).emit('playerList', room.players);
         socket.emit('room:settings', room.settings);
+        
+        // Send chat history to rejoining player
+        if (room.chatHistory && room.chatHistory.length > 0) {
+          socket.emit('chat:history', room.chatHistory);
+        }
+        
         return;
       }
 
@@ -437,18 +475,19 @@ const setupRoomSocketHandlers = (io) => {
 
         // Send current game state
         socket.emit('room:settings', room.settings);
+        
+        // Send chat history to new player
+        if (room.chatHistory && room.chatHistory.length > 0) {
+          socket.emit('chat:history', room.chatHistory);
+        }
+        
         io.to(`room-${roomId}`).emit('playerList', room.players);
 
         // Redirect to game immediately
         socket.emit('game:startRound', { roomId });
 
         // Notify others
-        io.to(`room-${roomId}`).emit('chat:newMessage', {
-          player: 'System',
-          text: `${data.playerName} has joined the game`,
-          timestamp: new Date(),
-          type: 'system'
-        });
+        sendSystemMessage(roomId, `${data.playerName} has joined the game`);
 
         return;
       }
@@ -475,16 +514,16 @@ const setupRoomSocketHandlers = (io) => {
       // Send room settings to the new player
       socket.emit('room:settings', room.settings);
 
+      // Send chat history to new player
+      if (room.chatHistory && room.chatHistory.length > 0) {
+        socket.emit('chat:history', room.chatHistory);
+      }
+
       // Send current player list to all players in the room
       io.to(roomChannel).emit('playerList', room.players);
 
       // Send join message to chat
-      io.to(roomChannel).emit('chat:newMessage', {
-        player: 'System',
-        text: `${playerName} has joined the room`,
-        timestamp: new Date(),
-        type: 'system'
-      });
+      sendSystemMessage(roomId, `${playerName} has joined the room`);
 
       // inform player they joined
       socket.emit('rooms:joined', { room: getSafeRoom(room), player });
@@ -532,12 +571,7 @@ const setupRoomSocketHandlers = (io) => {
       }
 
       // Send leave message to chat
-      io.to(roomChannel).emit('chat:newMessage', {
-        player: 'System',
-        text: `${playerName} has left the room`,
-        timestamp: new Date(),
-        type: 'system'
-      });
+      sendSystemMessage(roomId, `${playerName} has left the room`);
       
       // Check if room is empty and delete it if so
       if (room.players.length === 0) {
@@ -595,12 +629,7 @@ const setupRoomSocketHandlers = (io) => {
             }
 
             // Send disconnect message to chat
-            io.to(`room-${roomId}`).emit('chat:newMessage', {
-              player: 'System',
-              text: `${player.name} has disconnected`,
-              timestamp: new Date(),
-              type: 'system'
-            });
+            sendSystemMessage(roomId, `${player.name} has disconnected`);
 
             // Check if room is empty and delete it if so
             if (room.players.length === 0) {
@@ -974,8 +1003,7 @@ exports.createRoom = (req, res) => {
       players: [],
       settings: {
         roomName: roomData.roomName,
-        roomCode: roomCode,
-        playersLimit: roomData.playersLimit || 4,
+        roomCode: roomCode,        playersLimit: roomData.playersLimit || 4,
         rounds: roomData.rounds || 5,
         powerUps: roomData.powerUps || 2,
         answerTime: roomData.answerTime || 30,
@@ -987,7 +1015,8 @@ exports.createRoom = (req, res) => {
       turnDeadline: null,
       stealUsedThisRound: false, // Initialize steal tracking
       gameHistory: [], // Track cars chosen in each round
-      playerQueue: [] // Queue for turn order (array of player IDs)
+      playerQueue: [], // Queue for turn order (array of player IDs)
+      chatHistory: [] // Store chat messages
     };
 
     console.log('Created new room object:', JSON.stringify(newRoom, null, 2));

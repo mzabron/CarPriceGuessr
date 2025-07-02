@@ -51,6 +51,10 @@ const GameLobby = () => {
       setMessages(prev => [...prev, message]);
     });
 
+    socketService.socket?.on('chat:history', (chatHistory) => {
+      setMessages(chatHistory);
+    });
+
     socketService.socket?.on('room:settings', (settings) => {
       setGameSettings(settings);
       setTempSettings(settings);
@@ -70,6 +74,7 @@ const GameLobby = () => {
       socketService.socket?.off('rooms:playerLeft');
       socketService.socket?.off('game:startRound');
       socketService.socket?.off('chat:newMessage');
+      socketService.socket?.off('chat:history');
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');
       socketService.socket?.off('hostStatus');
