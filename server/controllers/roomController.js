@@ -393,6 +393,9 @@ const setupRoomSocketHandlers = (io) => {
       const room = rooms.find(r => r.id === roomId);
       
       if (room) {
+        // Store old powerUps value to check if it changed
+        const oldPowerUps = room.settings.powerUps;
+        
         // Validate that powerUps don't exceed rounds
         const updatedSettings = { ...room.settings, ...settings };
         if (updatedSettings.powerUps > updatedSettings.rounds) {
@@ -400,6 +403,17 @@ const setupRoomSocketHandlers = (io) => {
         }
         
         room.settings = updatedSettings;
+        
+        // If powerUps changed, update all players' stealsRemaining
+        if (oldPowerUps !== updatedSettings.powerUps) {
+          room.players.forEach(player => {
+            player.stealsRemaining = updatedSettings.powerUps;
+          });
+          
+          // Emit updated player list to reflect the changes
+          io.to(`room-${roomId}`).emit('playerList', room.players);
+        }
+        
         io.to(`room-${roomId}`).emit('room:settingsUpdated', room.settings);
       }
     });
