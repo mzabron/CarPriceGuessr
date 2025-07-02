@@ -44,6 +44,11 @@ const Game = ({ gameSettings }) => {
       setMessages(chatHistory);
     });
 
+    // Listen for chat clear event
+    socketService.socket?.on('chat:clear', () => {
+      setMessages([]);
+    });
+
     // Request current player list when component mounts
     socketService.socket?.emit('rooms:join', { 
       roomId: parseInt(roomId),
@@ -58,6 +63,7 @@ const Game = ({ gameSettings }) => {
       socketService.socket?.off('rooms:playerJoined');
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('chat:history');
+      socketService.socket?.off('chat:clear');
     };
   }, [roomId]);
 
