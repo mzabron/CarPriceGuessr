@@ -55,6 +55,11 @@ const GameLobby = () => {
       setMessages(chatHistory);
     });
 
+    // Listen for chat clear event
+    socketService.socket?.on('chat:clear', () => {
+      setMessages([]);
+    });
+
     socketService.socket?.on('room:settings', (settings) => {
       setGameSettings(settings);
       setTempSettings(settings);
@@ -75,6 +80,7 @@ const GameLobby = () => {
       socketService.socket?.off('game:startRound');
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('chat:history');
+      socketService.socket?.off('chat:clear');
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');
       socketService.socket?.off('hostStatus');

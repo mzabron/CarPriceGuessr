@@ -349,6 +349,12 @@ const setupRoomSocketHandlers = (io) => {
         console.log(`${player.name} gets ${stealBonus} bonus points for ${player.stealsRemaining} remaining steals`);
       });
       
+      // Clear chat history after game finishes
+      room.chatHistory = [];
+      
+      // Notify all players to clear their chat
+      ioInstance.to(`room-${room.id}`).emit('chat:clear');
+      
       console.log('Finishing game - sending game history:', room.gameHistory);
       // Broadcast to ALL players in the room, not just the requesting socket
       ioInstance.to(`room-${room.id}`).emit('game:finishGame', {
@@ -945,6 +951,7 @@ const setupRoomSocketHandlers = (io) => {
         room.currentRoundTurns = 0;
         room.stealUsedThisRound = false;
         room.gameHistory = [];
+        room.chatHistory = []; // Clear chat history when resetting to lobby
         
         // Reset all players' ready status and clear any game-specific data
         room.players.forEach(player => {
@@ -958,6 +965,9 @@ const setupRoomSocketHandlers = (io) => {
           clearTimeout(room.turnTimer);
           room.turnTimer = null;
         }
+        
+        // Notify all players to clear their chat
+        io.to(`room-${roomId}`).emit('chat:clear');
         
         // Broadcast updated player list and room settings to all players in the room
         io.to(`room-${roomId}`).emit('playerList', room.players);
