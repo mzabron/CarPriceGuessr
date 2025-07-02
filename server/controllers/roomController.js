@@ -292,6 +292,14 @@ const setupRoomSocketHandlers = (io) => {
 
             room.currentRoundIndex += 1;
 
+            // Send round announcement to chat
+            io.to(`room-${socket.roomId}`).emit('chat:newMessage', {
+              player: 'System',
+              text: `Round ${room.currentRoundIndex}/${room.settings.rounds}`,
+              timestamp: new Date(),
+              type: 'round'
+            });
+
             const ebayController = require('./ebayController');
 
             ebayController.getCars(

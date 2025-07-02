@@ -26,10 +26,12 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
                     : msg.text.includes('left') || msg.text.includes('disconnected')
                       ? 'bg-red-50 text-red-600 italic'
                       : 'bg-gray-100 text-gray-600 italic'
-                  : 'bg-white'
+                  : msg.type === 'round'
+                    ? 'bg-blue-50 text-blue-600 italic font-semibold'
+                    : 'bg-white'
               }`}
             >
-              {msg.type === 'system' ? (
+              {msg.type === 'system' || msg.type === 'round' ? (
                 <div>{msg.text}</div>
               ) : (
                 <>
