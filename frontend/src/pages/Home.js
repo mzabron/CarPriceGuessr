@@ -1,26 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import RegisterModal from '../components/RegisterModal';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
 
 const Home = () => {
-  const [showRegister, setShowRegister] = useState(false);
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
-
-  // Sprawdzenie localStorage przy starcie
-  useEffect(() => {
-    const savedUser = localStorage.getItem('loggedInUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('loggedInUser');
-    setUser(null);
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -28,23 +13,6 @@ const Home = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">Car Price Guessr</h1>
-            {user ? (
-              <div className="flex space-x-4 items-center">
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowRegister(true)}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Login
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -78,21 +46,6 @@ const Home = () => {
       </main>
 
       {/* Modals */}
-      {showRegister && (
-        <RegisterModal
-          onClose={() => setShowRegister(false)}
-          onRegister={(newUser) => {
-            localStorage.setItem('loggedInUser', JSON.stringify(newUser));
-            setUser(newUser);
-            setShowRegister(false);
-          }}
-          onLogin={(loggedUser) => {
-            localStorage.setItem('loggedInUser', JSON.stringify(loggedUser));
-            setUser(loggedUser);
-            setShowRegister(false);
-          }}
-        />
-      )}
 
       {showCreateGame && (
         <CreateGameModal onClose={() => setShowCreateGame(false)} user={user} />
