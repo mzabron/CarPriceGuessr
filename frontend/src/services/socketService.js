@@ -8,7 +8,7 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('http://localhost:8080', {
+      this.socket = io(window.location.origin, {
         path: '/ws',
       });
       this.setupEventListeners();
@@ -107,4 +107,4 @@ class SocketService {
   }
 }
 
-export default new SocketService(); 
+export default new SocketService();
