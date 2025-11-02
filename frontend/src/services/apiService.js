@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = '';
 
 class ApiService {
   async createRoom(roomConfig) {
@@ -71,4 +71,4 @@ class ApiService {
   }
 }
 
-export default new ApiService(); 
+export default new ApiService();
