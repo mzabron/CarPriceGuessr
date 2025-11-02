@@ -8,11 +8,8 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      const socketUrl = window.location.origin;
-      console.log('Attempting to connect to WebSocket:', socketUrl + '/ws');
-      
-      this.socket = io(socketUrl, {
-        path: '/ws',  
+      this.socket = io('', {
+        path: '/ws',
       });
       
       this.setupEventListeners();
