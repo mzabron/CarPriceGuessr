@@ -14,10 +14,8 @@ function getSafeRooms(rooms) {
     name: room.name,
     players: room.players,
     settings: room.settings,
-    // Do NOT include turnTimer, turnDeadline, or any other non-serializable fields!
     currentTurnIndex: room.currentTurnIndex,
     currentRoundIndex: room.currentRoundIndex,
-    // add any other fields you want to expose
   }));
 }
 
@@ -30,7 +28,6 @@ function getSafeRoom(room) {
     settings: room.settings,
     currentTurnIndex: room.currentTurnIndex,
     currentRoundIndex: room.currentRoundIndex,
-    // add any other fields you want to expose
   };
 }
 

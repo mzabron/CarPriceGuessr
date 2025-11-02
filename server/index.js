@@ -15,20 +15,25 @@ const swaggerDocument = yaml.load('./docs/swagger.yaml');
 const app = express();
 const server = createServer(app);
 
-const URL = 'http://localhost:3000';
+const allowedOrigins = [
+  'https://carpriceguessr.com',
+  'https://www.carpriceguessr.com'
+];      
+
 const io = new Server(server, {
   path: '/ws',
   cors: {
-    origin: URL,
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   }
 });
 
 app.use(cors({
-  origin: URL,
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 app.use(express.json());
@@ -46,5 +51,6 @@ app.get('/', (req, res) => {
 
 server.listen(8080, async () => {
   console.log('Server listening on port 8080');
+  console.log('Allowed origins:', allowedOrigins.join(', '));
   console.log('Swagger documentation available at http://localhost:8080/api-docs');
 });
