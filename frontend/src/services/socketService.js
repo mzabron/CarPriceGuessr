@@ -8,7 +8,8 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      this.socket = io('', {
+      // Use current origin (works in both dev and prod)
+      this.socket = io(window.location.origin, {
         path: '/ws',
       });
       
