@@ -20,7 +20,7 @@ const Home = () => {
                 onClick={() => setShowSetName(true)}
                 className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-base font-medium shadow-sm transition-colors"
               >
-                Set name
+                {user?.name ? 'Change name' : 'Set name'}
               </button>
             </div>
           </div>

@@ -36,7 +36,9 @@ const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {
           ×
         </button>
 
-        <h3 className="text-xl font-semibold text-gray-900 mb-1">Set your nickname</h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+          {initialName ? 'Change your nickname' : 'Set your nickname'}
+        </h3>
         <p className="text-sm text-gray-500 mb-5">This name will be shown to other players.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
