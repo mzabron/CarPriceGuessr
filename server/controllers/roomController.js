@@ -686,7 +686,9 @@ const setupRoomSocketHandlers = (io) => {
 
     socket.on('game:vote', ({ roomId, playerName, carIndex }) => {
       if (!roomVotes[roomId]) return;
-      roomVotes[roomId].votes[playerName] = carIndex;
+      // Use a unique identifier for voters to avoid name collisions
+      const voterId = socket.id;
+      roomVotes[roomId].votes[voterId] = carIndex;
       io.to(`room-${roomId}`).emit('game:votesUpdate', roomVotes[roomId].votes);
     });
 

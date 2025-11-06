@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
+import SetNameModal from '../components/SetNameModal';
 
 const Home = () => {
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
+  const [showSetName, setShowSetName] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -13,6 +15,14 @@ const Home = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">Car Price Guessr</h1>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowSetName(true)}
+                className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-base font-medium shadow-sm transition-colors"
+              >
+                Set name
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -53,6 +63,17 @@ const Home = () => {
 
       {showRoomList && (
         <RoomList onClose={() => setShowRoomList(false)} user={user} />
+      )}
+
+      {showSetName && (
+        <SetNameModal
+          initialName={user?.name || ''}
+          onClose={() => setShowSetName(false)}
+          onSubmit={(name) => {
+            setUser({ name });
+            setShowSetName(false);
+          }}
+        />
       )}
     </div>
   );

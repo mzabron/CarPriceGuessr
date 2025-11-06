@@ -117,7 +117,7 @@ const RoomList = ({ onClose, user }) => {
         {!user && (
           <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded">
             <p className="text-sm text-yellow-700">
-              You are not logged in but you can still join as a guest.
+              You didn't set a username but you can still join as a guest.
             </p>
           </div>
         )}
