@@ -1,9 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 
-const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
+const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage, forceScrollTrigger = 0 }) => {
   const chatContainerRef = useRef(null);
 
-  // Auto-scroll chat when new messages arrive
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Scroll to bottom on mount
+  useEffect(() => {
+    scrollToBottom();
+  }, []);
+
+  // Auto-scroll chat when new messages arrive (only if user is near bottom)
   useEffect(() => {
     if (chatContainerRef.current) {
       const { scrollHeight, clientHeight, scrollTop } = chatContainerRef.current;
@@ -13,11 +24,18 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage }) => {
       }
     }
   }, [messages]);
+
+  // Force scroll when trigger changes (e.g., on game start or history load)
+  useEffect(() => {
+    scrollToBottom();
+  }, [forceScrollTrigger]);
+
   return (
     <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-gray-100 flex flex-col border-l border-gray-300">
       <div ref={chatContainerRef} className="flex-1 p-2 overflow-y-auto thin-scrollbar">
         <div className="space-y-1">
-          {messages.map((msg, index) => (            <div
+          {messages.map((msg, index) => (
+            <div
               key={index}
               className={`p-1.5 rounded shadow-sm text-xs sm:text-sm break-words ${
                 msg.type === 'system'

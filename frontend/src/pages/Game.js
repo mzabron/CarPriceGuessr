@@ -11,6 +11,7 @@ const Game = ({ gameSettings }) => {
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [scrollTrigger, setScrollTrigger] = useState(0);
 
   useEffect(() => {
     // Listen for player updates
@@ -37,16 +38,28 @@ const Game = ({ gameSettings }) => {
     // Listen for chat messages
     socketService.socket?.on('chat:newMessage', (message) => {
       setMessages(prev => [...prev, message]);
+      // Force scroll on round announcements
+      if (message?.type === 'round') {
+        setScrollTrigger(t => t + 1);
+      }
     });
 
     // Listen for chat history
     socketService.socket?.on('chat:history', (chatHistory) => {
       setMessages(chatHistory);
+      // Force scroll after history loads
+      setScrollTrigger(t => t + 1);
     });
 
     // Listen for chat clear event
     socketService.socket?.on('chat:clear', () => {
       setMessages([]);
+      setScrollTrigger(t => t + 1);
+    });
+
+    // Also force scroll on game start if this client receives it
+    socketService.socket?.on('game:startRound', () => {
+      setScrollTrigger(t => t + 1);
     });
 
     // Request current player list when component mounts
@@ -64,6 +77,7 @@ const Game = ({ gameSettings }) => {
       socketService.socket?.off('chat:newMessage');
       socketService.socket?.off('chat:history');
       socketService.socket?.off('chat:clear');
+      socketService.socket?.off('game:startRound');
     };
   }, [roomId]);
 
@@ -88,6 +102,7 @@ const Game = ({ gameSettings }) => {
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         onSendMessage={handleSendMessage}
+        forceScrollTrigger={scrollTrigger}
       />
     </div>
   );

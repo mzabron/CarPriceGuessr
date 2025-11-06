@@ -16,6 +16,7 @@ const GameLobby = () => {
   const [allPlayersReady, setAllPlayersReady] = useState(false);
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(null);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
 
   useEffect(() => {
     const currentUser = socketService.getCurrentUser();
@@ -44,20 +45,28 @@ const GameLobby = () => {
     });
 
     socketService.socket?.on('game:startRound', ({ roomId }) => {
+      // Force scroll to bottom when the game starts
+      setScrollTrigger(t => t + 1);
       navigate(`/game/${roomId}`);
     });
 
     socketService.socket?.on('chat:newMessage', (message) => {
       setMessages(prev => [...prev, message]);
+      if (message?.type === 'round') {
+        setScrollTrigger(t => t + 1);
+      }
     });
 
     socketService.socket?.on('chat:history', (chatHistory) => {
       setMessages(chatHistory);
+      // Force scroll after history loads
+      setScrollTrigger(t => t + 1);
     });
 
     // Listen for chat clear event
     socketService.socket?.on('chat:clear', () => {
       setMessages([]);
+      setScrollTrigger(t => t + 1);
     });
 
     socketService.socket?.on('room:settings', (settings) => {
@@ -356,6 +365,7 @@ const GameLobby = () => {
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         onSendMessage={handleSendMessage}
+        forceScrollTrigger={scrollTrigger}
       />
     </div>
   );
