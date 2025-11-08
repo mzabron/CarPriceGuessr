@@ -85,6 +85,20 @@ class SocketService {
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
     });
+
+    // Keep currentUser.id in sync once the server acknowledges join
+    this.socket.on('rooms:joined', (data) => {
+      try {
+        const joinedPlayerId = data?.player?.id;
+        if (joinedPlayerId) {
+          if (!this.currentUser) this.currentUser = {};
+          this.currentUser.id = joinedPlayerId;
+        }
+      } catch (e) {
+        // Non-fatal; just log
+        console.warn('Failed to set currentUser.id from rooms:joined', e);
+      }
+    });
   }
 
   // Event listeners

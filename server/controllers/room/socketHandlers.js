@@ -229,10 +229,19 @@ function setupRoomSocketHandlers(io) {
       io.to(`room-${roomId}`).emit('game:votingStarted');
     });
 
-    socket.on('game:vote', ({ roomId, playerName, carIndex }) => {
+    socket.on('game:vote', ({ roomId, playerId, playerName, carIndex }) => {
       const roomVotes = getRoomVotes();
       if (!roomVotes[roomId]) return;
-      roomVotes[roomId].votes[playerName] = carIndex;
+      // Prefer playerId; fall back to resolving by name for backward compatibility
+      let key = playerId;
+      if (!key && playerName) {
+        const rooms = getRooms();
+        const room = rooms.find(r => r.id === roomId);
+        const player = room?.players?.find(p => p.name === playerName);
+        key = player?.id || playerName;
+      }
+      if (!key) return;
+      roomVotes[roomId].votes[key] = carIndex;
       io.to(`room-${roomId}`).emit('game:votesUpdate', roomVotes[roomId].votes);
     });
 
@@ -249,7 +258,7 @@ function setupRoomSocketHandlers(io) {
       room.pendingGuess = { playerId: currentPlayer.id, price: data.price };
       const { getCarPrice } = require('./state');
       const deviation = getDeviation(data.price, getCarPrice());
-      io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerName: currentPlayer.name, price: data.price, deviation });
+      io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: currentPlayer.id, playerName: currentPlayer.name, price: data.price, deviation });
       room.pendingGuess = null;
       if (deviation < correctGuessThreshold) {
         const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
@@ -258,6 +267,7 @@ function setupRoomSocketHandlers(io) {
         currentPlayer.points += totalPoints;
         io.to(`room-${room.id}`).emit('playerList', room.players);
         io.to(`room-${room.id}`).emit('game:finishRound', {
+          playerId: currentPlayer.id,
           playerName: currentPlayer.name,
           price: data.price,
           actualPrice: getCarPrice(),
@@ -282,7 +292,10 @@ function setupRoomSocketHandlers(io) {
       const room = rooms.find(r => r.id === socket.roomId);
       if (!room) return;
       const currentPlayer = getCurrentPlayerFromQueue(room);
-      if (!currentPlayer || currentPlayer.name !== data.playerName) return;
+      // Allow matching either by playerId (preferred) or by name for backward compatibility
+      if (!currentPlayer) return;
+      if (data.playerId && currentPlayer.id !== data.playerId) return;
+      if (!data.playerId && data.playerName && currentPlayer.name !== data.playerName) return;
       room.pendingGuess = { playerId: currentPlayer.id, price: data.price };
     });
 
@@ -314,7 +327,7 @@ function setupRoomSocketHandlers(io) {
         if (room.pendingGuess && room.pendingGuess.playerId === stealingPlayer.id) {
           priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
           const deviation = getDeviation(priceToSend, getCarPrice());
-          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerName: stealingPlayer.name, price: priceToSend, deviation });
+          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: priceToSend, deviation });
           room.pendingGuess = null;
           if (deviation < correctGuessThreshold) {
             const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
@@ -322,12 +335,12 @@ function setupRoomSocketHandlers(io) {
             const totalPoints = accuracyPoints + turnBonus;
             stealingPlayer.points += totalPoints;
             io.to(`room-${room.id}`).emit('playerList', room.players);
-            io.to(`room-${room.id}`).emit('game:finishRound', { playerName: stealingPlayer.name, price: priceToSend, actualPrice: getCarPrice(), pointsAwarded: totalPoints, accuracyPoints, turnBonus, turnsPlayed: room.currentRoundTurns, deviation, currentRound: room.currentRoundIndex, totalRounds: room.settings.rounds, isLastRound: room.currentRoundIndex >= room.settings.rounds });
+            io.to(`room-${room.id}`).emit('game:finishRound', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: priceToSend, actualPrice: getCarPrice(), pointsAwarded: totalPoints, accuracyPoints, turnBonus, turnsPlayed: room.currentRoundTurns, deviation, currentRound: room.currentRoundIndex, totalRounds: room.settings.rounds, isLastRound: room.currentRoundIndex >= room.settings.rounds });
             room.currentRoundTurns = 0;
             return;
           }
         } else {
-          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerName: stealingPlayer.name, price: 0, deviation: 100 });
+          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: 0, deviation: 100 });
         }
         handleStealInQueue(room, stealingPlayer.id);
         room.currentQueueIndex = originalQueueIndex;

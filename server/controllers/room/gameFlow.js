@@ -38,6 +38,7 @@ function startNextTurn(room) {
       priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
       const deviation = getDeviation(priceToSend, getCarPrice());
       io?.to(`room-${room.id}`).emit('game:guessConfirmed', {
+        playerId: currentPlayer.id,
         playerName: currentPlayer.name,
         price: priceToSend,
         deviation,
@@ -51,6 +52,7 @@ function startNextTurn(room) {
         currentPlayer.points += totalPoints;
         io?.to(`room-${room.id}`).emit('playerList', room.players);
         io?.to(`room-${room.id}`).emit('game:finishRound', {
+          playerId: currentPlayer.id,
           playerName: currentPlayer.name,
           price: priceToSend,
           actualPrice: getCarPrice(),
@@ -68,6 +70,7 @@ function startNextTurn(room) {
       }
     } else {
       io?.to(`room-${room.id}`).emit('game:guessConfirmed', {
+        playerId: currentPlayer.id,
         playerName: currentPlayer.name,
         price: 0,
         deviation: 100,

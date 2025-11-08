@@ -8,9 +8,10 @@ const PLAYER_COLORS = [
   'text-orange-600', 'text-gray-600'
 ];
 
-function getPlayerColor(name, playerList) {
-  const idx = playerList.findIndex(n => n === name);
-  return PLAYER_COLORS[idx % PLAYER_COLORS.length];
+function getPlayerColorById(id, orderedIds) {
+  if (!id) return 'text-gray-600';
+  const idx = orderedIds.indexOf(id);
+  return PLAYER_COLORS[(idx >= 0 ? idx : 0) % PLAYER_COLORS.length];
 }
 
 const GameContent = ({ gameSettings, players = [] }) => {
@@ -44,8 +45,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
     { label: 'Over 300k', min: 300000, max: 1000000 }
   ];
 
-  const playerName = socketService.getCurrentUser()?.name;
-  const playerNames = players.map(p => p.name);
+  const currentUser = socketService.getCurrentUser() || {};
+  const playerName = currentUser.name;
+  const playerId = currentUser.id;
+  const playerIdsInOrder = players.map(p => p.id);
   const [guessPrice, setGuessPrice] = useState('');
   const [sliderPrice, setSliderPrice] = useState(10000);
   const [selectedRange, setSelectedRange] = useState(PRICE_RANGES[0]);
@@ -153,8 +156,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
       return () => clearInterval(interval);
     });
 
-    socketService.socket?.on('game:votesUpdate', (votes) => {
-      setVotes(votes);
+    socketService.socket?.on('game:votesUpdate', (votesUpdate) => {
+      setVotes(votesUpdate);
     });
 
     socketService.socket?.on('game:votingResult', ({ winningIndex }) => {
@@ -166,11 +169,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
     // Listen for guess result/confirmation from backend
     socketService.socket?.on('game:guessResult', (data) => {
-      setLastGuess({ playerName: data.playerName, price: data.price });
+      setLastGuess({ playerId: data.playerId, playerName: data.playerName, price: data.price });
       setGuessSubmitted(false);
     });
     socketService.socket?.on('game:guessConfirmed', (data) => {
-      setLastGuess({ playerName: data.playerName, price: data.price });
+      setLastGuess({ playerId: data.playerId, playerName: data.playerName, price: data.price });
       setGuessSubmitted(false);
     });
 
@@ -206,7 +209,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       closeRoundModal();
       
       // If current player is host, start the next round
-      const currentPlayer = players.find(p => p.name === playerName);
+  const currentPlayer = players.find(p => p.id === playerId);
       if (currentPlayer && currentPlayer.isHost) {
         socketService.socket.emit('game:startRound', { roomId });
       }
@@ -294,7 +297,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const handleVote = (carIdx) => {
-    socketService.socket.emit('game:vote', { roomId, playerName, carIndex: carIdx });
+    socketService.socket.emit('game:vote', { roomId, playerId, playerName, carIndex: carIdx });
   };
 
   const handleSliderChange = (e) => {
@@ -420,7 +423,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   useEffect(() => {
     if (
       turnTimeLeft === 0 &&
-      currentTurn?.playerName === playerName &&
+  currentTurn?.playerId === playerId &&
       !guessSubmitted &&
       currentTurn &&
       guessPrice !== '' &&
@@ -436,6 +439,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     setGuessSubmitted(true);
     socketService.socket.emit('game:confirmGuess', {
       roomId,
+      playerId,
       playerName,
       price: Number(guessPrice),
     });
@@ -444,12 +448,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
   useEffect(() => {
     if (
-      currentTurn?.playerName === playerName &&
+  currentTurn?.playerId === playerId &&
       guessPrice &&
       !isNaN(Number(guessPrice))
     ) {
       socketService.socket.emit('game:updatePendingGuess', {
         roomId,
+        playerId,
         playerName,
         price: Number(guessPrice)
       });
@@ -492,7 +497,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     closeRoundModal();
     
     // Check if current player is host
-    const currentPlayer = players.find(p => p.name === playerName);
+  const currentPlayer = players.find(p => p.id === playerId);
     if (currentPlayer && currentPlayer.isHost) {
       // Host starts the round
       socketService.socket.emit('game:startRound', { roomId });
@@ -503,7 +508,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const handleSteal = () => {
-    const currentPlayer = players.find(p => p.name === playerName);
+  const currentPlayer = players.find(p => p.id === playerId);
     
     // Check if player has steals remaining
     if (!currentPlayer || currentPlayer.stealsRemaining <= 0) {
@@ -518,7 +523,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
     
     // Check if it's already their turn
-    if (currentTurn?.playerName === playerName) {
+  if (currentTurn?.playerId === playerId) {
       alert('It is already your turn!');
       return;
     }
@@ -528,17 +533,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const getCurrentPlayerSteals = () => {
-    const currentPlayer = players.find(p => p.name === playerName);
+  const currentPlayer = players.find(p => p.id === playerId);
     return currentPlayer ? currentPlayer.stealsRemaining : 0;
   };
 
   const canUseSteal = () => {
-    const currentPlayer = players.find(p => p.name === playerName);
+  const currentPlayer = players.find(p => p.id === playerId);
     return (
       currentPlayer &&
       currentPlayer.stealsRemaining > 0 &&
       !stealUsedThisRound &&
-      currentTurn?.playerName !== playerName &&
+  currentTurn?.playerId !== playerId &&
       currentTurn // Make sure there is an active turn
     );
   };
@@ -592,21 +597,24 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 {cars.map((car, idx) => {
                   const voters = Object.entries(votes)
                     .filter(([_, v]) => v === idx)
-                    .map(([name]) => name);
+                    .map(([idOrName]) => {
+                      const player = players.find(p => p.id === idOrName || p.name === idOrName);
+                      return player ? { id: player.id, name: player.name } : { id: idOrName, name: idOrName };
+                    });
                   return (
                     <button
                       key={idx}
                       onClick={() => handleVote(idx)}
                       className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${
-                        votes[playerName] === idx ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
+                        (votes[playerId] === idx || votes[playerName] === idx) ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
                       }`}
                       style={{ minHeight: '90px' }}
                     >
                       {getDisplayText(car)}
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {voters.map((name) => (
-                          <span key={name} className={`font-bold ${getPlayerColor(name, playerNames)}`}>
-                            {name}
+                        {voters.map((v) => (
+                          <span key={v.id} className={`font-bold ${getPlayerColorById(v.id, playerIdsInOrder)}`}>
+                            {v.name}
                           </span>
                         ))}
                       </div>
@@ -808,7 +816,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-3 mb-1">
                     <span className="font-bold text-base">
-                      Turn: <span className={getPlayerColor(currentTurn?.playerName, playerNames)}>{currentTurn?.playerName || "..."}</span>
+                      Turn: <span className={getPlayerColorById(currentTurn?.playerId, playerIdsInOrder)}>{currentTurn?.playerName || "..."}</span>
                     </span>
                     <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-base font-mono">
                       {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
@@ -816,7 +824,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
-                        <span className={getPlayerColor(lastGuess.playerName, playerNames)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
+                        <span className={getPlayerColorById(lastGuess.playerId, playerIdsInOrder)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
                         {(() => {
                           // Compare guess to actual car price
                           const car = cars[getActiveCarIndex()];
@@ -854,7 +862,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           ? 'Steal already used this round'
                           : getCurrentPlayerSteals() <= 0 
                             ? 'No steals remaining'
-                            : currentTurn?.playerName === playerName
+                            : (currentTurn?.playerId === playerId)
                               ? 'Already your turn'
                               : `Steal (${getCurrentPlayerSteals()} left)`
                       }
@@ -863,7 +871,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     </button>
                     <button
                       onClick={e => {
-                        if (currentTurn?.playerName !== playerName || guessSubmitted) return;
+                        if (currentTurn?.playerId !== playerId || guessSubmitted) return;
                         submitGuess();
                         const btn = e.currentTarget;
                         btn.classList.add('scale-95', 'ring', 'ring-green-400');
@@ -871,14 +879,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           btn.classList.remove('scale-95', 'ring', 'ring-green-400');
                         }, 180);
                       }}
-                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${currentTurn?.playerName === playerName && !guessSubmitted
+                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${(currentTurn?.playerId === playerId) && !guessSubmitted
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       disabled={
                         guessPrice === '' ||
                         isNaN(Number(guessPrice)) ||
-                        currentTurn?.playerName !== playerName ||
+                        currentTurn?.playerId !== playerId ||
                         guessSubmitted
                       }
                       style={{ transition: 'transform 0.15s, box-shadow 0.15s', minWidth: '140px' }}
