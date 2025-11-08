@@ -62,14 +62,17 @@ const CreateGameModal = ({ onClose, user }) => {
       // Connect to socket
       socketService.connect();
       
+      // ... existing code ...
       // Set current user as host
       const hostUser = {
         name: user ? user.name : `Guest_${Math.floor(Math.random() * 10000)}`,
-        isHost: true
+        isHost: true,
+        preferredColor: user?.preferredColor,
       };
       socketService.setCurrentUser(hostUser);
       
       // Join the room
+// ... existing code ...
       await socketService.joinRoom(response.room.id);
       
       onClose();

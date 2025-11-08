@@ -26,6 +26,10 @@ class SocketService {
   }
 
   setCurrentUser(user) {
+    // Normalize preferredColor structure: allow passing {preferredColorKey: 'cyan'} etc.
+    if (user && user.preferredColorKey && !user.preferredColor) {
+      user.preferredColor = { key: user.preferredColorKey };
+    }
     this.currentUser = user;
   }
 
@@ -41,12 +45,14 @@ class SocketService {
     }
     
     const playerName = this.currentUser ? this.currentUser.name : `Guest_${Math.floor(Math.random() * 1000)}`;
-    console.log('Emitting rooms:join:', { roomId, playerName });
+    const preferredColorKey = this.currentUser?.preferredColor?.key || null;
+    console.log('Emitting rooms:join:', { roomId, playerName, preferredColorKey });
     
     this.socket.emit('rooms:join', { 
       roomId,
       playerName,
-      isHost: this.currentUser?.isHost || false
+      isHost: this.currentUser?.isHost || false,
+      preferredColorKey
     });
   }
 

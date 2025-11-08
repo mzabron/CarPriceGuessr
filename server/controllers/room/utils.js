@@ -1,4 +1,6 @@
 // Utility functions for room data shaping and calculations
+const { getRooms } = require('./state');
+const { assignPlayerColor } = require('./colorAssignment');
 
 function getSafeRooms(rooms) {
   return rooms.map(getSafeRoom);
@@ -46,4 +48,5 @@ module.exports = {
   getSafeRoom,
   generateRoomCode,
   getDeviation,
+  assignPlayerColor,
 };

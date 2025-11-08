@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
+// Align color options with player pastel palette used in PlayerList
+const COLOR_OPTIONS = [
+  { key: 'random', name: 'Random', bgClass: 'bg-gradient-to-r from-pink-200 via-yellow-200 to-green-200' },
+  { key: 'red', name: 'Red', bgClass: 'bg-red-200' },
+  { key: 'blue', name: 'Blue', bgClass: 'bg-blue-200' },
+  { key: 'green', name: 'Green', bgClass: 'bg-green-200' },
+  { key: 'yellow', name: 'Yellow', bgClass: 'bg-yellow-200' },
+  { key: 'purple', name: 'Purple', bgClass: 'bg-purple-200' },
+  { key: 'pink', name: 'Pink', bgClass: 'bg-pink-200' },
+  { key: 'cyan', name: 'Cyan', bgClass: 'bg-cyan-200' },
+  { key: 'brown', name: 'Brown', bgClass: 'bg-amber-900' },
+  { key: 'orange', name: 'Orange', bgClass: 'bg-orange-200' },
+  { key: 'gray', name: 'Gray', bgClass: 'bg-gray-300' },
+];
+
 const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {
   const [name, setName] = useState(initialName);
+  const [colorIndex, setColorIndex] = useState(0); // default to 'random'
 
   useEffect(() => {
     setName(initialName || '');
@@ -12,7 +28,8 @@ const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (trimmed.length > 15) return;
-    onSubmit?.(trimmed);
+    const selected = COLOR_OPTIONS[colorIndex] || COLOR_OPTIONS[0];
+    onSubmit?.({ name: trimmed, preferredColor: selected });
   };
 
   return (
@@ -43,19 +60,61 @@ const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
-              Nickname
-            </label>
             <input
               id="nickname"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Speedster42"
+              placeholder="Your nickname"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               autoFocus
-              maxLength={15}
+              maxLength={12}
             />
+          </div>
+
+          {/* Preferred color selector */}
+          <div>
+            <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+              Preferred color
+            </label>
+            <div className="flex items-center justify-between gap-3">
+              {/* Prev arrow */}
+              <button
+                type="button"
+                onClick={() => setColorIndex((i) => (i - 1 + COLOR_OPTIONS.length) % COLOR_OPTIONS.length)}
+                className="p-2 rounded-md hover:bg-gray-100 text-gray-700"
+                aria-label="Previous color"
+                title="Previous color"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+
+              {/* Color sample and name */}
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex w-9 h-9 rounded-full border border-gray-300 shadow-inner ${COLOR_OPTIONS[colorIndex].bgClass}`}
+                  aria-label={`Selected color ${COLOR_OPTIONS[colorIndex].name}`}
+                />
+                <span className="text-sm font-medium text-gray-800 min-w-[5.5rem]">
+                  {COLOR_OPTIONS[colorIndex].name}
+                </span>
+              </div>
+
+              {/* Next arrow */}
+              <button
+                type="button"
+                onClick={() => setColorIndex((i) => (i + 1) % COLOR_OPTIONS.length)}
+                className="p-2 rounded-md hover:bg-gray-100 text-gray-700"
+                aria-label="Next color"
+                title="Next color"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <button
