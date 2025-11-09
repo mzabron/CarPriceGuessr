@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 
-// Align color options with player pastel palette used in PlayerList
+// Align color options with unified palette (PLAYER_BG_COLOR)
+// Keys correspond to assignedColorKey/preferredColorKey stored on server.
 const COLOR_OPTIONS = [
   { key: 'random', name: 'Random', bgClass: 'bg-gradient-to-r from-pink-200 via-yellow-200 to-green-200' },
-  { key: 'red', name: 'Red', bgClass: 'bg-red-200' },
-  { key: 'blue', name: 'Blue', bgClass: 'bg-blue-200' },
-  { key: 'green', name: 'Green', bgClass: 'bg-green-200' },
-  { key: 'yellow', name: 'Yellow', bgClass: 'bg-yellow-200' },
-  { key: 'purple', name: 'Purple', bgClass: 'bg-purple-200' },
-  { key: 'pink', name: 'Pink', bgClass: 'bg-pink-200' },
-  { key: 'cyan', name: 'Cyan', bgClass: 'bg-cyan-200' },
-  { key: 'brown', name: 'Brown', bgClass: 'bg-amber-900' },
-  { key: 'orange', name: 'Orange', bgClass: 'bg-orange-200' },
-  { key: 'gray', name: 'Gray', bgClass: 'bg-gray-300' },
+  { key: 'red', name: 'Red', bgClass: 'bg-red-600' },
+  { key: 'blue', name: 'Blue', bgClass: 'bg-blue-500' },
+  { key: 'green', name: 'Green', bgClass: 'bg-lime-500' },
+  { key: 'yellow', name: 'Yellow', bgClass: 'bg-yellow-400' },
+  { key: 'purple', name: 'Purple', bgClass: 'bg-violet-500' },
+  { key: 'pink', name: 'Pink', bgClass: 'bg-fuchsia-400' },
+  { key: 'cyan', name: 'Cyan', bgClass: 'bg-cyan-400' },
+  { key: 'amber', name: 'Brown', bgClass: 'bg-amber-800' },
+  { key: 'orange', name: 'Orange', bgClass: 'bg-orange-500' },
+  { key: 'gray', name: 'Gray', bgClass: 'bg-stone-500' },
 ];
 
 const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {

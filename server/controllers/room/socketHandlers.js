@@ -125,8 +125,24 @@ function setupRoomSocketHandlers(io) {
         return socket.emit('error', { message: `Room with id ${roomId} is currently full` });
       }
 
+      // Collect already assigned colors in this room
+      const assignedColorsInUse = new Set(room.players.map(p => p.assignedColorKey).filter(Boolean));
+      const COLOR_POOL = ['red','blue','green','yellow','purple','pink','cyan','amber','orange','gray'];
+      function pickAssignedColor(preferredColorKey) {
+        let chosen = null;
+        if (preferredColorKey && COLOR_POOL.includes(preferredColorKey) && !assignedColorsInUse.has(preferredColorKey)) {
+          chosen = preferredColorKey;
+        } else {
+          const available = COLOR_POOL.filter(c => !assignedColorsInUse.has(c));
+          chosen = available.length ? available[Math.floor(Math.random() * available.length)] : COLOR_POOL[0];
+        }
+        return chosen;
+      }
+      const preferredColorKey = (data.preferredColorKey && COLOR_POOL.includes(data.preferredColorKey)) ? data.preferredColorKey : null;
+
       if (room.gameStarted && !data.rejoin) {
-        const player = { id: socket.id, name: data.playerName, points: 0, isReady: true, isHost: data.isHost || false, stealsRemaining: room.settings.powerUps || 2 };
+        const assignedColorKey = pickAssignedColor(preferredColorKey);
+        const player = { id: socket.id, name: data.playerName, points: 0, isReady: true, isHost: data.isHost || false, stealsRemaining: room.settings.powerUps || 2, preferredColorKey, assignedColorKey };
         room.players.push(player);
         if (room.playerQueue) room.playerQueue.push(player.id);
         socket.join(`room-${roomId}`);
@@ -134,6 +150,9 @@ function setupRoomSocketHandlers(io) {
         socket.emit('room:settings', room.settings);
         if (room.chatHistory?.length) socket.emit('chat:history', room.chatHistory);
         io.to(`room-${roomId}`).emit('playerList', room.players);
+        try {
+          console.log(`[room ${roomId}] Players after join (in-game):`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
+        } catch (e) {}
         socket.emit('game:startRound', { roomId });
         sendSystemMessage(roomId, `${data.playerName} has joined the game`);
         return;
@@ -141,13 +160,17 @@ function setupRoomSocketHandlers(io) {
 
       const playerName = data.playerName;
       const roomChannel = `room-${roomId}`;
-      const player = { id: socket.id, name: playerName, points: 0, isReady: false, isHost: data.isHost || false, stealsRemaining: room.settings.powerUps || 2 };
+      const assignedColorKey = pickAssignedColor(preferredColorKey);
+      const player = { id: socket.id, name: playerName, points: 0, isReady: false, isHost: data.isHost || false, stealsRemaining: room.settings.powerUps || 2, preferredColorKey, assignedColorKey };
       room.players.push(player);
       socket.join(roomChannel);
       socket.roomId = roomId;
       socket.emit('room:settings', room.settings);
       if (room.chatHistory?.length) socket.emit('chat:history', room.chatHistory);
       io.to(roomChannel).emit('playerList', room.players);
+      try {
+        console.log(`[room ${roomId}] Players after join:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
+      } catch (e) {}
       sendSystemMessage(roomId, `${playerName} has joined the room`);
       socket.emit('rooms:joined', { room: getSafeRoom(room), player });
       io.to(roomChannel).emit('rooms:playerJoined', { roomId, playerName, players: room.players });
@@ -186,6 +209,9 @@ function setupRoomSocketHandlers(io) {
       }
       socket.emit('rooms:left', { room: getSafeRoom(room), playerName });
       io.to(roomChannel).emit('rooms:playerLeft', { roomId, playerName, players: room.players });
+      try {
+        console.log(`[room ${roomId}] Players after leave:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
+      } catch (e) {}
       socket.roomId = null;
       io.emit('rooms:list', getSafeRooms(getRooms()));
     });
@@ -200,7 +226,7 @@ function setupRoomSocketHandlers(io) {
       if (idx === -1) return;
       const player = room.players[idx];
       const wasHost = player.isHost;
-      room.players.splice(idx, 1);
+  room.players.splice(idx, 1);
       if (wasHost && room.players.length > 0) {
         room.players[0].isHost = true;
         io.to(room.players[0].id).emit('hostStatus', true);
@@ -216,6 +242,9 @@ function setupRoomSocketHandlers(io) {
         setRooms(next);
       }
       io.to(`room-${roomId}`).emit('rooms:playerLeft', { roomId, playerId: socket.id, playerName: player.name, players: room.players });
+      try {
+        console.log(`[room ${roomId}] Players after disconnect:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
+      } catch (e) {}
       io.emit('rooms:list', getSafeRooms(getRooms()));
     });
 

@@ -2,16 +2,40 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 
-const PLAYER_COLORS = [
-  'text-red-600', 'text-blue-600', 'text-green-600', 'text-yellow-600',
-  'text-purple-600', 'text-pink-600', 'text-cyan-600', 'text-amber-900',
-  'text-orange-600', 'text-gray-600'
-];
+// Use the exact same bg colors as SetNameModal and PlayerList
+const PLAYER_BG_COLOR = {
+  red: 'bg-red-600',
+  blue: 'bg-blue-500',
+  green: 'bg-lime-400',
+  yellow: 'bg-yellow-300',
+  purple: 'bg-violet-500',
+  pink: 'bg-fuchsia-400',
+  cyan: 'bg-cyan-400',
+  amber: 'bg-amber-800',
+  orange: 'bg-orange-500',
+  gray: 'bg-stone-500',
+};
 
-function getPlayerColorById(id, orderedIds) {
-  if (!id) return 'text-gray-600';
-  const idx = orderedIds.indexOf(id);
-  return PLAYER_COLORS[(idx >= 0 ? idx : 0) % PLAYER_COLORS.length];
+// Choose readable text over the background swatch
+const PLAYER_TEXT_ON_BG = {
+  red: 'text-white',
+  blue: 'text-white',
+  green: 'text-white',
+  yellow: 'text-white',
+  purple: 'text-white',
+  pink: 'text-white',
+  cyan: 'text-white',
+  amber: 'text-white',
+  orange: 'text-white',
+  gray: 'text-white',
+};
+
+function getPlayerBadgeClassesById(id, players) {
+  const player = players.find(p => p.id === id);
+  const key = player?.assignedColorKey || player?.assignedColor || 'gray';
+  const bg = PLAYER_BG_COLOR[key] || PLAYER_BG_COLOR.gray;
+  const text = PLAYER_TEXT_ON_BG[key] || PLAYER_TEXT_ON_BG.gray;
+  return `${bg} ${text} px-1.5 py-0.5 rounded`;
 }
 
 const GameContent = ({ gameSettings, players = [] }) => {
@@ -48,7 +72,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const currentUser = socketService.getCurrentUser() || {};
   const playerName = currentUser.name;
   const playerId = currentUser.id;
-  const playerIdsInOrder = players.map(p => p.id);
+  // players array now contains assignedColorKey per player; use it for coloring
   const [guessPrice, setGuessPrice] = useState('');
   const [sliderPrice, setSliderPrice] = useState(10000);
   const [selectedRange, setSelectedRange] = useState(PRICE_RANGES[0]);
@@ -613,7 +637,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       {getDisplayText(car)}
                       <div className="flex flex-wrap gap-1 mt-2">
                         {voters.map((v) => (
-                          <span key={v.id} className={`font-bold ${getPlayerColorById(v.id, playerIdsInOrder)}`}>
+                          <span key={v.id} className={`font-bold ${getPlayerBadgeClassesById(v.id, players)}`}>
                             {v.name}
                           </span>
                         ))}
@@ -816,7 +840,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-3 mb-1">
                     <span className="font-bold text-base">
-                      Turn: <span className={getPlayerColorById(currentTurn?.playerId, playerIdsInOrder)}>{currentTurn?.playerName || "..."}</span>
+                      Turn: <span className={getPlayerBadgeClassesById(currentTurn?.playerId, players)}>{currentTurn?.playerName || "..."}</span>
                     </span>
                     <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-base font-mono">
                       {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
@@ -824,7 +848,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
-                        <span className={getPlayerColorById(lastGuess.playerId, playerIdsInOrder)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
+                        <span className={getPlayerBadgeClassesById(lastGuess.playerId, players)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
                         {(() => {
                           // Compare guess to actual car price
                           const car = cars[getActiveCarIndex()];
