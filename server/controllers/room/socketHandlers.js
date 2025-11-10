@@ -192,6 +192,13 @@ function setupRoomSocketHandlers(io) {
       const wasHost = player.isHost;
       socket.leave(roomChannel);
       room.players.splice(playerIndex, 1);
+      // Remove from next-round readiness and update progress
+      if (room.nextRoundReady) {
+        room.nextRoundReady.delete(socket.id);
+        const readyCount = room.nextRoundReady.size;
+        const totalPlayers = room.players.length;
+        io.to(roomChannel).emit('game:nextRoundProgress', { readyCount, totalPlayers });
+      }
       if (wasHost && room.players.length > 0) {
         room.players[0].isHost = true;
         io.to(room.players[0].id).emit('hostStatus', true);
@@ -227,6 +234,13 @@ function setupRoomSocketHandlers(io) {
       const player = room.players[idx];
       const wasHost = player.isHost;
   room.players.splice(idx, 1);
+      // Remove from next-round readiness and update progress
+      if (room.nextRoundReady) {
+        room.nextRoundReady.delete(socket.id);
+        const readyCount = room.nextRoundReady.size;
+        const totalPlayers = room.players.length;
+        io.to(`room-${roomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
+      }
       if (wasHost && room.players.length > 0) {
         room.players[0].isHost = true;
         io.to(room.players[0].id).emit('hostStatus', true);
@@ -309,6 +323,8 @@ function setupRoomSocketHandlers(io) {
           totalRounds: room.settings.rounds,
           isLastRound: room.currentRoundIndex >= room.settings.rounds,
         });
+        // Reset collective next-round readiness tracking
+        room.nextRoundReady = new Set();
         room.currentRoundTurns = 0;
       } else {
         advanceQueueToNextPlayer(room);
@@ -365,6 +381,7 @@ function setupRoomSocketHandlers(io) {
             stealingPlayer.points += totalPoints;
             io.to(`room-${room.id}`).emit('playerList', room.players);
             io.to(`room-${room.id}`).emit('game:finishRound', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: priceToSend, actualPrice: getCarPrice(), pointsAwarded: totalPoints, accuracyPoints, turnBonus, turnsPlayed: room.currentRoundTurns, deviation, currentRound: room.currentRoundIndex, totalRounds: room.settings.rounds, isLastRound: room.currentRoundIndex >= room.settings.rounds });
+              room.nextRoundReady = new Set();
             room.currentRoundTurns = 0;
             return;
           }
@@ -379,7 +396,71 @@ function setupRoomSocketHandlers(io) {
     });
 
     socket.on('game:requestNextRound', ({ roomId, playerName }) => {
+      // Deprecated old behavior: now handled by collective clicks; keep for backwards compatibility (broadcast only)
       io.to(`room-${roomId}`).emit('game:requestNextRound', { playerName });
+    });
+
+    // New collective next-round readiness mechanism
+    socket.on('game:nextRoundClick', ({ roomId }) => {
+      // Prefer using the socket's bound room to avoid type mismatch issues
+      const effectiveRoomId = socket.roomId || (typeof roomId === 'string' ? parseInt(roomId) : roomId);
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === effectiveRoomId);
+      if (!room) return;
+      if (!room.nextRoundReady) room.nextRoundReady = new Set();
+      // Add this player's id
+      room.nextRoundReady.add(socket.id);
+  const readyCount = room.nextRoundReady.size;
+  const totalPlayers = room.players.length;
+  io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
+      // If everyone clicked, start the next round immediately
+      if (readyCount === totalPlayers) {
+        // Clear tracking for next cycle
+        room.nextRoundReady = new Set();
+        // Start next round logic copied from host-only startRound
+        if (room.currentRoundIndex >= room.settings.rounds) {
+          finishGame(room);
+          return;
+        }
+        room.gameStarted = true;
+        if (room.currentRoundIndex === 0) {
+          room.players.forEach(player => { player.points = 0; });
+          initializePlayerQueue(room);
+        } else {
+          shiftQueueForNextRound(room);
+        }
+        room.currentRoundTurns = 0;
+        room.stealUsedThisRound = false;
+        if (!room.gameHistory) room.gameHistory = [];
+        io.to(`room-${effectiveRoomId}`).emit('game:startRound', { roomId: effectiveRoomId });
+        room.currentRoundIndex += 1;
+        sendSystemMessage(effectiveRoomId, `Round ${room.currentRoundIndex}/${room.settings.rounds}`, 'round');
+        const ebayController = require('../ebayController');
+        ebayController.getCars(
+          { query: {} },
+          {
+            json: (carList) => {
+              io.to(`room-${effectiveRoomId}`).emit('game:cars', carList);
+              const { setCars } = require('./state');
+              setCars(carList || { itemSummaries: [] });
+              startVotingPhase(io, socket);
+            },
+            status: () => ({ json: () => {} })
+          }
+        );
+      }
+    });
+
+    socket.on('game:nextRoundUnclick', ({ roomId }) => {
+      const effectiveRoomId = socket.roomId || (typeof roomId === 'string' ? parseInt(roomId) : roomId);
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === effectiveRoomId);
+      if (!room) return;
+      if (!room.nextRoundReady) room.nextRoundReady = new Set();
+      room.nextRoundReady.delete(socket.id);
+      const readyCount = room.nextRoundReady.size;
+      const totalPlayers = room.players.length;
+      io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
     });
 
     socket.on('game:resetToLobby', ({ roomId }) => {

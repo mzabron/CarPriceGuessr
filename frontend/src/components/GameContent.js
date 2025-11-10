@@ -58,6 +58,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [roundModalTimer, setRoundModalTimer] = useState(10);
   const [modalTimerRef, setModalTimerRef] = useState(null);
   const [countdownTimerRef, setCountdownTimerRef] = useState(null);
+  const [nextRoundReadyCount, setNextRoundReadyCount] = useState(0);
+  const [nextRoundTotal, setNextRoundTotal] = useState(0);
+  const [hasClickedNextRound, setHasClickedNextRound] = useState(false);
   const [stealUsedThisRound, setStealUsedThisRound] = useState(false);
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
@@ -205,6 +208,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setRoundResult(data);
       setShowRoundModal(true);
       setRoundModalTimer(10); // Reset timer to 10 seconds
+      setNextRoundReadyCount(0);
+      setNextRoundTotal(players?.length || 0);
+      setHasClickedNextRound(false);
       setCurrentTurn(null);
       setTurnTimeLeft(null);
       setLastGuess(null);
@@ -228,15 +234,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
       });
     });
 
-    socketService.socket?.on('game:requestNextRound', (data) => {
-      // When any player requests next round, close modal for everyone and clear timers
-      closeRoundModal();
-      
-      // If current player is host, start the next round
-  const currentPlayer = players.find(p => p.id === playerId);
-      if (currentPlayer && currentPlayer.isHost) {
-        socketService.socket.emit('game:startRound', { roomId });
-      }
+    // Collective next round progress updates
+    socketService.socket?.on('game:nextRoundProgress', ({ readyCount, totalPlayers }) => {
+      setNextRoundReadyCount(readyCount || 0);
+      setNextRoundTotal(totalPlayers || 0);
     });
 
     return () => {
@@ -248,7 +249,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:guessConfirmed');
       socketService.socket?.off('game:finishRound');
       socketService.socket?.off('game:finishGame');
-      socketService.socket?.off('game:requestNextRound');
+      socketService.socket?.off('game:nextRoundProgress');
     };
   }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
 
@@ -488,14 +489,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
   useEffect(() => {
     if (showRoundModal) {
-      const timer = setTimeout(() => {
-        setShowRoundModal(false);
-        setRoundResult(null);
-        socketService.socket.emit('game:startRound', { roomId });
-      }, 10000); // 10 seconds
-      setModalTimerRef(timer);
-      
-      // Countdown timer
+      // Only run a countdown UI; do not auto-start rounds anymore
       const countdownInterval = setInterval(() => {
         setRoundModalTimer(prev => {
           if (prev <= 1) {
@@ -506,28 +500,37 @@ const GameContent = ({ gameSettings, players = [] }) => {
         });
       }, 1000);
       setCountdownTimerRef(countdownInterval);
-      
+
       return () => {
-        clearTimeout(timer);
         clearInterval(countdownInterval);
-        setModalTimerRef(null);
         setCountdownTimerRef(null);
       };
     }
+  }, [showRoundModal]);
+
+  // Restore previous behavior: auto-advance after countdown via host-only startRound
+  useEffect(() => {
+    if (!showRoundModal) return;
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    const timer = setTimeout(() => {
+      socketService.socket.emit('game:startRound', { roomId: numericRoomId });
+    }, 10000);
+    setModalTimerRef(timer);
+    return () => {
+      clearTimeout(timer);
+      setModalTimerRef(null);
+    };
   }, [showRoundModal, roomId]);
 
-  const handleNextRound = () => {
-    // Use the helper function to close modal and clear timers
-    closeRoundModal();
-    
-    // Check if current player is host
-  const currentPlayer = players.find(p => p.id === playerId);
-    if (currentPlayer && currentPlayer.isHost) {
-      // Host starts the round
-      socketService.socket.emit('game:startRound', { roomId });
+  const handleNextRoundToggle = () => {
+    if (!showRoundModal) return;
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (!hasClickedNextRound) {
+      socketService.socket.emit('game:nextRoundClick', { roomId: numericRoomId });
+      setHasClickedNextRound(true);
     } else {
-      // Non-host requests next round - emit to all players including host
-      socketService.socket.emit('game:requestNextRound', { roomId, playerName });
+      socketService.socket.emit('game:nextRoundUnclick', { roomId: numericRoomId });
+      setHasClickedNextRound(false);
     }
   };
 
@@ -603,13 +606,30 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   <p className="mb-4 text-gray-600">{roundResult.message || "Round ended with no winner"}</p>
                 )}
                 <button
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
-                  onClick={handleNextRound}
+                  className={`mt-4 px-6 py-2 rounded-lg font-bold transition transform duration-150 ${
+                    hasClickedNextRound
+                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-500 shadow-inner ring-1 ring-gray-400'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
+                  }`}
+                  onClick={handleNextRoundToggle}
+                  disabled={nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0}
+                  title={hasClickedNextRound ? 'Click to undo readiness' : 'Click to mark ready for next round'}
+                  aria-pressed={hasClickedNextRound}
                 >
-                  {roundResult.isLastRound && roundResult.playerName ? 
-                    `View Results (${roundModalTimer}s)` : 
-                    `Next Round (${roundModalTimer}s)`
-                  }
+                  <span className="inline-flex items-center gap-2">
+                    {hasClickedNextRound && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-800" fill="currentColor" aria-hidden="true">
+                        <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
+                      </svg>
+                    )}
+                    {(() => {
+                      const base = roundResult.isLastRound && roundResult.playerName
+                        ? `View Results (${roundModalTimer}s)`
+                        : `Next Round (${roundModalTimer}s)`;
+                      const progress = nextRoundTotal > 0 ? ` (${nextRoundReadyCount}/${nextRoundTotal})` : '';
+                      return base + progress;
+                    })()}
+                  </span>
                 </button>
               </div>
             </div>

@@ -65,6 +65,8 @@ function startNextTurn(room) {
           totalRounds: room.settings.rounds,
           isLastRound: room.currentRoundIndex >= room.settings.rounds,
         });
+        // Reset collective next-round readiness tracking
+        room.nextRoundReady = new Set();
         room.currentRoundTurns = 0;
         return;
       }
