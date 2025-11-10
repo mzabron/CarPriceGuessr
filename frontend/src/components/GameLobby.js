@@ -239,7 +239,16 @@ const GameLobby = () => {
               />
             </div>
             <div>
-              <label className="block mb-2">Power-ups</label>
+              <label className="block mb-2 flex items-center gap-3">
+                <span>Steals</span>
+                <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
+                  <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                    Steals let you take over another player's turn. After using a steal, there's a 5‑second cooldown before you can steal again.
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                  </span>
+                </span>
+              </label>
               <input
                 type="number"
                 value={tempSettings.powerUps}
@@ -289,7 +298,16 @@ const GameLobby = () => {
           <div className="col-span-2 text-lg font-semibold">Room Name: {gameSettings.roomName}</div>
           <div>Rounds: {gameSettings.rounds}</div>
           <div>Max Players: {gameSettings.playersLimit}</div>
-          <div>Power-ups: {gameSettings.powerUps}</div>
+          <div className="flex items-center gap-3">
+            <span>Steals: {gameSettings.powerUps}</span>
+            <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
+              <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                Steals let you take over another player's turn. After using a steal, there's a 5‑second cooldown before you can steal again.
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+              </span>
+            </span>
+          </div>
           <div>Answer Time: {gameSettings.answerTime}s</div>
           <div>Room Type: {gameSettings.visibility}</div>
         </div>
