@@ -41,9 +41,9 @@ const CreateGameModal = ({ onClose, user }) => {
       return;
     }
 
-    // Validate powerUps against rounds
-    if (formData.powerUps > formData.rounds) {
-      setError('Number of power-ups cannot exceed number of rounds');
+    // Validate powerUps range (decoupled from rounds)
+    if (formData.powerUps < 0 || formData.powerUps > 100) {
+      setError('Steals must be between 0 and 100');
       return;
     }
 
@@ -109,10 +109,7 @@ const CreateGameModal = ({ onClose, user }) => {
         [name]: processedValue
       };
       
-      // If rounds are being changed and powerUps exceed the new rounds count, adjust powerUps
-      if (name === 'rounds' && typeof processedValue === 'number' && updated.powerUps > processedValue) {
-        updated.powerUps = processedValue;
-      }
+
       
       return updated;
     });
@@ -187,7 +184,7 @@ const CreateGameModal = ({ onClose, user }) => {
               >
                 <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
                 <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
-                  Steals let you take over another player's turn. After using a steal, there's a 5‑second cooldown before you can steal again.
+                  Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
                   <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
                 </span>
               </span>
@@ -196,7 +193,7 @@ const CreateGameModal = ({ onClose, user }) => {
               type="number"
               name="powerUps"
               min="0"
-              max={formData.rounds}
+              max={100}
               value={formData.powerUps}
               onChange={handleChange}
               className="w-full p-2 border rounded"

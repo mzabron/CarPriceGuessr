@@ -61,7 +61,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [nextRoundReadyCount, setNextRoundReadyCount] = useState(0);
   const [nextRoundTotal, setNextRoundTotal] = useState(0);
   const [hasClickedNextRound, setHasClickedNextRound] = useState(false);
-  const [stealUsedThisRound, setStealUsedThisRound] = useState(false);
+  // Track local cooldown for the current user. Only the stealer is cooled down.
+  const [stealCooldownUntil, setStealCooldownUntil] = useState(null); // epoch ms (server-based)
+  const [stealCooldownMs, setStealCooldownMs] = useState(5000); // default 5s
+  const [stealCooldownLeftMs, setStealCooldownLeftMs] = useState(0);
+  const [serverTimeOffsetMs, setServerTimeOffsetMs] = useState(0); // serverTime - clientTime
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
 
@@ -101,7 +105,6 @@ const GameContent = ({ gameSettings, players = [] }) => {
   useEffect(() => {
     socketService.socket?.on('game:turn', (turnData) => {
       setCurrentTurn(turnData);
-      setStealUsedThisRound(turnData.stealUsedThisRound || false);
       // Calculate seconds left based on deadline
       if (turnData.deadline) {
         setTurnTimeLeft(Math.max(0, Math.round((turnData.deadline - Date.now()) / 1000)));
@@ -118,8 +121,16 @@ const GameContent = ({ gameSettings, players = [] }) => {
     });
 
     socketService.socket?.on('game:stealUsed', (data) => {
-      setStealUsedThisRound(true);
-      // You could add a notification here about who used the steal
+      // If I am the stealing player, set my local cooldown clock
+      if (data.stealingPlayerId && data.stealingPlayerId === playerId) {
+        const duration = typeof data.cooldownMs === 'number' ? data.cooldownMs : 5000;
+        setStealCooldownMs(duration);
+        const serverTime = typeof data.serverTime === 'number' ? data.serverTime : Date.now();
+        setServerTimeOffsetMs(serverTime - Date.now());
+        if (data.cooldownUntil) setStealCooldownUntil(data.cooldownUntil);
+        else setStealCooldownUntil(serverTime + duration);
+      }
+      // Optional: toast/notification could go here
       console.log(`${data.stealingPlayer} used a steal! Now it's their turn.`);
     });
 
@@ -144,6 +155,24 @@ const GameContent = ({ gameSettings, players = [] }) => {
     return () => clearInterval(interval);
   }, [turnTimeLeft]);
 
+  // Smooth ticking for steal cooldown progress based on server time
+  useEffect(() => {
+    if (!stealCooldownUntil) {
+      setStealCooldownLeftMs(0);
+      return;
+    }
+    const tick = () => {
+      const left = Math.max(0, stealCooldownUntil - (Date.now() + serverTimeOffsetMs));
+      setStealCooldownLeftMs(left);
+      if (left <= 0) {
+        setStealCooldownUntil(null);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 100);
+    return () => clearInterval(id);
+  }, [stealCooldownUntil, serverTimeOffsetMs]);
+
 
 
   useEffect(() => {
@@ -167,7 +196,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(null);
       setVotingTimeLeft(15);
       setShowChosenText(false);
-      setStealUsedThisRound(false); // Reset steal usage for new round
+  // Do not reset cooldown; it's per-player time-based.
       
       // Close round modal when voting starts (new round in progress)
       closeRoundModal();
@@ -252,6 +281,21 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:nextRoundProgress');
     };
   }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
+
+  // Listen for structured cooldown errors from the server to sync precisely during spam clicking
+  useEffect(() => {
+    const onError = (payload) => {
+      if (!payload || !payload.code) return;
+      if (payload.code === 'STEAL_COOLDOWN') {
+        const serverTime = typeof payload.serverTime === 'number' ? payload.serverTime : Date.now();
+        setServerTimeOffsetMs(serverTime - Date.now());
+        if (typeof payload.cooldownMs === 'number') setStealCooldownMs(payload.cooldownMs);
+        if (typeof payload.cooldownUntil === 'number') setStealCooldownUntil(payload.cooldownUntil);
+      }
+    };
+    socketService.socket?.on('error', onError);
+    return () => socketService.socket?.off('error', onError);
+  }, []);
 
   useEffect(() => {
     if (winningIndex !== null && cars[winningIndex]?.thumbnailImages) {
@@ -542,10 +586,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
       alert('You have no steals remaining!');
       return;
     }
-    
-    // Check if steal was already used this round
-    if (stealUsedThisRound) {
-      alert('Steal has already been used this round!');
+    // Check local cooldown
+    if (stealCooldownUntil && Date.now() < stealCooldownUntil) {
+      const secs = Math.ceil((stealCooldownUntil - Date.now()) / 1000);
+      alert(`Steal is on cooldown (${secs}s left)`);
       return;
     }
     
@@ -566,10 +610,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
   const canUseSteal = () => {
   const currentPlayer = players.find(p => p.id === playerId);
+    const onCooldown = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
     return (
       currentPlayer &&
       currentPlayer.stealsRemaining > 0 &&
-      !stealUsedThisRound &&
+      !onCooldown &&
   currentTurn?.playerId !== playerId &&
       currentTurn // Make sure there is an active turn
     );
@@ -894,24 +939,40 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <button
                       type="button"
                       onClick={handleSteal}
-                      className={`px-6 py-2 rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none ${
+                      className={`relative px-6 py-2 rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none overflow-hidden ${
                         canUseSteal()
                           ? 'bg-red-600 hover:bg-red-700 text-white'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                       style={{ minWidth: '100px' }}
                       disabled={!canUseSteal()}
-                      title={
-                        stealUsedThisRound 
-                          ? 'Steal already used this round'
-                          : getCurrentPlayerSteals() <= 0 
-                            ? 'No steals remaining'
-                            : (currentTurn?.playerId === playerId)
-                              ? 'Already your turn'
-                              : `Steal (${getCurrentPlayerSteals()} left)`
-                      }
+                      title={(() => {
+                        if (getCurrentPlayerSteals() <= 0) return 'No steals remaining';
+                        if (currentTurn?.playerId === playerId) return 'Already your turn';
+                         const onCd = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
+                        if (onCd) {
+                           const secs = Math.ceil((stealCooldownUntil - (Date.now() + serverTimeOffsetMs)) / 1000);
+                          return `Steal on cooldown (${secs}s)`;
+                        }
+                        return `Steal (${getCurrentPlayerSteals()} left)`;
+                      })()}
                     >
                       Steal {getCurrentPlayerSteals() > 0 ? `(${getCurrentPlayerSteals()})` : ''}
+                      {(() => {
+                        const onCd = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
+                        const stealsLeft = getCurrentPlayerSteals();
+                        // Do not render cooldown bar if user has no steals left
+                        if (!onCd || !stealCooldownMs || stealsLeft <= 0) return null;
+                        const left = Math.max(0, stealCooldownUntil - (Date.now() + serverTimeOffsetMs));
+                        const pct = Math.max(0, Math.min(100, (1 - left / stealCooldownMs) * 100));
+                        return (
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-0 bottom-0 h-1 bg-gradient-to-r from-red-500 to-rose-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        );
+                      })()}
                     </button>
                     <button
                       onClick={e => {

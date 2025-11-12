@@ -171,8 +171,8 @@ const GameLobby = () => {
       return;
     }
     
-    if (tempSettings.powerUps < 0 || tempSettings.powerUps > tempSettings.rounds) {
-      alert('Power-ups must be between 0 and the number of rounds');
+    if (tempSettings.powerUps < 0 || tempSettings.powerUps > 100) {
+      alert('Steals must be between 0 and 100');
       return;
     }
     
@@ -190,10 +190,6 @@ const GameLobby = () => {
         ...changes
       };
       
-      // If rounds are being changed and powerUps exceed the new rounds count, adjust powerUps
-      if (changes.rounds !== undefined && updated.powerUps > changes.rounds) {
-        updated.powerUps = changes.rounds;
-      }
       
       return updated;
     });
@@ -219,8 +215,7 @@ const GameLobby = () => {
         validatedValue = Math.min(Math.max(numVal, 2), 10);
         break;
       case 'powerUps':
-        const maxPowerUps = typeof tempSettings.rounds === 'number' ? tempSettings.rounds : 10;
-        validatedValue = Math.min(Math.max(numVal, 0), maxPowerUps);
+        validatedValue = Math.min(Math.max(numVal, 0), 100);
         break;
       default:
         break;
@@ -264,7 +259,7 @@ const GameLobby = () => {
                 <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
                   <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
                   <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
-                    Steals let you take over another player's turn. After using a steal, there's a 5‑second cooldown before you can steal again.
+                    Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
                     <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
                   </span>
                 </span>
@@ -274,7 +269,7 @@ const GameLobby = () => {
                 value={tempSettings.powerUps}
                 onChange={(e) => handleNumericInputChange('powerUps', e.target.value)}
                 min="0"
-                max={tempSettings.rounds}
+                max={100}
                 className="w-full p-2 border rounded"
               />
             </div>
@@ -323,7 +318,7 @@ const GameLobby = () => {
             <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
               <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
               <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
-                Steals let you take over another player's turn. After using a steal, there's a 5‑second cooldown before you can steal again.
+                Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
                 <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
               </span>
             </span>

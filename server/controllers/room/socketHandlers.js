@@ -84,8 +84,10 @@ function setupRoomSocketHandlers(io) {
       if (!room) return;
       const oldPowerUps = room.settings.powerUps;
       const updatedSettings = { ...room.settings, ...settings };
-      if (updatedSettings.powerUps > updatedSettings.rounds) {
-        updatedSettings.powerUps = updatedSettings.rounds;
+      // Allow powerUps independent of rounds (0-100)
+      if (typeof updatedSettings.powerUps === 'number') {
+        if (updatedSettings.powerUps < 0) updatedSettings.powerUps = 0;
+        if (updatedSettings.powerUps > 100) updatedSettings.powerUps = 100;
       }
       room.settings = updatedSettings;
       if (oldPowerUps !== updatedSettings.powerUps) {
@@ -350,11 +352,25 @@ function setupRoomSocketHandlers(io) {
       if (!room) return;
       const stealingPlayer = room.players.find(p => p.id === socket.id);
       if (!stealingPlayer) return;
+      // Per-player cooldown: 5 seconds between steals for the same player
+      const now = Date.now();
+      const cooldownMs = 5000;
+      if (stealingPlayer.nextStealAt && stealingPlayer.nextStealAt > now) {
+        const secondsLeft = Math.ceil((stealingPlayer.nextStealAt - now) / 1000);
+        return socket.emit('error', {
+          message: `Steal is on cooldown (${secondsLeft}s left)`,
+          code: 'STEAL_COOLDOWN',
+          cooldownUntil: stealingPlayer.nextStealAt,
+          cooldownMs,
+          serverTime: now,
+        });
+      }
       if (stealingPlayer.stealsRemaining <= 0) return socket.emit('error', { message: 'You have no steals remaining!' });
-      if (room.stealUsedThisRound) return socket.emit('error', { message: 'Steal has already been used this round!' });
       const currentPlayer = getCurrentPlayerFromQueue(room);
       if (currentPlayer && currentPlayer.id === socket.id) return socket.emit('error', { message: 'It is already your turn!' });
-      stealingPlayer.stealsRemaining--; room.stealUsedThisRound = true;
+      stealingPlayer.stealsRemaining--;
+      // Set next allowed steal time for this player (5 seconds)
+      stealingPlayer.nextStealAt = now + cooldownMs;
       if (room.turnTimer) clearTimeout(room.turnTimer);
       const originalQueueIndex = room.currentQueueIndex;
       const stealingPlayerQueueIndex = room.playerQueue.indexOf(stealingPlayer.id);
@@ -363,8 +379,15 @@ function setupRoomSocketHandlers(io) {
       const deadline = Date.now() + answerTime * 1000;
       room.turnDeadline = deadline;
       room.currentTurnIndex = room.players.findIndex(p => p.id === stealingPlayer.id);
-      io.to(`room-${room.id}`).emit('game:stealUsed', { stealingPlayer: stealingPlayer.name, newCurrentPlayer: stealingPlayer.name });
-      io.to(`room-${room.id}`).emit('game:turn', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, deadline, answerTime, stealUsedThisRound: room.stealUsedThisRound, queuePosition: stealingPlayerQueueIndex + 1, totalPlayers: room.playerQueue.length });
+      io.to(`room-${room.id}`).emit('game:stealUsed', {
+        stealingPlayer: stealingPlayer.name,
+        stealingPlayerId: stealingPlayer.id,
+        cooldownMs,
+        cooldownUntil: stealingPlayer.nextStealAt,
+        serverTime: now,
+        newCurrentPlayer: stealingPlayer.name,
+      });
+      io.to(`room-${room.id}`).emit('game:turn', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, deadline, answerTime, stealUsedThisRound: false, queuePosition: stealingPlayerQueueIndex + 1, totalPlayers: room.playerQueue.length });
       io.to(`room-${room.id}`).emit('playerList', room.players);
       room.turnTimer = setTimeout(() => {
         let priceToSend = 0;
