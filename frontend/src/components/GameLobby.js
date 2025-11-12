@@ -17,6 +17,8 @@ const GameLobby = () => {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [tempSettings, setTempSettings] = useState(null);
   const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [showRoomCode, setShowRoomCode] = useState(false);
+  const [copiedNotice, setCopiedNotice] = useState(false);
 
   useEffect(() => {
     const currentUser = socketService.getCurrentUser();
@@ -108,6 +110,24 @@ const GameLobby = () => {
   const handleStartGame = () => {
     if (isHost && allPlayersReady) {
       socketService.startGame();
+    }
+  };
+
+  const handleCopyRoomCode = async () => {
+    if (!gameSettings?.roomCode) return;
+    try {
+      await navigator.clipboard.writeText(gameSettings.roomCode);
+      setCopiedNotice(true);
+      // Auto-hide after a short delay
+      setTimeout(() => setCopiedNotice(false), 2500);
+    } catch (err) {
+      // Optional: fallback to prompt if clipboard fails
+      try {
+        // eslint-disable-next-line no-alert
+        window.prompt('Copy the room code:', gameSettings.roomCode);
+        setCopiedNotice(true);
+        setTimeout(() => setCopiedNotice(false), 2500);
+      } catch (_) {}
     }
   };
 
@@ -331,16 +351,53 @@ const GameLobby = () => {
       <div className="flex-1 bg-white flex flex-col items-center justify-center overflow-auto">
         <div className="w-full max-w-4xl flex flex-col items-center justify-center">
           <div className="bg-gray-100 p-4 sm:p-8 w-full rounded-xl shadow-lg">
-            <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between">
-              <span>Room Code: <span className="font-mono">{gameSettings?.roomCode}</span></span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(gameSettings?.roomCode);
-                }}
-                className="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Copy
-              </button>
+            <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between relative">
+              <div className="flex items-center gap-3">
+                <span>
+                  Room Code: {' '}
+                  <span className="font-mono tracking-wider select-all">
+                    {showRoomCode ? (
+                      gameSettings?.roomCode || '—'
+                    ) : (
+                      // Masked display when hidden
+                      (gameSettings?.roomCode ? '••••••' : '—')
+                    )}
+                  </span>
+                </span>
+                <button
+                  onClick={() => setShowRoomCode(v => !v)}
+                  title={showRoomCode ? 'Hide room code' : 'Show room code'}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-300 focus:outline-none"
+                  aria-label={showRoomCode ? 'Hide room code' : 'Show room code'}
+                >
+                  <span className="material-symbols-outlined text-[22px] text-gray-700">
+                    {showRoomCode ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyRoomCode}
+                  disabled={!gameSettings?.roomCode}
+                  className={`px-2 py-1 text-sm rounded text-white ${gameSettings?.roomCode ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`}
+                >
+                  Copy
+                </button>
+              </div>
+              {copiedNotice && (
+                <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-4 sm:-top-5 z-20">
+                  <div className="flex items-center gap-2 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-full shadow-lg ring-1 ring-black/10 fade-out-once">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-emerald-400">
+                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-7.25 9.25a.75.75 0 01-1.128.06L3.17 9.079A.75.75 0 014.33 8.02l4.036 3.954 6.695-8.54a.75.75 0 011.052-.143z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">Room code copied</span>
+                  </div>
+                </div>
+              )}
+              {/* SR-only live region for screen readers */}
+              <span className="sr-only" role="status" aria-live="polite">
+                {copiedNotice ? 'Room code copied to clipboard' : ''}
+              </span>
             </div>
             <h3 className="text-xl font-bold mb-4">Game Settings</h3>
             {renderGameSettings()}

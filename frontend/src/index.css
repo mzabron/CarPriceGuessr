@@ -48,3 +48,14 @@ body {
 }
 
 /* removed .text-outline-black utility */
+
+  /* Simple one-shot fade-out utility for ephemeral notices */
+  @keyframes fadeOutSlideUp {
+    0% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-4px); }
+  }
+
+  .fade-out-once {
+    animation: fadeOutSlideUp 2.4s ease forwards;
+  }
