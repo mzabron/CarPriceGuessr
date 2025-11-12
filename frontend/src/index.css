@@ -59,3 +59,31 @@ body {
   .fade-out-once {
     animation: fadeOutSlideUp 2.4s ease forwards;
   }
+
+  /* Global press/click animation for buttons */
+  :where(button, [role="button"]) {
+    /* Improve tap responsiveness on mobile */
+    touch-action: manipulation;
+    /* Smooth press animation */
+    transition: transform 120ms ease-out, filter 120ms ease-out;
+    /* Create own composite layer, reduces jank */
+    transform: translateZ(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :where(button, [role="button"]) {
+      transition: none;
+    }
+  }
+
+  :where(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(1px) scale(0.98);
+    filter: brightness(0.98);
+  }
+
+  /* Opt-out utility for special cases */
+  .no-press,
+  .no-press:active {
+    transform: none !important;
+    filter: none !important;
+  }
