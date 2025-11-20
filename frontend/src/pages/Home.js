@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
-import SetNameModal from '../components/SetNameModal';
+import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 
 const Home = () => {
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
   const [showSetName, setShowSetName] = useState(false);
+
+  // Rehydrate saved nickname & preferred color from localStorage (Home page persistence only)
+  useEffect(() => {
+    try {
+      const storedName = localStorage.getItem('cpg:nickname');
+      const storedColorKey = localStorage.getItem('cpg:preferredColorKey');
+      if (storedName) {
+        let preferredColor = null;
+        if (storedColorKey) {
+          preferredColor = COLOR_OPTIONS.find(c => c.key === storedColorKey) || null;
+        }
+        setUser({ name: storedName, preferredColor });
+      }
+    } catch (_) {
+      // Non-fatal: ignore storage issues
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -131,11 +148,20 @@ const Home = () => {
       {showSetName && (
         <SetNameModal
           initialName={user?.name || ''}
+          initialPreferredColorKey={user?.preferredColor?.key}
           onClose={() => setShowSetName(false)}
           onSubmit={(payload) => {
             if (payload && typeof payload === 'object') {
               const { name, preferredColor } = payload;
               setUser({ name, preferredColor });
+              // Persist locally so a simple browser refresh retains choices on Home page
+              try {
+                localStorage.setItem('cpg:nickname', name);
+                // Store only the key; 'random' stored so user sees avatar gradient again after refresh
+                localStorage.setItem('cpg:preferredColorKey', preferredColor?.key || '');
+              } catch (_) {
+                // Ignore quota / privacy mode errors
+              }
             }
             setShowSetName(false);
           }}

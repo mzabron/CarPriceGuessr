@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // Align color options with unified palette (PLAYER_BG_COLOR)
 // Keys correspond to assignedColorKey/preferredColorKey stored on server.
-const COLOR_OPTIONS = [
+export const COLOR_OPTIONS = [
   { key: 'random', name: 'Random', bgClass: 'bg-gradient-to-r from-pink-200 via-yellow-200 to-green-200' },
   { key: 'red', name: 'Red', bgClass: 'bg-red-600' },
   { key: 'blue', name: 'Blue', bgClass: 'bg-blue-500' },
@@ -16,13 +16,21 @@ const COLOR_OPTIONS = [
   { key: 'gray', name: 'Gray', bgClass: 'bg-stone-500' },
 ];
 
-const SetNameModal = ({ initialName = '', onClose, onSubmit }) => {
+const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onSubmit }) => {
   const [name, setName] = useState(initialName);
   const [colorIndex, setColorIndex] = useState(0); // default to 'random'
 
   useEffect(() => {
     setName(initialName || '');
   }, [initialName]);
+
+  // When reopening modal with existing preferred color, sync selection
+  useEffect(() => {
+    if (initialPreferredColorKey) {
+      const idx = COLOR_OPTIONS.findIndex(c => c.key === initialPreferredColorKey);
+      if (idx >= 0) setColorIndex(idx);
+    }
+  }, [initialPreferredColorKey]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
