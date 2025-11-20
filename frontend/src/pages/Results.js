@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const { gameData } = location.state || {};
+  const initialState = location.state || {};
+  const [gameData, setGameData] = useState(initialState.gameData || null);
+  const [pending, setPending] = useState(!!initialState.pendingResults && !initialState.gameData);
+  const [pendingRoomId] = useState(initialState.roomId || null);
   
   // Debug logging
   console.log('Results page - gameData:', gameData);
@@ -18,9 +20,37 @@ const Results = () => {
     });
   }
   
+  // If navigated in pending mode, wait for finishGame and then render
+  useEffect(() => {
+    if (!pending) return;
+    const onFinish = (data) => {
+      const payload = {
+        players: data.players,
+        roomId: data.roomId,
+        roomCode: data.roomCode,
+        roomName: data.roomName,
+        gameHistory: data.gameHistory,
+      };
+      setGameData(payload);
+      setPending(false);
+    };
+    socketService.socket?.on('game:finishGame', onFinish);
+    // Optionally request finish if not already emitted (guarded server-side)
+    if (pendingRoomId) {
+      socketService.socket?.emit('game:requestFinishGame', { roomId: pendingRoomId });
+    }
+    return () => socketService.socket?.off('game:finishGame', onFinish);
+  }, [pending, pendingRoomId]);
+
   if (!gameData) {
-    navigate('/');
-    return null;
+    return (
+      <div className="h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="text-2xl font-bold mb-2">Preparing final results…</div>
+          <div className="opacity-80">Waiting for game summary from server</div>
+        </div>
+      </div>
+    );
   }
 
   const { players, roomId, roomCode, roomName, gameHistory } = gameData;

@@ -33,9 +33,15 @@ function setupRoomSocketHandlers(io) {
       const player = room.players.find(p => p.id === socket.id);
       if (player && player.isHost && room.players.every(p => p.isReady)) {
         if (room.currentRoundIndex >= room.settings.rounds) {
-          finishGame(room);
+          // Guard to emit finish only once
+          if (!room.finishGameEmitted) {
+            room.finishGameEmitted = true;
+            finishGame(room);
+          }
           return;
         }
+        // Reset finish flag at the start of a new round sequence
+        room.finishGameEmitted = false;
         room.gameStarted = true;
         if (room.currentRoundIndex === 0) {
           room.players.forEach(player => { player.points = 0; });
@@ -442,9 +448,14 @@ function setupRoomSocketHandlers(io) {
         room.nextRoundReady = new Set();
         // Start next round logic copied from host-only startRound
         if (room.currentRoundIndex >= room.settings.rounds) {
-          finishGame(room);
+          if (!room.finishGameEmitted) {
+            room.finishGameEmitted = true;
+            finishGame(room);
+          }
           return;
         }
+        // Reset finish flag as we are continuing the game
+        room.finishGameEmitted = false;
         room.gameStarted = true;
         if (room.currentRoundIndex === 0) {
           room.players.forEach(player => { player.points = 0; });
@@ -486,6 +497,18 @@ function setupRoomSocketHandlers(io) {
       io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
     });
 
+    // Allow any player to request finishing the game on last-round modal.
+    // This will emit finish only once per game end.
+    socket.on('game:requestFinishGame', ({ roomId }) => {
+      const effectiveRoomId = socket.roomId || (typeof roomId === 'string' ? parseInt(roomId) : roomId);
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === effectiveRoomId);
+      if (!room) return;
+      if (room.finishGameEmitted) return; // already emitted
+      room.finishGameEmitted = true;
+      finishGame(room);
+    });
+
     socket.on('game:resetToLobby', ({ roomId }) => {
       const rooms = getRooms();
       const room = rooms.find(r => r.id === roomId);
@@ -495,6 +518,7 @@ function setupRoomSocketHandlers(io) {
       room.currentTurnIndex = -1;
       room.currentRoundTurns = 0;
       room.stealUsedThisRound = false;
+      room.finishGameEmitted = false;
       room.gameHistory = [];
       room.chatHistory = [];
       room.players.forEach(player => { player.isReady = false; player.stealsRemaining = room.settings.powerUps; player.points = 0; });

@@ -61,6 +61,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [nextRoundReadyCount, setNextRoundReadyCount] = useState(0);
   const [nextRoundTotal, setNextRoundTotal] = useState(0);
   const [hasClickedNextRound, setHasClickedNextRound] = useState(false);
+  // Results handling (last round): cache final data and control navigation
+  const [finalGameData, setFinalGameData] = useState(null);
+  const [requestedResultsNow, setRequestedResultsNow] = useState(false);
+  const [hasNavigatedToResults, setHasNavigatedToResults] = useState(false);
   // Track local cooldown for the current user. Only the stealer is cooled down.
   const [stealCooldownUntil, setStealCooldownUntil] = useState(null); // epoch ms (server-based)
   const [stealCooldownMs, setStealCooldownMs] = useState(5000); // default 5s
@@ -249,18 +253,21 @@ const GameContent = ({ gameSettings, players = [] }) => {
     });
 
     socketService.socket?.on('game:finishGame', (data) => {
-      // Navigate to Results page with game data
-      navigate('/results', {
-        state: {
-          gameData: {
-            players: data.players,
-            roomId: data.roomId,
-            roomCode: data.roomCode,
-            roomName: data.roomName,
-            gameHistory: data.gameHistory
-          }
-        }
-      });
+      // Cache final game data globally; navigate only if this user clicked "View Results"
+      // or when the local timer runs down.
+      const payload = {
+        players: data.players,
+        roomId: data.roomId,
+        roomCode: data.roomCode,
+        roomName: data.roomName,
+        gameHistory: data.gameHistory
+      };
+      setFinalGameData(payload);
+      // If this client explicitly requested results now, navigate immediately
+      if ((requestedResultsNow || roundModalTimer === 0) && !hasNavigatedToResults) {
+        setHasNavigatedToResults(true);
+        navigate('/results', { state: { gameData: payload } });
+      }
     });
 
     // Collective next round progress updates
@@ -552,23 +559,51 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
   }, [showRoundModal]);
 
-  // Restore previous behavior: auto-advance after countdown via host-only startRound
+  // After countdown: for normal rounds, ask host to start next round; for last round, request finish.
   useEffect(() => {
     if (!showRoundModal) return;
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    const isLast = !!roundResult?.isLastRound;
     const timer = setTimeout(() => {
-      socketService.socket.emit('game:startRound', { roomId: numericRoomId });
+      if (isLast) {
+        // Ensure finish is emitted once globally if nobody clicked yet
+        if (!finalGameData) {
+          socketService.socket.emit('game:requestFinishGame', { roomId: numericRoomId });
+        }
+      } else {
+        socketService.socket.emit('game:startRound', { roomId: numericRoomId });
+      }
     }, 10000);
     setModalTimerRef(timer);
     return () => {
       clearTimeout(timer);
       setModalTimerRef(null);
     };
-  }, [showRoundModal, roomId]);
+  }, [showRoundModal, roomId, roundResult, finalGameData]);
 
   const handleNextRoundToggle = () => {
     if (!showRoundModal) return;
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    // If it's the last round (View Results case), request finalization and navigate this client immediately.
+    if (roundResult?.isLastRound) {
+      if (!requestedResultsNow) {
+        setRequestedResultsNow(true);
+        setHasClickedNextRound(true);
+        // Ask server to emit finishGame once globally (guarded server-side)
+        socketService.socket.emit('game:requestFinishGame', { roomId: numericRoomId });
+      }
+      // Navigate immediately: with data if we have it, otherwise in pending mode
+      if (!hasNavigatedToResults) {
+        setHasNavigatedToResults(true);
+        if (finalGameData) {
+          navigate('/results', { state: { gameData: finalGameData } });
+        } else {
+          navigate('/results', { state: { roomId: numericRoomId, pendingResults: true } });
+        }
+      }
+      return;
+    }
+    // Normal next-round readiness toggle
     if (!hasClickedNextRound) {
       socketService.socket.emit('game:nextRoundClick', { roomId: numericRoomId });
       setHasClickedNextRound(true);
@@ -577,6 +612,22 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setHasClickedNextRound(false);
     }
   };
+
+  // If timer elapses on the last round: ensure finish is requested and navigate when data exists.
+  useEffect(() => {
+    if (!showRoundModal) return;
+    if (!roundResult?.isLastRound) return;
+    if (roundModalTimer === 0) {
+      const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+      if (!finalGameData) {
+        socketService.socket.emit('game:requestFinishGame', { roomId: numericRoomId });
+      }
+      if (finalGameData && !hasNavigatedToResults) {
+        setHasNavigatedToResults(true);
+        navigate('/results', { state: { gameData: finalGameData } });
+      }
+    }
+  }, [roundModalTimer, finalGameData, hasNavigatedToResults, roundResult, showRoundModal, navigate, roomId]);
 
   const handleSteal = () => {
   const currentPlayer = players.find(p => p.id === playerId);
@@ -657,8 +708,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
                   }`}
                   onClick={handleNextRoundToggle}
-                  disabled={nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0}
-                  title={hasClickedNextRound ? 'Click to undo readiness' : 'Click to mark ready for next round'}
+                  disabled={!(roundResult?.isLastRound) && (nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0)}
+                  title={roundResult?.isLastRound ? 'View results now' : (hasClickedNextRound ? 'Click to undo readiness' : 'Click to mark ready for next round')}
                   aria-pressed={hasClickedNextRound}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -668,11 +719,16 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       </svg>
                     )}
                     {(() => {
-                      const base = roundResult.isLastRound && roundResult.playerName
+                      const isLast = !!roundResult?.isLastRound;
+                      const base = isLast
                         ? `View Results (${roundModalTimer}s)`
                         : `Next Round (${roundModalTimer}s)`;
-                      const progress = nextRoundTotal > 0 ? ` (${nextRoundReadyCount}/${nextRoundTotal})` : '';
-                      return base + progress;
+                      // Show readiness progress only for Next Round case
+                      if (!isLast) {
+                        const progress = nextRoundTotal > 0 ? ` (${nextRoundReadyCount}/${nextRoundTotal})` : '';
+                        return base + progress;
+                      }
+                      return base;
                     })()}
                   </span>
                 </button>
