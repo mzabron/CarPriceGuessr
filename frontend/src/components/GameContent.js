@@ -751,9 +751,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh]" style={{ maxHeight: '35vh' }}>
                     <button
                       onClick={handlePrevImage}
-                      className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-l hover:bg-opacity-75 z-10"
+                      className="no-press absolute left-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-l hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                      aria-label="Previous image"
                     >
-                      ←
+                      ‹
                     </button>
                     <img
                       src={cars[getActiveCarIndex()]?.thumbnailImages?.[currentImageIndex]?.imageUrl}
@@ -774,9 +775,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-r hover:bg-opacity-75 z-10"
+                      className="no-press absolute right-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-r hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                      aria-label="Next image"
                     >
-                      →
+                      ›
                     </button>
                     <div
                       className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-1 justify-center w-full px-4"
@@ -1029,9 +1031,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 <div className="aspect-[16/9] relative">
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-4 rounded-l hover:bg-opacity-75 z-10"
+                    className="no-press absolute left-0 top-[40%] bg-black bg-opacity-50 text-white p-4 rounded-l hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                    aria-label="Previous image"
                   >
-                    ←
+                    ‹
                   </button>
                   <img
                     src={cars[selectedCarIndex]?.thumbnailImages?.[currentImageIndex]?.imageUrl}
@@ -1040,9 +1043,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
                   />
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-4 rounded-r hover:bg-opacity-75 z-10"
+                    className="no-press absolute right-0 top-[40%] bg-black bg-opacity-50 text-white p-4 rounded-r hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                    aria-label="Next image"
                   >
-                    →
+                    ›
                   </button>
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
                     {cars[selectedCarIndex]?.thumbnailImages?.map((_, index) => (
@@ -1065,21 +1069,25 @@ const GameContent = ({ gameSettings, players = [] }) => {
       {/* Fullscreen image viewer */}
       {showFullscreenImage && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
+          {/* Close button fixed to viewport for consistent placement */}
+          <button
+            onClick={() => setShowFullscreenImage(false)}
+            aria-label="Close fullscreen"
+            className="no-press fixed top-4 right-4 z-50 bg-black/70 text-white p-3 rounded-full hover:bg-black/80 shadow-lg text-4xl leading-none"
+            title="Close fullscreen"
+          >
+            ×
+          </button>
           <div className="relative w-full h-full max-w-5xl max-h-[90vh]">
-            <button
-              onClick={() => setShowFullscreenImage(false)}
-              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-gray-300 z-20"
-              title="Close fullscreen"
-            >
-              ×
-            </button>
+            {/* Fullscreen navigation arrows positioned outside image, fixed for consistent placement */}
             <button
               onClick={() => {
                 const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
                 setFullscreenImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
               }}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              className="no-press fixed left-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
               title="Previous image"
+              aria-label="Previous image"
             >
               ‹
             </button>
@@ -1088,8 +1096,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
                 setFullscreenImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
               }}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-3xl hover:text-gray-300 z-20"
+              className="no-press fixed right-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
               title="Next image"
+              aria-label="Next image"
             >
               ›
             </button>
