@@ -32,55 +32,62 @@ function startNextTurn(room) {
 
   if (room.turnTimer) clearTimeout(room.turnTimer);
 
+  const capturedRoomId = room.id;
+  const capturedPlayerId = currentPlayer.id;
+
   room.turnTimer = setTimeout(() => {
+    const roomsNow = getRooms();
+    const roomNow = roomsNow.find(r => r.id === capturedRoomId);
+    if (!roomNow) return;
+    const currentPlayerNow = roomNow.players.find(p => p.id === capturedPlayerId);
+    const ioNow = getIo();
     let priceToSend = 0;
-    if (room.pendingGuess && room.pendingGuess.playerId === currentPlayer.id) {
-      priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
+    if (roomNow.pendingGuess && roomNow.pendingGuess.playerId === capturedPlayerId) {
+      priceToSend = (roomNow.pendingGuess.price === null || roomNow.pendingGuess.price === undefined) ? 0 : roomNow.pendingGuess.price;
       const deviation = getDeviation(priceToSend, getCarPrice());
-      io?.to(`room-${room.id}`).emit('game:guessConfirmed', {
-        playerId: currentPlayer.id,
-        playerName: currentPlayer.name,
+      ioNow?.to(`room-${roomNow.id}`).emit('game:guessConfirmed', {
+        playerId: capturedPlayerId,
+        playerName: currentPlayerNow?.name,
         price: priceToSend,
         deviation,
       });
-      room.pendingGuess = null;
+      roomNow.pendingGuess = null;
 
       if (deviation < correctGuessThreshold) {
         const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
-        const turnBonus = room.currentRoundTurns * 5;
+        const turnBonus = roomNow.currentRoundTurns * 5;
         const totalPoints = accuracyPoints + turnBonus;
-        currentPlayer.points += totalPoints;
-        io?.to(`room-${room.id}`).emit('playerList', room.players);
-        io?.to(`room-${room.id}`).emit('game:finishRound', {
-          playerId: currentPlayer.id,
-          playerName: currentPlayer.name,
+        if (currentPlayerNow) currentPlayerNow.points += totalPoints;
+        ioNow?.to(`room-${roomNow.id}`).emit('playerList', roomNow.players);
+        ioNow?.to(`room-${roomNow.id}`).emit('game:finishRound', {
+          playerId: capturedPlayerId,
+          playerName: currentPlayerNow?.name,
           price: priceToSend,
           actualPrice: getCarPrice(),
           pointsAwarded: totalPoints,
           accuracyPoints,
           turnBonus,
-          turnsPlayed: room.currentRoundTurns,
+          turnsPlayed: roomNow.currentRoundTurns,
           deviation,
-          currentRound: room.currentRoundIndex,
-          totalRounds: room.settings.rounds,
-          isLastRound: room.currentRoundIndex >= room.settings.rounds,
+          currentRound: roomNow.currentRoundIndex,
+          totalRounds: roomNow.settings.rounds,
+          isLastRound: roomNow.currentRoundIndex >= roomNow.settings.rounds,
         });
-        // Reset collective next-round readiness tracking
-        room.nextRoundReady = new Set();
-        room.currentRoundTurns = 0;
+        roomNow.nextRoundReady = new Set();
+        roomNow.currentRoundTurns = 0;
         return;
       }
     } else {
-      io?.to(`room-${room.id}`).emit('game:guessConfirmed', {
-        playerId: currentPlayer.id,
-        playerName: currentPlayer.name,
+      ioNow?.to(`room-${roomNow.id}`).emit('game:guessConfirmed', {
+        playerId: capturedPlayerId,
+        playerName: currentPlayerNow?.name,
         price: 0,
         deviation: 100,
       });
     }
 
-    advanceQueueToNextPlayer(room);
-    startNextTurn(room);
+    advanceQueueToNextPlayer(roomNow);
+    startNextTurn(roomNow);
   }, answerTime * 1000);
 }
 

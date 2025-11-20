@@ -395,32 +395,40 @@ function setupRoomSocketHandlers(io) {
       });
       io.to(`room-${room.id}`).emit('game:turn', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, deadline, answerTime, stealUsedThisRound: false, queuePosition: stealingPlayerQueueIndex + 1, totalPlayers: room.playerQueue.length });
       io.to(`room-${room.id}`).emit('playerList', room.players);
+      const capturedRoomId = room.id;
+      const capturedStealingPlayerId = stealingPlayer.id;
+      const capturedOriginalQueueIndex = originalQueueIndex;
+
       room.turnTimer = setTimeout(() => {
+        const roomsNow = getRooms();
+        const roomNow = roomsNow.find(r => r.id === capturedRoomId);
+        if (!roomNow) return;
+        const stealingPlayerNow = roomNow.players.find(p => p.id === capturedStealingPlayerId);
+        const ioNow = getIo();
         let priceToSend = 0;
-        const { getCarPrice } = require('./state');
-        if (room.pendingGuess && room.pendingGuess.playerId === stealingPlayer.id) {
-          priceToSend = (room.pendingGuess.price === null || room.pendingGuess.price === undefined) ? 0 : room.pendingGuess.price;
-          const deviation = getDeviation(priceToSend, getCarPrice());
-          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: priceToSend, deviation });
-          room.pendingGuess = null;
+        if (roomNow.pendingGuess && roomNow.pendingGuess.playerId === capturedStealingPlayerId) {
+          priceToSend = (roomNow.pendingGuess.price === null || roomNow.pendingGuess.price === undefined) ? 0 : roomNow.pendingGuess.price;
+          const deviation = getDeviation(priceToSend, require('./state').getCarPrice());
+          ioNow.to(`room-${roomNow.id}`).emit('game:guessConfirmed', { playerId: capturedStealingPlayerId, playerName: stealingPlayerNow?.name, price: priceToSend, deviation });
+          roomNow.pendingGuess = null;
           if (deviation < correctGuessThreshold) {
             const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
-            const turnBonus = room.currentRoundTurns * 5;
+            const turnBonus = roomNow.currentRoundTurns * 5;
             const totalPoints = accuracyPoints + turnBonus;
-            stealingPlayer.points += totalPoints;
-            io.to(`room-${room.id}`).emit('playerList', room.players);
-            io.to(`room-${room.id}`).emit('game:finishRound', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: priceToSend, actualPrice: getCarPrice(), pointsAwarded: totalPoints, accuracyPoints, turnBonus, turnsPlayed: room.currentRoundTurns, deviation, currentRound: room.currentRoundIndex, totalRounds: room.settings.rounds, isLastRound: room.currentRoundIndex >= room.settings.rounds });
-              room.nextRoundReady = new Set();
-            room.currentRoundTurns = 0;
+            if (stealingPlayerNow) stealingPlayerNow.points += totalPoints;
+            ioNow.to(`room-${roomNow.id}`).emit('playerList', roomNow.players);
+            ioNow.to(`room-${roomNow.id}`).emit('game:finishRound', { playerId: capturedStealingPlayerId, playerName: stealingPlayerNow?.name, price: priceToSend, actualPrice: require('./state').getCarPrice(), pointsAwarded: totalPoints, accuracyPoints, turnBonus, turnsPlayed: roomNow.currentRoundTurns, deviation, currentRound: roomNow.currentRoundIndex, totalRounds: roomNow.settings.rounds, isLastRound: roomNow.currentRoundIndex >= roomNow.settings.rounds });
+            roomNow.nextRoundReady = new Set();
+            roomNow.currentRoundTurns = 0;
             return;
           }
         } else {
-          io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: stealingPlayer.id, playerName: stealingPlayer.name, price: 0, deviation: 100 });
+          ioNow.to(`room-${roomNow.id}`).emit('game:guessConfirmed', { playerId: capturedStealingPlayerId, playerName: stealingPlayerNow?.name, price: 0, deviation: 100 });
         }
-        handleStealInQueue(room, stealingPlayer.id);
-        room.currentQueueIndex = originalQueueIndex;
-        advanceQueueToNextPlayer(room);
-        startNextTurn(room);
+        handleStealInQueue(roomNow, capturedStealingPlayerId);
+        roomNow.currentQueueIndex = capturedOriginalQueueIndex;
+        advanceQueueToNextPlayer(roomNow);
+        startNextTurn(roomNow);
       }, answerTime * 1000);
     });
 

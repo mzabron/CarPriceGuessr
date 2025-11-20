@@ -10,8 +10,8 @@ exports.createRoom = (req, res) => {
   try {
     const roomData = req.body;
     let rooms = getRooms();
-    console.log('Current rooms before creation:', JSON.stringify(rooms, null, 2));
-    console.log('Received room creation request:', JSON.stringify(roomData, null, 2));
+    console.log('Current rooms before creation:', getSafeRooms(rooms));
+    console.log('Received room creation request:', roomData && typeof roomData === 'object' ? { roomName: roomData.roomName } : roomData);
 
     if (!roomData.roomName) {
       console.log('Room creation failed: name is required');
@@ -45,11 +45,11 @@ exports.createRoom = (req, res) => {
       chatHistory: [] // Store chat messages
     };
 
-    console.log('Created new room object:', JSON.stringify(newRoom, null, 2));
+    console.log('Created new room object:', getSafeRoom(newRoom));
 
   rooms = [...rooms, newRoom];
   setRooms(rooms);
-    console.log('Current rooms after adding new room:', JSON.stringify(rooms, null, 2));
+    console.log('Current rooms after adding new room:', getSafeRooms(rooms));
 
     const { getIo } = require('./room/state');
     const io = getIo();
@@ -73,8 +73,8 @@ exports.createRoom = (req, res) => {
 exports.getRooms = (req, res) => {
   try {
     const rooms = getRooms();
-    console.log('Getting all rooms:', JSON.stringify(rooms, null, 2));
-    res.json(rooms);
+    console.log('Getting all rooms: (safe)', getSafeRooms(rooms));
+    res.json(getSafeRooms(rooms));
   } catch (error) {
     console.error('Error in getRooms:', error);
     res.status(500).json({ error: 'Internal server error while fetching rooms' });
