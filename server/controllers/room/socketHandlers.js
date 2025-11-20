@@ -207,6 +207,19 @@ function setupRoomSocketHandlers(io) {
         const totalPlayers = room.players.length;
         io.to(roomChannel).emit('game:nextRoundProgress', { readyCount, totalPlayers });
       }
+      // Remove from skip-voting readiness and update progress if voting is active
+      if (room.skipVotingReady) {
+        room.skipVotingReady.delete(socket.id);
+        const readyCount = room.skipVotingReady.size;
+        const totalPlayers = room.players.length;
+        io.to(roomChannel).emit('game:skipVotingProgress', { readyCount, totalPlayers });
+        const roomVotes = getRoomVotes();
+        if (roomVotes[roomId] && readyCount === totalPlayers && totalPlayers > 0) {
+          const { finishVoting } = require('./gameFlow');
+          if (roomVotes[roomId]?.timer) { clearTimeout(roomVotes[roomId].timer); roomVotes[roomId].timer = null; }
+          finishVoting(roomId);
+        }
+      }
       if (wasHost && room.players.length > 0) {
         room.players[0].isHost = true;
         io.to(room.players[0].id).emit('hostStatus', true);
@@ -249,6 +262,19 @@ function setupRoomSocketHandlers(io) {
         const totalPlayers = room.players.length;
         io.to(`room-${roomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
       }
+      // Remove from skip-voting readiness and update progress if voting is active
+      if (room.skipVotingReady) {
+        room.skipVotingReady.delete(socket.id);
+        const readyCount = room.skipVotingReady.size;
+        const totalPlayers = room.players.length;
+        io.to(`room-${roomId}`).emit('game:skipVotingProgress', { readyCount, totalPlayers });
+        const roomVotes = getRoomVotes();
+        if (roomVotes[roomId] && readyCount === totalPlayers && totalPlayers > 0) {
+          const { finishVoting } = require('./gameFlow');
+          if (roomVotes[roomId]?.timer) { clearTimeout(roomVotes[roomId].timer); roomVotes[roomId].timer = null; }
+          finishVoting(roomId);
+        }
+      }
       if (wasHost && room.players.length > 0) {
         room.players[0].isHost = true;
         io.to(room.players[0].id).emit('hostStatus', true);
@@ -277,7 +303,51 @@ function setupRoomSocketHandlers(io) {
         const { finishVoting } = require('./gameFlow');
         finishVoting(roomId);
       }, 15000);
+      // Initialize skip voting readiness and broadcast initial progress
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === roomId);
+      if (room) {
+        room.skipVotingReady = new Set();
+        io.to(`room-${roomId}`).emit('game:skipVotingProgress', { readyCount: 0, totalPlayers: room.players.length });
+      }
       io.to(`room-${roomId}`).emit('game:votingStarted');
+    });
+
+    // Skip Voting (collective) – similar to Next Round readiness
+    socket.on('game:skipVotingClick', ({ roomId }) => {
+      const effectiveRoomId = socket.roomId || (typeof roomId === 'string' ? parseInt(roomId) : roomId);
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === effectiveRoomId);
+      if (!room) return;
+      const roomVotes = getRoomVotes();
+      if (!roomVotes[effectiveRoomId]) return; // Only during active voting
+      if (!room.skipVotingReady) room.skipVotingReady = new Set();
+      room.skipVotingReady.add(socket.id);
+      const readyCount = room.skipVotingReady.size;
+      const totalPlayers = room.players.length;
+      io.to(`room-${effectiveRoomId}`).emit('game:skipVotingProgress', { readyCount, totalPlayers });
+      if (readyCount === totalPlayers && totalPlayers > 0) {
+        const { finishVoting } = require('./gameFlow');
+        if (roomVotes[effectiveRoomId]?.timer) {
+          clearTimeout(roomVotes[effectiveRoomId].timer);
+          roomVotes[effectiveRoomId].timer = null;
+        }
+        finishVoting(effectiveRoomId);
+      }
+    });
+
+    socket.on('game:skipVotingUnclick', ({ roomId }) => {
+      const effectiveRoomId = socket.roomId || (typeof roomId === 'string' ? parseInt(roomId) : roomId);
+      const rooms = getRooms();
+      const room = rooms.find(r => r.id === effectiveRoomId);
+      if (!room) return;
+      const roomVotes = getRoomVotes();
+      if (!roomVotes[effectiveRoomId]) return; // Only during active voting
+      if (!room.skipVotingReady) room.skipVotingReady = new Set();
+      room.skipVotingReady.delete(socket.id);
+      const readyCount = room.skipVotingReady.size;
+      const totalPlayers = room.players.length;
+      io.to(`room-${effectiveRoomId}`).emit('game:skipVotingProgress', { readyCount, totalPlayers });
     });
 
     socket.on('game:vote', ({ roomId, playerId, playerName, carIndex }) => {

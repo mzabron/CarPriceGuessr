@@ -118,6 +118,14 @@ function startVotingPhase(io, socket) {
   const roomVotes = getRoomVotes();
   roomVotes[socket.roomId] = { votes: {}, carCount };
   roomVotes[socket.roomId].timer = setTimeout(() => finishVoting(socket.roomId), 15000);
+  // Initialize collective skip voting readiness tracking
+  if (room) {
+    room.skipVotingReady = new Set();
+    io.to(`room-${socket.roomId}`).emit('game:skipVotingProgress', {
+      readyCount: 0,
+      totalPlayers: room.players.length,
+    });
+  }
   io.to(`room-${socket.roomId}`).emit('game:votingStarted');
 }
 
@@ -156,6 +164,8 @@ function finishVoting(roomId) {
 
   clearTimeout(roomVotes[roomId]?.timer);
   delete roomVotes[roomId];
+  // Reset skip voting readiness tracking after voting ends
+  if (room) room.skipVotingReady = new Set();
 
   setTimeout(() => {
     const room = rooms.find(r => r.id === roomId);

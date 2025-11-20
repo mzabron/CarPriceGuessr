@@ -47,6 +47,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [voting, setVoting] = useState(false);
   const [votes, setVotes] = useState({});
   const [votingTimeLeft, setVotingTimeLeft] = useState(15);
+  const [skipVotingReadyCount, setSkipVotingReadyCount] = useState(0);
+  const [skipVotingTotal, setSkipVotingTotal] = useState(0);
+  const [hasClickedSkipVoting, setHasClickedSkipVoting] = useState(false);
   const [winningIndex, setWinningIndex] = useState(null);
   const [showChosenText, setShowChosenText] = useState(false);
   const [currentTurn, setCurrentTurn] = useState(null);
@@ -200,6 +203,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(null);
       setVotingTimeLeft(15);
       setShowChosenText(false);
+      setHasClickedSkipVoting(false);
+      setSkipVotingReadyCount(0);
+      setSkipVotingTotal(players?.length || 0);
   // Do not reset cooldown; it's per-player time-based.
       
       // Close round modal when voting starts (new round in progress)
@@ -218,6 +224,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
     socketService.socket?.on('game:votesUpdate', (votesUpdate) => {
       setVotes(votesUpdate);
+    });
+
+    // Collective skip-voting progress updates
+    socketService.socket?.on('game:skipVotingProgress', ({ readyCount, totalPlayers }) => {
+      setSkipVotingReadyCount(readyCount || 0);
+      setSkipVotingTotal(totalPlayers || 0);
     });
 
     socketService.socket?.on('game:votingResult', ({ winningIndex }) => {
@@ -281,6 +293,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:votingStarted');
       socketService.socket?.off('game:votesUpdate');
       socketService.socket?.off('game:votingResult');
+      socketService.socket?.off('game:skipVotingProgress');
       socketService.socket?.off('game:guessResult');
       socketService.socket?.off('game:guessConfirmed');
       socketService.socket?.off('game:finishRound');
@@ -374,6 +387,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
   const handleVote = (carIdx) => {
     socketService.socket.emit('game:vote', { roomId, playerId, playerName, carIndex: carIdx });
+  };
+
+  const handleSkipVotingToggle = () => {
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (!hasClickedSkipVoting) {
+      socketService.socket.emit('game:skipVotingClick', { roomId: numericRoomId });
+      setHasClickedSkipVoting(true);
+    } else {
+      socketService.socket.emit('game:skipVotingUnclick', { roomId: numericRoomId });
+      setHasClickedSkipVoting(false);
+    }
   };
 
   const handleSliderChange = (e) => {
@@ -766,6 +790,33 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     </button>
                   );
                 })}
+              </div>
+              {/* Skip Voting button relocated to bottom-right under categories */}
+              <div className="flex justify-end mt-4 max-w-4xl mx-auto">
+                <button
+                  className={`px-6 py-2 rounded-lg font-bold transition transform duration-150 ${
+                    hasClickedSkipVoting
+                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-500 shadow-inner ring-1 ring-gray-400'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
+                  }`}
+                  onClick={handleSkipVotingToggle}
+                  disabled={skipVotingReadyCount === skipVotingTotal && skipVotingTotal > 0}
+                  title={hasClickedSkipVoting ? 'Click to undo skip' : 'Click to skip voting now'}
+                  aria-pressed={hasClickedSkipVoting}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    {hasClickedSkipVoting && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-800" fill="currentColor" aria-hidden="true">
+                        <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
+                      </svg>
+                    )}
+                    {(() => {
+                      const base = `Skip (${votingTimeLeft}s)`;
+                      const progress = skipVotingTotal > 0 ? ` (${skipVotingReadyCount}/${skipVotingTotal})` : '';
+                      return base + progress;
+                    })()}
+                  </span>
+                </button>
               </div>
             </div>
           ) : showChosenText && winningIndex !== null ? (

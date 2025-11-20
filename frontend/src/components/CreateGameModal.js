@@ -9,7 +9,7 @@ const CreateGameModal = ({ onClose, user }) => {
     roomName: '',
     visibility: 'public',
     maxPlayers: 4,
-    powerUps: 2,
+    powerUps: 5,
     rounds: 5,
     roundDuration: 30
   });

@@ -88,7 +88,7 @@ const Results = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">Game Results</h1>
-            <p className="text-xl text-blue-200">Room: {roomName} ({roomCode})</p>
+            <p className="text-xl text-blue-200">Room: {roomName}</p>
           </div>
           
           {/* Player Rankings */}
@@ -121,9 +121,21 @@ const Results = () => {
                       {getPlacementSuffix(index)}
                     </div>
                     <div>
-                      <div className="font-semibold text-lg text-gray-800">
-                        {player.name}
-                        {player.isHost && <span className="ml-2 text-sm text-yellow-600">(Host)</span>}
+                      <div className="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                        <span>{player.name}</span>
+                        {player.isHost && (
+                          <svg
+                            className="text-yellow-500"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            aria-label="Host"
+                            title="Host"
+                          >
+                            <path d="M5 16l-2-9 5 4 4-6 4 6 5-4-2 9H5zm0 2h14v2H5v-2z" />
+                          </svg>
+                        )}
                       </div>
                       {player.stealsRemaining !== undefined && (
                         <div className="text-sm text-gray-600">
