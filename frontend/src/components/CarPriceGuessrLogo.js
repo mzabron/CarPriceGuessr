@@ -1,19 +1,20 @@
-/**
- * CarPriceGuessrLogo.js
- * Fix: Text Clipping issue resolved (Line-height & Padding adjustment)
- */
- export default function CarPriceGuessrLogo() {
+export default function CarPriceGuessrLogo() {
   // --- Dimensions ---
-  const width = 220; 
-  const height = 125; 
-  const cx = width / 2;      
-  const cy = height - 10; 
-  const radius = 90;      
+  const width = 220;
+  const height = 125;
+  const cx = width / 2;
+  const cy = height - 10;
+  const radius = 90;
   const needleLength = 85;
 
+  const arcThickness = 18;
+  const iconSize = 42;
+  const iconSpread = 45;
+  const iconLift = 5;
+
   // --- Colors ---
-  const gradientColors = ["#94a3b8", "#3B82F6", "#22c55e"];
-  const textColor = "#1e293b";
+  const gradientColors = ['#94a3b8', '#3B82F6', '#22c55e'];
+  const textColor = '#1e293b';
 
   // --- CSS Styles ---
   const styles = `
@@ -24,25 +25,19 @@
       justify-content: center;
       font-family: sans-serif;
       gap: 15px;
-      
-      /* FIX 1: Add padding so the bottom edge isn't hard-clipped */
       padding-bottom: 5px; 
       overflow: visible;
     }
 
+    /* --- 1. TITLE --- */
     .cpg-title {
-      /* FIX 2: Adjusted margin to align visually with SVG baseline */
       margin: 0 0 8px 0; 
-      
       position: relative;
       z-index: 0;
-      
       font-size: 5rem; 
       font-weight: 900;
       text-align: right;
       letter-spacing: -3px;
-      
-      /* FIX 3: Increased line-height to prevent clipping */
       line-height: 0.9; 
       
       background: linear-gradient(90deg, ${gradientColors[0]}, ${gradientColors[1]}, ${gradientColors[2]});
@@ -53,33 +48,45 @@
 
       opacity: 0;
       transform: translateX(-20px);
-      transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+      transition: opacity 0.8s ease 0.1s, transform 0.8s ease 0.1s;
     }
     .cpg-title.visible {
       opacity: 1;
       transform: translateX(0);
     }
 
+    /* --- 2. ARC --- */
     .cpg-arc {
       stroke-dasharray: 1000;
       stroke-dashoffset: 1000;
-      transition: stroke-dashoffset 1s ease-out;
+      transition: stroke-dashoffset 1s ease-out 0.1s;
     }
     .cpg-arc.visible {
       stroke-dashoffset: 0;
     }
 
+    /* --- 3. TICKS --- */
+    .cpg-ticks {
+      opacity: 0;
+      transition: opacity 0.8s ease 0.1s;
+    }
+    .cpg-ticks.visible {
+      opacity: 1;
+    }
+
+    /* --- 4. NEEDLE --- */
     .cpg-needle-rotate {
       transform: rotate(-90deg);
-      transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1s;
+      transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s;
     }
     .cpg-needle-rotate.visible {
       transform: rotate(30deg);
     }
 
+    /* --- 5. ICONS --- */
     .cpg-icons {
       opacity: 0;
-      transition: opacity 0.8s ease-out 1.5s;
+      transition: opacity 0.8s ease-out 0.8s;
     }
     .cpg-icons.visible {
       opacity: 1;
@@ -91,18 +98,23 @@
   const count = 24;
   const step = Math.PI / count;
 
+  // Slightly adjusted ticks to account for thicker arc
+  const tickGap = arcThickness / 2 + 5;
+
   for (let i = 0; i <= count; i++) {
-    const angle = Math.PI - (i * step);
+    const angle = Math.PI - i * step;
     const isMajor = i % 4 === 0;
-    const innerR = isMajor ? radius - 12 : radius - 6; 
-    const outerR = radius;
+
+    // We subtract tickGap so ticks don't overlap the thicker arc
+    const innerR = isMajor ? radius - tickGap - 8 : radius - tickGap - 2;
+    const outerR = radius - tickGap + 2;
 
     const x1 = cx + innerR * Math.cos(angle);
     const y1 = cy - innerR * Math.sin(angle);
     const x2 = cx + outerR * Math.cos(angle);
     const y2 = cy - outerR * Math.sin(angle);
 
-    const color = isMajor ? "#94a3b8" : "#e2e8f0";
+    const color = isMajor ? '#94a3b8' : '#e2e8f0';
     const strokeW = isMajor ? 3 : 1;
 
     ticksHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${strokeW}" />`;
@@ -118,6 +130,7 @@
 
   container.innerHTML += `<h1 class="cpg-title">CarPriceGuessr</h1>`;
 
+  // Updated SVG generation using new variables
   container.innerHTML += `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible; z-index: 1;">
       <defs>
@@ -131,14 +144,22 @@
         </filter>
       </defs>
 
-      <g>${ticksHTML}</g>
+      <path class="cpg-arc" d="M ${
+        cx - radius
+      } ${cy} A ${radius} ${radius} 0 0 1 ${
+    cx + radius
+  } ${cy}" fill="none" stroke="url(#grad1)" stroke-width="${arcThickness}" stroke-linecap="round" />
+
+      <g class="cpg-ticks">${ticksHTML}</g>
 
       <g class="cpg-icons">
-        <text x="${cx - 50}" y="${cy - 20}" fill="${gradientColors[0]}" font-size="32" font-weight="900" text-anchor="middle" dominant-baseline="middle" style="user-select: none;">?</text>
-        <text x="${cx + 50}" y="${cy - 20}" fill="${gradientColors[2]}" font-size="32" font-weight="900" text-anchor="middle" dominant-baseline="middle" style="user-select: none;">$</text>
+        <text x="${cx - iconSpread}" y="${cy - iconLift}" fill="${
+    gradientColors[0]
+  }" font-size="${iconSize}" font-weight="900" text-anchor="middle" dominant-baseline="middle" style="user-select: none;">?</text>
+        <text x="${cx + iconSpread}" y="${cy - iconLift}" fill="${
+    gradientColors[2]
+  }" font-size="${iconSize}" font-weight="900" text-anchor="middle" dominant-baseline="middle" style="user-select: none;">$</text>
       </g>
-
-      <path class="cpg-arc" d="M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}" fill="none" stroke="url(#grad1)" stroke-width="10" stroke-linecap="round" />
 
       <g transform="translate(${cx}, ${cy})">
         <g class="cpg-needle-rotate">
@@ -158,11 +179,13 @@
       const arc = container.querySelector('.cpg-arc');
       const needle = container.querySelector('.cpg-needle-rotate');
       const icons = container.querySelector('.cpg-icons');
+      const ticks = container.querySelector('.cpg-ticks');
 
       if (title) title.classList.add('visible');
       if (arc) arc.classList.add('visible');
       if (needle) needle.classList.add('visible');
       if (icons) icons.classList.add('visible');
+      if (ticks) ticks.classList.add('visible');
     });
   });
 
