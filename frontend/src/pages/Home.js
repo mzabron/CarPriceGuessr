@@ -1,71 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
-import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
+import SetNameModal from '../components/SetNameModal';
+import CarPriceGuessrLogo from '../components/CarPriceGuessrLogo';
 
 const Home = () => {
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
   const [showSetName, setShowSetName] = useState(false);
+  const logoRef = useRef(null);
 
-  // Rehydrate saved nickname & preferred color from localStorage (Home page persistence only)
   useEffect(() => {
-    try {
-      const storedName = localStorage.getItem('cpg:nickname');
-      const storedColorKey = localStorage.getItem('cpg:preferredColorKey');
-      if (storedName) {
-        let preferredColor = null;
-        if (storedColorKey) {
-          preferredColor = COLOR_OPTIONS.find(c => c.key === storedColorKey) || null;
-        }
-        setUser({ name: storedName, preferredColor });
-      }
-    } catch (_) {
-      // Non-fatal: ignore storage issues
-    }
+    const mount = logoRef.current;
+    if (!mount) return;
+    const el = CarPriceGuessrLogo();
+    mount.innerHTML = '';
+    mount.appendChild(el);
+    return () => {
+      if (mount) mount.innerHTML = '';
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Car Price Guessr</h1>
+            <div
+              ref={logoRef}
+              className="flex items-center h-20"
+              style={{ transform: 'scale(0.5)', transformOrigin: 'left center' }}
+            />
             <div className="flex items-center">
               <button
                 onClick={() => setShowSetName(true)}
                 className={
                   user?.name
-                    ? 'inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 shadow-sm transition-colors'
-                    : 'inline-flex items-center gap-4 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-base font-medium shadow-sm transition-colors'
+                    ? 'inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white border border-gray-300 text-gray-800 hover:bg-gray-50 shadow-sm transition-colors'
+                    : 'inline-flex items-center gap-5 px-7 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-lg font-semibold shadow-md transition-colors'
                 }
                 title={user?.name ? 'Change name' : 'Set name'}
               >
                 {user?.name ? (
                   <>
-                    {/* Avatar: if preferredColor exists (including 'random'), show solid/gradient swatch without letters; otherwise fallback to initials */}
-                    {user?.preferredColor ? (
-                      <span
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${user.preferredColor.bgClass}`}
-                        aria-hidden="true"
-                        title={user?.preferredColor?.name || 'Avatar'}
-                      />
-                    ) : (
-                      <span
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-semibold uppercase`}
-                        aria-hidden="true"
-                        title="Avatar"
-                      >
-                        {(user.name || '')
-                          .split(/\s+/)
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map(s => s[0])
-                          .join('')
-                          .toUpperCase() || 'U'}
-                      </span>
-                    )}
+                    {/* Avatar: show preferred color swatch when set, otherwise initials */}
+                    <span
+                      className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-semibold uppercase ${user?.preferredColor && user.preferredColor.key !== 'random' ? user.preferredColor.bgClass : 'bg-indigo-600'}`}
+                      aria-hidden="true"
+                      title={user?.preferredColor?.name || 'Avatar'}
+                    >
+                      {user?.preferredColor && user.preferredColor.key !== 'random'
+                        ? ''
+                        : ((user.name || '')
+                            .split(/\s+/)
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map(s => s[0])
+                            .join('')
+                            .toUpperCase() || 'U')}
+                    </span>
                     <span className="max-w-[11rem] truncate font-semibold leading-normal pb-0.5">{user.name}</span>
                     {/* Minimal outline pencil icon */}
                     <svg
@@ -148,20 +142,13 @@ const Home = () => {
       {showSetName && (
         <SetNameModal
           initialName={user?.name || ''}
-          initialPreferredColorKey={user?.preferredColor?.key}
           onClose={() => setShowSetName(false)}
           onSubmit={(payload) => {
-            if (payload && typeof payload === 'object') {
+            if (typeof payload === 'string') {
+              setUser({ name: payload });
+            } else if (payload && typeof payload === 'object') {
               const { name, preferredColor } = payload;
               setUser({ name, preferredColor });
-              // Persist locally so a simple browser refresh retains choices on Home page
-              try {
-                localStorage.setItem('cpg:nickname', name);
-                // Store only the key; 'random' stored so user sees avatar gradient again after refresh
-                localStorage.setItem('cpg:preferredColorKey', preferredColor?.key || '');
-              } catch (_) {
-                // Ignore quota / privacy mode errors
-              }
             }
             setShowSetName(false);
           }}
