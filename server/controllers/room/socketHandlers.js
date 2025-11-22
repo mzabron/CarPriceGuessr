@@ -1,7 +1,72 @@
-const { setIo, getIo, getRooms, setRooms, getRoomVotes, correctGuessThreshold } = require('./state');
+const { setIo, getIo, getRooms, setRooms, getRoomVotes, correctGuessThreshold, setCars } = require('./state');
 const { getSafeRooms, getSafeRoom, generateRoomCode, getDeviation } = require('./utils');
 const { sendSystemMessage } = require('./messaging');
 const { startNextTurn, finishGame, startVotingPhase, initializePlayerQueue, shiftQueueForNextRound, getCurrentPlayerFromQueue, advanceQueueToNextPlayer, handleStealInQueue } = require('./gameFlow');
+const ebayController = require('../ebayController');
+
+function triggerRoundStart(room, socket) {
+  if (!room) return false;
+  if (room.roundTransitioning) return false;
+
+  room.roundTransitioning = true;
+  room.nextRoundReady = new Set();
+
+  const io = getIo();
+  const roomChannel = `room-${room.id}`;
+  const releaseLock = () => { room.roundTransitioning = false; };
+
+  if (room.currentRoundIndex >= room.settings.rounds) {
+    if (!room.finishGameEmitted) {
+      room.finishGameEmitted = true;
+      finishGame(room);
+    }
+    releaseLock();
+    return true;
+  }
+
+  room.finishGameEmitted = false;
+  room.gameStarted = true;
+  if (room.currentRoundIndex === 0) {
+    room.players.forEach(player => { player.points = 0; });
+    initializePlayerQueue(room);
+  } else {
+    shiftQueueForNextRound(room);
+  }
+  room.currentRoundTurns = 0;
+  room.stealUsedThisRound = false;
+  if (!room.gameHistory) room.gameHistory = [];
+
+  io.to(roomChannel).emit('game:startRound', { roomId: room.id });
+  room.currentRoundIndex += 1;
+  sendSystemMessage(room.id, `Round ${room.currentRoundIndex}/${room.settings.rounds}`, 'round');
+
+  try {
+    ebayController.getCars(
+      { query: {} },
+      {
+        json: (carList) => {
+          io.to(roomChannel).emit('game:cars', carList);
+          setCars(carList || { itemSummaries: [] });
+          try {
+            startVotingPhase(io, socket);
+          } finally {
+            releaseLock();
+          }
+        },
+        status: () => ({
+          json: () => {
+            releaseLock();
+          }
+        })
+      }
+    );
+  } catch (error) {
+    console.error(`Failed to start round for room ${room.id}:`, error);
+    releaseLock();
+  }
+
+  return true;
+}
 
 function setupRoomSocketHandlers(io) {
   setIo(io);
@@ -32,44 +97,7 @@ function setupRoomSocketHandlers(io) {
       if (!room) return;
       const player = room.players.find(p => p.id === socket.id);
       if (player && player.isHost && room.players.every(p => p.isReady)) {
-        if (room.currentRoundIndex >= room.settings.rounds) {
-          // Guard to emit finish only once
-          if (!room.finishGameEmitted) {
-            room.finishGameEmitted = true;
-            finishGame(room);
-          }
-          return;
-        }
-        // Reset finish flag at the start of a new round sequence
-        room.finishGameEmitted = false;
-        room.gameStarted = true;
-        if (room.currentRoundIndex === 0) {
-          room.players.forEach(player => { player.points = 0; });
-          initializePlayerQueue(room);
-        } else {
-          shiftQueueForNextRound(room);
-        }
-        room.currentRoundTurns = 0;
-        room.stealUsedThisRound = false;
-        if (!room.gameHistory) room.gameHistory = [];
-
-        io.to(`room-${socket.roomId}`).emit('game:startRound', { roomId: socket.roomId });
-        room.currentRoundIndex += 1;
-        sendSystemMessage(socket.roomId, `Round ${room.currentRoundIndex}/${room.settings.rounds}`, 'round');
-
-        const ebayController = require('../ebayController');
-        ebayController.getCars(
-          { query: {} },
-          {
-            json: (carList) => {
-              io.to(`room-${socket.roomId}`).emit('game:cars', carList);
-              const { setCars } = require('./state');
-              setCars(carList || { itemSummaries: [] });
-              startVotingPhase(io, socket);
-            },
-            status: () => ({ json: () => {} })
-          }
-        );
+        triggerRoundStart(room, socket);
       }
     });
 
@@ -522,44 +550,7 @@ function setupRoomSocketHandlers(io) {
   io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
       // If everyone clicked, start the next round immediately
       if (readyCount === totalPlayers) {
-        // Clear tracking for next cycle
-        room.nextRoundReady = new Set();
-        // Start next round logic copied from host-only startRound
-        if (room.currentRoundIndex >= room.settings.rounds) {
-          if (!room.finishGameEmitted) {
-            room.finishGameEmitted = true;
-            finishGame(room);
-          }
-          return;
-        }
-        // Reset finish flag as we are continuing the game
-        room.finishGameEmitted = false;
-        room.gameStarted = true;
-        if (room.currentRoundIndex === 0) {
-          room.players.forEach(player => { player.points = 0; });
-          initializePlayerQueue(room);
-        } else {
-          shiftQueueForNextRound(room);
-        }
-        room.currentRoundTurns = 0;
-        room.stealUsedThisRound = false;
-        if (!room.gameHistory) room.gameHistory = [];
-        io.to(`room-${effectiveRoomId}`).emit('game:startRound', { roomId: effectiveRoomId });
-        room.currentRoundIndex += 1;
-        sendSystemMessage(effectiveRoomId, `Round ${room.currentRoundIndex}/${room.settings.rounds}`, 'round');
-        const ebayController = require('../ebayController');
-        ebayController.getCars(
-          { query: {} },
-          {
-            json: (carList) => {
-              io.to(`room-${effectiveRoomId}`).emit('game:cars', carList);
-              const { setCars } = require('./state');
-              setCars(carList || { itemSummaries: [] });
-              startVotingPhase(io, socket);
-            },
-            status: () => ({ json: () => {} })
-          }
-        );
+        triggerRoundStart(room, socket);
       }
     });
 

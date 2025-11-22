@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CreateGameModal from '../components/CreateGameModal';
 import RoomList from '../components/RoomList';
-import SetNameModal from '../components/SetNameModal';
 import CarPriceGuessrLogo from '../components/CarPriceGuessrLogo';
+import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 
 const Home = () => {
   const [showCreateGame, setShowCreateGame] = useState(false);
@@ -11,7 +11,22 @@ const Home = () => {
   const [showSetName, setShowSetName] = useState(false);
   const logoRef = useRef(null);
 
+  
   useEffect(() => {
+    // Rehydrate saved nickname & preferred color from localStorage (Home page persistence only)
+    try {
+      const storedName = localStorage.getItem('cpg:nickname');
+      const storedColorKey = localStorage.getItem('cpg:preferredColorKey');
+      if (storedName) {
+        let preferredColor = null;
+        if (storedColorKey) {
+          preferredColor = COLOR_OPTIONS.find(c => c.key === storedColorKey) || null;
+        }
+        setUser({ name: storedName, preferredColor });
+      }
+    } catch (_) {
+      // Non-fatal: ignore storage issues
+    }
     const mount = logoRef.current;
     if (!mount) return;
     const el = CarPriceGuessrLogo();
@@ -44,22 +59,28 @@ const Home = () => {
               >
                 {user?.name ? (
                   <>
-                    {/* Avatar: show preferred color swatch when set, otherwise initials */}
-                    <span
-                      className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-semibold uppercase ${user?.preferredColor && user.preferredColor.key !== 'random' ? user.preferredColor.bgClass : 'bg-indigo-600'}`}
-                      aria-hidden="true"
-                      title={user?.preferredColor?.name || 'Avatar'}
-                    >
-                      {user?.preferredColor && user.preferredColor.key !== 'random'
-                        ? ''
-                        : ((user.name || '')
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map(s => s[0])
-                            .join('')
-                            .toUpperCase() || 'U')}
-                    </span>
+                    {/* Avatar: if preferredColor exists (including 'random'), show solid/gradient swatch without letters; otherwise fallback to initials */}
+                    {user?.preferredColor ? (
+                      <span
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${user.preferredColor.bgClass}`}
+                        aria-hidden="true"
+                        title={user?.preferredColor?.name || 'Avatar'}
+                      />
+                    ) : (
+                      <span
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-semibold uppercase`}
+                        aria-hidden="true"
+                        title="Avatar"
+                      >
+                        {(user.name || '')
+                          .split(/\s+/)
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map(s => s[0])
+                          .join('')
+                          .toUpperCase() || 'U'}
+                      </span>
+                    )}
                     <span className="max-w-[11rem] truncate font-semibold leading-normal pb-0.5">{user.name}</span>
                     {/* Minimal outline pencil icon */}
                     <svg
@@ -142,13 +163,20 @@ const Home = () => {
       {showSetName && (
         <SetNameModal
           initialName={user?.name || ''}
+          initialPreferredColorKey={user?.preferredColor?.key}
           onClose={() => setShowSetName(false)}
           onSubmit={(payload) => {
-            if (typeof payload === 'string') {
-              setUser({ name: payload });
-            } else if (payload && typeof payload === 'object') {
+            if (payload && typeof payload === 'object') {
               const { name, preferredColor } = payload;
               setUser({ name, preferredColor });
+              // Persist locally so a simple browser refresh retains choices on Home page
+              try {
+                localStorage.setItem('cpg:nickname', name);
+                // Store only the key; 'random' stored so user sees avatar gradient again after refresh
+                localStorage.setItem('cpg:preferredColorKey', preferredColor?.key || '');
+              } catch (_) {
+                // Ignore quota / privacy mode errors
+              }
             }
             setShowSetName(false);
           }}

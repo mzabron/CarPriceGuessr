@@ -64,6 +64,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [nextRoundReadyCount, setNextRoundReadyCount] = useState(0);
   const [nextRoundTotal, setNextRoundTotal] = useState(0);
   const [hasClickedNextRound, setHasClickedNextRound] = useState(false);
+  const [roundAdvanceLocked, setRoundAdvanceLocked] = useState(false);
   // Results handling (last round): cache final data and control navigation
   const [finalGameData, setFinalGameData] = useState(null);
   const [requestedResultsNow, setRequestedResultsNow] = useState(false);
@@ -256,6 +257,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setNextRoundReadyCount(0);
       setNextRoundTotal(players?.length || 0);
       setHasClickedNextRound(false);
+      setRoundAdvanceLocked(false);
       setCurrentTurn(null);
       setTurnTimeLeft(null);
       setLastGuess(null);
@@ -589,6 +591,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
     const isLast = !!roundResult?.isLastRound;
     const timer = setTimeout(() => {
+      setRoundAdvanceLocked(true);
       if (isLast) {
         // Ensure finish is emitted once globally if nobody clicked yet
         if (!finalGameData) {
@@ -606,13 +609,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
   }, [showRoundModal, roomId, roundResult, finalGameData]);
 
   const handleNextRoundToggle = () => {
-    if (!showRoundModal) return;
+    if (!showRoundModal || roundAdvanceLocked) return;
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
     // If it's the last round (View Results case), request finalization and navigate this client immediately.
     if (roundResult?.isLastRound) {
       if (!requestedResultsNow) {
         setRequestedResultsNow(true);
         setHasClickedNextRound(true);
+        setRoundAdvanceLocked(true);
         // Ask server to emit finishGame once globally (guarded server-side)
         socketService.socket.emit('game:requestFinishGame', { roomId: numericRoomId });
       }
@@ -732,7 +736,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
                   }`}
                   onClick={handleNextRoundToggle}
-                  disabled={!(roundResult?.isLastRound) && (nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0)}
+                  disabled={roundAdvanceLocked || (!(roundResult?.isLastRound) && (nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0))}
                   title={roundResult?.isLastRound ? 'View results now' : (hasClickedNextRound ? 'Click to undo readiness' : 'Click to mark ready for next round')}
                   aria-pressed={hasClickedNextRound}
                 >
@@ -747,6 +751,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       const base = isLast
                         ? `View Results (${roundModalTimer}s)`
                         : `Next Round (${roundModalTimer}s)`;
+                      if (roundAdvanceLocked) {
+                        return isLast ? 'Preparing results...' : 'Starting next round...';
+                      }
                       // Show readiness progress only for Next Round case
                       if (!isLast) {
                         const progress = nextRoundTotal > 0 ? ` (${nextRoundReadyCount}/${nextRoundTotal})` : '';
