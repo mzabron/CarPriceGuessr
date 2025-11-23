@@ -2,7 +2,11 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 
 console.log(process.env.CLIENT_ID)
-const SCOPES = 'https://api.ebay.com/oauth/api_scope'; // Required scope for most public APIs
+const DEFAULT_SCOPES = [
+  'https://api.ebay.com/oauth/api_scope',
+];
+
+const SCOPES = process.env.EBAY_SCOPES || DEFAULT_SCOPES.join(' ');
 
 let currentAccessToken = null;
 let tokenExpiryTime = 0;
@@ -22,7 +26,8 @@ async function fetchNewApplicationToken() {
     })
     
     if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
+      const body = await response.text();
+      throw new Error(`Response status: ${response.status} - ${body}`);
     }
     const json = await response.json();
     const { access_token, expires_in } = json;

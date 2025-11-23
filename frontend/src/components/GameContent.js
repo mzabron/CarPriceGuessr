@@ -331,13 +331,16 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const getDisplayText = (car) => {
     if (car.conditionDescription) {
       const words = car.conditionDescription.split(' ');
-      const shortDesc = words.slice(0, 6).join(' ');
-      return shortDesc + (words.length > 6 ? '...' : '');
+      const firstSix = words.slice(0, 6).join(' ');
+      if (firstSix !== 'View 35 pictures by scrolling below') {
+        const shortDesc = firstSix;
+        return shortDesc + (words.length > 6 ? '...' : '');
+      }
     }
     const fields = [
       'carType',
-      'bodyType',
       'horsePower',
+      'bodyType',
       'numberOfCylinders',
       'numberOfDoors',
       'make'
@@ -348,6 +351,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
         car[field] !== 'No Information' &&
         car[field] !== '--'
       ) {
+        if (field === 'bodyType' && car[field] === 'Other') {
+          continue;
+        }
+        if (field === 'horsePower') {
+          return `Horse Power: ${car[field]}`;
+        }
         if (field === 'numberOfCylinders') {
           return `Cylinders number: ${car[field]}`;
         }

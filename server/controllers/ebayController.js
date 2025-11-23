@@ -1,156 +1,95 @@
-const { getApplicationAccessToken } = require('./token');
+const { getRandomCars, getCarsCount } = require('../services/db');
 
-const EBAY_API_BASE_URL = 'https://api.ebay.com/buy/browse/v1';
-const MARKETPLACE_ID = 'EBAY_US';
-const CARS_CATEGORY_ID = '6001';
-
-// Function to shuffle array using Fisher-Yates algorithm
-const shuffleArray = (array) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+function buildDisplayLabel(car) {
+  if (car.conditionDescription) {
+    const words = car.conditionDescription.split(' ');
+    const firstSix = words.slice(0, 6).join(' ');
+    if (firstSix !== 'View 35 pictures by scrolling below') {
+      const shortDesc = firstSix;
+      return shortDesc + (words.length > 6 ? '...' : '');
+    }
   }
-  return array;
-};
+
+  const fields = [
+    'carType',
+    'horsePower',
+    'bodyType',
+    'numberOfCylinders',
+    'numberOfDoors',
+    'make',
+  ];
+
+  for (const field of fields) {
+    const value = car[field];
+    if (!value || value === 'No Information' || value === '--') {
+      continue;
+    }
+    if (field === 'bodyType' && value === 'Other') {
+      continue;
+    }
+    if (field === 'horsePower') {
+      return `Horse Power: ${value}`;
+    }
+    if (field === 'numberOfCylinders') {
+      return `Cylinders number: ${value}`;
+    }
+    if (field === 'numberOfDoors') {
+      return `Doors number: ${value}`;
+    }
+    return value;
+  }
+
+  return 'No Information Available';
+}
 
 exports.getCars = async (req, res) => {
   try {
-    
-    const randomOffset = Math.floor(Math.random() * 90) * 10;
-    // Request more items to have a larger pool for random selection
-    const params = new URLSearchParams({
-      category_ids: CARS_CATEGORY_ID,
-      //filter: 'itemLocation.country:US',
-      filter: 'buyingOptions:{FIXED_PRICE}',
-      limit: '10',
-      offset: `${randomOffset}`
-    });
+    const total = await getCarsCount();
 
-    const carsWithDetails = await fetchCarsWithDetails(params);
-    
-    // Randomly select 10 cars from the results
-    const randomizedCars = {
-      itemSummaries: shuffleArray(carsWithDetails.itemSummaries).slice(0, 10),
-      totalEstimatedMatches: carsWithDetails.totalEstimatedMatches
-    };
+    // Oversample from DB so we can enforce unique labels per round.
+    const oversampleCount = 40;
+    const desiredCount = 10;
+    const candidateCars = await getRandomCars(Math.max(oversampleCount, desiredCount));
 
-    res.json(randomizedCars);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch cars from eBay API' });
-  }
-};
-
-const fetchCarsWithDetails = async (params) => {
-  try {
-    const accessToken = await getApplicationAccessToken();
-    
-    const searchResponse = await fetch(`${EBAY_API_BASE_URL}/item_summary/search?${params.toString()}`, {
-      method: "GET",
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
-        'Content-Type': 'application/json'
-      },
-    });
-
-    if (!searchResponse.ok) {
-      throw new Error(`eBay API search request failed: ${searchResponse.status}`);
+    if (!candidateCars.length) {
+      return res.status(503).json({
+        itemSummaries: [],
+        totalEstimatedMatches: total,
+        message: 'No cached cars available yet. Please try again shortly.',
+      });
     }
 
-    const searchData = await searchResponse.json();
-    console.log('Search results sample item:', searchData?.itemSummaries?.[0]);
-    
-    if (!searchData?.itemSummaries?.length) {
-      console.warn('No cars found in search results');
-      return { itemSummaries: [], totalEstimatedMatches: 0 };
-    }
+    const usedLabels = new Set();
+    const selectedCars = [];
 
-    const itemDetailsPromises = searchData.itemSummaries.map(async (item) => {
-      try {
-        const detailResponse = await fetch(`${EBAY_API_BASE_URL}/item/${item.itemId}`, {
-          method: "GET",
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
-            'Content-Type': 'application/json'
-          },
-        });
-
-        if (!detailResponse.ok) {
-          console.error(`Failed to fetch details for item ${item.itemId}`);
-          return null;
-        }
-
-        const detailData = await detailResponse.json();
-        console.log('Detail data for item:', item.itemId, 'keys:', Object.keys(detailData));
-        console.log('itemWebUrl in detail data:', detailData.itemWebUrl);
-
-        // Function to find value in localizedAspects
-        const findAspect = (name) => {
-          const aspect = detailData.localizedAspects?.find(
-            aspect => aspect.name === name
-          );
-          return aspect ? aspect.value : null;
-        };
-
-        // Combine main image with additional images
-        const allImages = [
-          detailData.image,
-          ...(detailData.additionalImages || [])
-        ].filter(img => img && img.imageUrl);
-
-        return {
-          // Basic information
-          itemId: item.itemId,
-          title: detailData.title,
-          shortDescription: detailData.shortDescription,
-          price: item.price ? `${item.price.value} ${item.price.currency}` : null,
-          itemWebUrl: detailData.itemWebUrl || item.itemWebUrl || `https://www.ebay.com/itm/${item.itemId}`,
-          
-          // Condition
-          condition: detailData.condition,
-          conditionDescription: detailData.conditionDescription,
-          
-          // Location
-          itemLocation: {
-            city: detailData.itemLocation?.city,
-            country: detailData.itemLocation?.country
-          },
-          
-          // Images - now includes main image as first item
-          thumbnailImages: allImages,
-          
-          // Car specifics from localizedAspects
-          year: findAspect('Year'),
-          make: findAspect('Make'),
-          model: findAspect('Model'),
-          mileage: findAspect('Mileage'),
-          forSaleBy: findAspect('For Sale By'),
-          fuelType: findAspect('Fuel Type'),
-          engine: findAspect('Engine'),
-          carType: findAspect('Car Type'),
-          // Additional aspects
-          bodyType: findAspect('Body Type'),
-          horsePower: findAspect('Horse Power'),
-          numberOfCylinders: findAspect('Number of Cylinders'),
-          numberOfDoors: findAspect('Number of Doors')
-        };
-      } catch (error) {
-        console.error(`Error fetching details for item ${item.itemId}:`, error);
-        return null;
+    for (const car of candidateCars) {
+      const label = buildDisplayLabel(car);
+      if (usedLabels.has(label)) {
+        continue;
       }
+      usedLabels.add(label);
+      selectedCars.push(car);
+      if (selectedCars.length >= desiredCount) {
+        break;
+      }
+    }
+
+    // Fallback: if we couldn't get enough unique labels, fill the rest
+    // with remaining candidates (even if labels duplicate) to keep 10 cars.
+    if (selectedCars.length < desiredCount) {
+      for (const car of candidateCars) {
+        if (selectedCars.includes(car)) continue;
+        selectedCars.push(car);
+        if (selectedCars.length >= desiredCount) break;
+      }
+    }
+
+    res.json({
+      itemSummaries: selectedCars,
+      totalEstimatedMatches: total,
     });
-
-    const itemsWithDetails = await Promise.all(itemDetailsPromises);
-    
-    return {
-      itemSummaries: itemsWithDetails.filter(item => item !== null),
-      totalEstimatedMatches: searchData.totalEstimatedMatches || 0
-    };
-
   } catch (error) {
-    console.error('Error in fetchCarsWithDetails:', error);
-    throw error;
+    console.error('Failed to read cars from database', error);
+    res.status(500).json({ error: 'Failed to load cars from cache' });
   }
 };

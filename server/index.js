@@ -9,6 +9,7 @@ const yaml = require('yamljs');
 const roomRoutes = require('./routes/roomRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 const { setupRoomSocketHandlers } = require('./controllers/roomController');
+const { startScheduler } = require('./services/carIngestionService');
 
 const swaggerDocument = yaml.load('./docs/swagger.yaml');
 
@@ -44,6 +45,12 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/cars', gameRoutes);
 
 setupRoomSocketHandlers(io);
+
+if (process.env.SKIP_EBAY_WORKER === 'true') {
+  console.log('[eBayWorker] Scheduler disabled via SKIP_EBAY_WORKER flag.');
+} else {
+  startScheduler();
+}
 
 app.get('/', (req, res) => {
   res.send("hello");
