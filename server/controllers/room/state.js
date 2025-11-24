@@ -2,7 +2,8 @@
 let rooms = [];
 let cars = null; // Last fetched cars list (global across rooms currently)
 let carPrice = null; // Winning car price of current round
-const correctGuessThreshold = 5; // % deviation required to finish round
+// Default % deviation required to finish round if room doesn't override it
+const correctGuessThreshold = 5;
 let ioInstance = null; // Socket.IO server instance reference
 const roomVotes = {}; // { roomId: { votes: {playerName: carIndex}, timer: Timeout, carCount: N } }
 

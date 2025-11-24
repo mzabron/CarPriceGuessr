@@ -409,7 +409,10 @@ function setupRoomSocketHandlers(io) {
       const deviation = getDeviation(data.price, getCarPrice());
       io.to(`room-${room.id}`).emit('game:guessConfirmed', { playerId: currentPlayer.id, playerName: currentPlayer.name, price: data.price, deviation });
       room.pendingGuess = null;
-      if (deviation < correctGuessThreshold) {
+      const threshold = typeof room.settings?.correctGuessThreshold === 'number'
+        ? room.settings.correctGuessThreshold
+        : correctGuessThreshold;
+      if (deviation < threshold) {
         const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
         const turnBonus = room.currentRoundTurns * 5;
         const totalPoints = accuracyPoints + turnBonus;
@@ -509,7 +512,10 @@ function setupRoomSocketHandlers(io) {
           const deviation = getDeviation(priceToSend, require('./state').getCarPrice());
           ioNow.to(`room-${roomNow.id}`).emit('game:guessConfirmed', { playerId: capturedStealingPlayerId, playerName: stealingPlayerNow?.name, price: priceToSend, deviation });
           roomNow.pendingGuess = null;
-          if (deviation < correctGuessThreshold) {
+          const threshold = typeof roomNow.settings?.correctGuessThreshold === 'number'
+            ? roomNow.settings.correctGuessThreshold
+            : correctGuessThreshold;
+          if (deviation < threshold) {
             const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
             const turnBonus = roomNow.currentRoundTurns * 5;
             const totalPoints = accuracyPoints + turnBonus;

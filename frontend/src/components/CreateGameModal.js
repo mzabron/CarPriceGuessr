@@ -11,7 +11,8 @@ const CreateGameModal = ({ onClose, user }) => {
     maxPlayers: 4,
     powerUps: 5,
     rounds: 5,
-    roundDuration: 30
+    roundDuration: 30,
+    correctGuessThreshold: 5
   });
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -36,7 +37,7 @@ const CreateGameModal = ({ onClose, user }) => {
     }
 
     // Validate that all numeric fields have valid values
-    if (formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === '') {
+    if (formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === '' || formData.correctGuessThreshold === '') {
       setError('All fields must be filled out');
       return;
     }
@@ -214,6 +215,32 @@ const CreateGameModal = ({ onClose, user }) => {
             </select>
           </div>
 
+          <div>
+            <label className="block mb-2 flex items-center gap-3">
+              <span>Guess Accuracy Threshold</span>
+              <span
+                className="inline-flex items-center justify-center cursor-help relative group select-none ml-1"
+                aria-label="About price match difficulty"
+              >
+                <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
+                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                  Controls how close your guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                </span>
+              </span>
+            </label>
+            <select
+              name="correctGuessThreshold"
+              value={formData.correctGuessThreshold}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            >
+              {[5, 10, 15].map(percent => (
+                <option key={percent} value={percent}>{percent}%</option>
+              ))}
+            </select>
+          </div>
+
           {error && (
             <div className="text-red-500 text-sm mt-2">
               {error}
@@ -232,7 +259,7 @@ const CreateGameModal = ({ onClose, user }) => {
             <button
               type="submit"
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
-              disabled={!formData.roomName.trim() || isCreating || formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === ''}
+              disabled={!formData.roomName.trim() || isCreating || formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === '' || formData.correctGuessThreshold === ''}
             >
               {isCreating ? 'Creating...' : 'Create Game'}
             </button>

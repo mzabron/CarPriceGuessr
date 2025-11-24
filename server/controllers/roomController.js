@@ -33,6 +33,7 @@ exports.createRoom = (req, res) => {
         rounds: roomData.rounds || 5,
         powerUps: roomData.powerUps || 2,
         answerTime: roomData.answerTime || 30,
+        correctGuessThreshold: roomData.correctGuessThreshold || 5,
         visibility: roomData.visibility || 'public'
       },
       currentRoundIndex: 0,

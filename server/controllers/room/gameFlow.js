@@ -53,7 +53,10 @@ function startNextTurn(room) {
       });
       roomNow.pendingGuess = null;
 
-      if (deviation < correctGuessThreshold) {
+      const threshold = typeof roomNow.settings?.correctGuessThreshold === 'number'
+        ? roomNow.settings.correctGuessThreshold
+        : correctGuessThreshold;
+      if (deviation < threshold) {
         const accuracyPoints = Math.round(80 + (20 * (1 - Math.min(deviation, 5) / 5)));
         const turnBonus = roomNow.currentRoundTurns * 5;
         const totalPoints = accuracyPoints + turnBonus;

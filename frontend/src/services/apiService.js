@@ -11,7 +11,8 @@ class ApiService {
         visibility: roomConfig.visibility,
         rounds: roomConfig.rounds,
         powerUps: roomConfig.powerUps,
-        answerTime: roomConfig.roundDuration
+        answerTime: roomConfig.roundDuration,
+        correctGuessThreshold: roomConfig.correctGuessThreshold
       };
       
       console.log('Formatted request body:', requestBody);
