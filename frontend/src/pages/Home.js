@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CreateGameModal from '../components/CreateGameModal';
+import CreateSingleGameModal from '../components/CreateSingleGameModal';
 import RoomList from '../components/RoomList';
 import CarPriceGuessrLogo from '../components/CarPriceGuessrLogo';
 import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 
 const Home = () => {
   const [showCreateGame, setShowCreateGame] = useState(false);
+  const [showSingleGame, setShowSingleGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
   const [showSetName, setShowSetName] = useState(false);
@@ -135,6 +137,12 @@ const Home = () => {
 
           <div className="flex justify-center space-x-6">
             <button
+              onClick={() => setShowSingleGame(true)}
+              className="px-8 py-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-semibold text-lg shadow-md transition-colors"
+            >
+              Single Player Mode
+            </button>
+            <button
               onClick={() => setShowCreateGame(true)}
               className="px-8 py-4 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold text-lg shadow-md transition-colors"
             >
@@ -151,6 +159,10 @@ const Home = () => {
       </main>
 
       {/* Modals */}
+
+      {showSingleGame && (
+        <CreateSingleGameModal onClose={() => setShowSingleGame(false)} />
+      )}
 
       {showCreateGame && (
         <CreateGameModal onClose={() => setShowCreateGame(false)} user={user} />
