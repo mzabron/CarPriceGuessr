@@ -328,6 +328,22 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
   }, [winningIndex, cars]);
 
+  // Pre-load images for all cars as soon as they are received (voting phase)
+  useEffect(() => {
+    if (cars && cars.length > 0) {
+      cars.forEach(car => {
+        if (car.thumbnailImages) {
+          car.thumbnailImages.forEach(img => {
+            if (img && img.imageUrl) {
+              const image = new window.Image();
+              image.src = img.imageUrl;
+            }
+          });
+        }
+      });
+    }
+  }, [cars]);
+
   const getDisplayText = (car) => {
     if (car.conditionDescription) {
       const words = car.conditionDescription.split(' ');
