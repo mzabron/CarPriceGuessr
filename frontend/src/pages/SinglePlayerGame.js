@@ -20,7 +20,7 @@ const SinglePlayerGame = () => {
   const [round, setRound] = useState(1);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
-  
+
   // Game state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderPrice, setSliderPrice] = useState(10000);
@@ -29,6 +29,11 @@ const SinglePlayerGame = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
+
+  // New state for summary
+  const [gameHistory, setGameHistory] = useState([]);
+  const [startTime] = useState(Date.now());
+  const [endTime, setEndTime] = useState(null);
 
   // Fetch cars for the round
   const fetchCars = useCallback(async () => {
@@ -87,12 +92,24 @@ const SinglePlayerGame = () => {
 
     const deviation = Math.abs(guess - actualPrice) / actualPrice * 100;
 
+    // Record history
+    const roundResult = {
+      round,
+      car,
+      guess,
+      actualPrice,
+      deviation,
+      correct: deviation <= difficultyThreshold
+    };
+
+    setGameHistory(prev => [...prev, roundResult]);
+
     if (deviation <= difficultyThreshold) {
       // Correct!
       const points = Math.round(100 * (1 - deviation / 100)); // Simple scoring
       setScore(s => s + points);
       setFeedbackMessage(`Correct! The price was $${actualPrice}. (+${points} pts)`);
-      
+
       // Wait a bit then next round
       setTimeout(() => {
         setRound(r => r + 1);
@@ -105,8 +122,9 @@ const SinglePlayerGame = () => {
       // Incorrect
       const newLives = lives - 1;
       setLives(newLives);
-      
+
       if (newLives <= 0) {
+        setEndTime(Date.now());
         setPhase('gameover');
       } else {
         const direction = guess < actualPrice ? 'low' : 'high';
@@ -180,14 +198,57 @@ const SinglePlayerGame = () => {
     setGuessPrice(middle);
   };
 
+  // Calculate stats
+  const calculateStats = () => {
+    if (gameHistory.length === 0) return { avgDeviation: 0, timeString: '0s' };
+
+    const totalDeviation = gameHistory.reduce((acc, curr) => acc + curr.deviation, 0);
+    const avgDeviation = (totalDeviation / gameHistory.length).toFixed(1);
+
+    const timeDiff = (endTime || Date.now()) - startTime;
+    const seconds = Math.floor(timeDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    const timeString = minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${seconds}s`;
+
+    return { avgDeviation, timeString };
+  };
+
   if (phase === 'gameover') {
+    const { avgDeviation, timeString } = calculateStats();
+
+    // Filter history to show only the last guess for each round (unique cars)
+    const uniqueRoundHistory = Object.values(
+      gameHistory.reduce((acc, curr) => {
+        acc[curr.round] = curr;
+        return acc;
+      }, {})
+    );
+
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md w-full">
-          <h1 className="text-4xl font-bold text-red-600 mb-4">Game Over</h1>
-          <p className="text-xl mb-6">You ran out of lives!</p>
-          <div className="text-2xl font-bold mb-8">Final Score: {score}</div>
-          <div className="space-y-4">
+      <div className="h-screen bg-gray-100 flex flex-col items-center p-4 overflow-y-auto">
+        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-6xl mb-8 shrink-0">
+          <h1 className="text-4xl font-bold text-center text-red-600 mb-2">Game Over</h1>
+          <p className="text-xl text-center text-gray-600 mb-8">You ran out of lives!</p>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-blue-50 p-6 rounded-lg text-center border border-blue-100">
+              <div className="text-gray-600 font-semibold mb-1">Final Score</div>
+              <div className="text-4xl font-bold text-blue-600">{score}</div>
+            </div>
+            <div className="bg-green-50 p-6 rounded-lg text-center border border-green-100">
+              <div className="text-gray-600 font-semibold mb-1">Avg. Price Deviation</div>
+              <div className="text-4xl font-bold text-green-600">{avgDeviation}%</div>
+            </div>
+            <div className="bg-purple-50 p-6 rounded-lg text-center border border-purple-100">
+              <div className="text-gray-600 font-semibold mb-1">Time Played</div>
+              <div className="text-4xl font-bold text-purple-600">{timeString}</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={() => {
                 setPhase('voting');
@@ -196,18 +257,89 @@ const SinglePlayerGame = () => {
                 setLives(3);
                 setCars([]);
                 setSelectedCarIndex(null);
-                fetchCars();
+                setGameHistory([]);
+                // Reset start time implicitly by component remount or we could add a key, 
+                // but here we just continue. Ideally we might want to reset startTime too.
+                // Since startTime is a const from useState(Date.now()), we can't reset it easily without remounting.
+                // Let's force a remount or navigation to reset everything cleanly.
+                navigate(0); // Reload page to reset everything
               }}
-              className="w-full py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition"
+              className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-lg"
             >
               Play Again
             </button>
             <button
               onClick={() => navigate('/')}
-              className="w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition"
+              className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition shadow-lg"
             >
               Back to Home
             </button>
+          </div>
+
+          {/* Game History */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Game History</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {uniqueRoundHistory.map((roundData, index) => (
+              <div key={index} className="border rounded-lg overflow-hidden hover:shadow-lg transition-all bg-white">
+                <div className="bg-gray-50 text-center py-2 border-b flex justify-between px-4 items-center">
+                  <span className="font-bold text-gray-700">Round {roundData.round}</span>
+                  <span className={`text-sm font-bold px-2 py-1 rounded ${roundData.correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {roundData.correct ? 'Correct' : 'Incorrect'}
+                  </span>
+                </div>
+
+                <div className="p-4">
+                  {roundData.car.thumbnailImages && roundData.car.thumbnailImages[0] && (
+                    <div className="mb-3 relative group">
+                      <img
+                        src={roundData.car.thumbnailImages[0].imageUrl}
+                        alt={roundData.car.title}
+                        className="w-full h-48 object-cover rounded cursor-pointer"
+                        onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center"
+                        onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}>
+                        <span className="opacity-0 group-hover:opacity-100 bg-white px-3 py-1 rounded-full text-sm font-bold shadow">View on eBay</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div
+                      className="font-semibold text-gray-800 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors h-12"
+                      onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
+                      title={roundData.car.title}
+                    >
+                      {roundData.car.title}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                      <div className="text-gray-500">Your Guess:</div>
+                      <div className="font-semibold text-right">${roundData.guess.toLocaleString()}</div>
+
+                      <div className="text-gray-500">Actual Price:</div>
+                      <div className="font-bold text-green-600 text-right">${roundData.actualPrice.toLocaleString()}</div>
+
+                      <div className="text-gray-500">Deviation:</div>
+                      <div className={`font-semibold text-right ${roundData.deviation <= difficultyThreshold ? 'text-green-600' : 'text-red-600'}`}>
+                        {roundData.deviation.toFixed(1)}%
+                      </div>
+                    </div>
+
+                    {roundData.car.itemWebUrl && (
+                      <a
+                        href={roundData.car.itemWebUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full text-center mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-semibold"
+                      >
+                        View on eBay
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -220,7 +352,7 @@ const SinglePlayerGame = () => {
       <header className="bg-white shadow p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => navigate('/')}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold transition-colors"
               title="Go back to main page"
@@ -233,11 +365,11 @@ const SinglePlayerGame = () => {
             <div className="text-xl font-bold">Round {round}</div>
             <div className="flex gap-1">
               {[...Array(3)].map((_, i) => (
-                <svg 
-                  key={i} 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  viewBox="0 0 24 24" 
-                  fill="currentColor" 
+                <svg
+                  key={i}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
                   className={`w-8 h-8 ${i < lives ? 'text-red-500' : 'text-gray-300'}`}
                 >
                   <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
@@ -261,9 +393,8 @@ const SinglePlayerGame = () => {
                   <button
                     key={idx}
                     onClick={() => handleCarSelect(idx)}
-                    className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${
-                      selectedCarIndex === idx ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
-                    }`}
+                    className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${selectedCarIndex === idx ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
+                      }`}
                     style={{ minHeight: '90px' }}
                   >
                     {getDisplayText(car)}
@@ -277,7 +408,7 @@ const SinglePlayerGame = () => {
         {phase === 'playing' && cars[selectedCarIndex] && (
           <div className="flex flex-col items-center w-full max-w-6xl mx-auto bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold mb-2 text-center">{cars[selectedCarIndex].title}</div>
-            
+
             {/* Image and Details */}
             <div className="flex flex-col lg:flex-row gap-4 w-full mb-4">
               {/* Carousel */}
@@ -303,17 +434,17 @@ const SinglePlayerGame = () => {
                     ›
                   </button>
                   <button
-                      onClick={() => {
-                        setFullscreenImageIndex(currentImageIndex);
-                        setShowFullscreenImage(true);
-                      }}
-                      className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
-                      title="View fullscreen"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-                      </svg>
-                    </button>
+                    onClick={() => {
+                      setFullscreenImageIndex(currentImageIndex);
+                      setShowFullscreenImage(true);
+                    }}
+                    className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
+                    title="View fullscreen"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                    </svg>
+                  </button>
                 </div>
                 <div className="flex justify-center gap-1 mt-2 flex-wrap">
                   {cars[selectedCarIndex].thumbnailImages?.map((_, idx) => (
@@ -325,7 +456,7 @@ const SinglePlayerGame = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Details */}
               <div className="flex-1">
                 {renderCarDetailsGrid(cars[selectedCarIndex])}
@@ -336,13 +467,13 @@ const SinglePlayerGame = () => {
             <div className="w-full max-w-3xl border-t pt-4">
               <div className="flex justify-center gap-4 mb-4">
                 {/* Hearts above slider */}
-                 <div className="flex gap-1">
+                <div className="flex gap-1">
                   {[...Array(3)].map((_, i) => (
-                    <svg 
-                      key={i} 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 24 24" 
-                      fill="currentColor" 
+                    <svg
+                      key={i}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
                       className={`w-8 h-8 ${i < lives ? 'text-red-500' : 'text-gray-300'}`}
                     >
                       <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
@@ -356,11 +487,10 @@ const SinglePlayerGame = () => {
                   <button
                     key={range.label}
                     onClick={() => handleRangeClick(range)}
-                    className={`px-4 py-2 rounded-lg border text-sm transition-all ${
-                      selectedRange.label === range.label
-                        ? 'bg-blue-200 border-blue-400 font-bold'
-                        : 'bg-white border-gray-300 hover:bg-blue-50'
-                    }`}
+                    className={`px-4 py-2 rounded-lg border text-sm transition-all ${selectedRange.label === range.label
+                      ? 'bg-blue-200 border-blue-400 font-bold'
+                      : 'bg-white border-gray-300 hover:bg-blue-50'
+                      }`}
                   >
                     {range.label}
                   </button>
@@ -377,7 +507,7 @@ const SinglePlayerGame = () => {
                   onChange={handleSliderChange}
                   className="w-full max-w-lg h-8 accent-blue-500"
                 />
-                
+
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold">$</span>
                   <input
@@ -393,10 +523,9 @@ const SinglePlayerGame = () => {
                 </div>
 
                 {feedbackMessage && (
-                  <div className={`text-xl font-bold ${
-                    feedbackMessage.includes('Correct') ? 'text-green-600' : 
+                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-green-600' :
                     feedbackMessage.includes('Low') ? 'text-blue-600' : 'text-red-600'
-                  }`}>
+                    }`}>
                     {feedbackMessage}
                   </div>
                 )}
@@ -413,7 +542,7 @@ const SinglePlayerGame = () => {
           </div>
         )}
       </main>
-       {/* Fullscreen image viewer */}
+      {/* Fullscreen image viewer */}
       {showFullscreenImage && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
           <button
