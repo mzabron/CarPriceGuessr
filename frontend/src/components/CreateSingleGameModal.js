@@ -18,55 +18,58 @@ const CreateSingleGameModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="hand-drawn-modal p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4">Single Player Mode</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block mb-2 font-semibold">Select Difficulty</label>
             <div className="space-y-2">
-              <label className="flex items-center space-x-3 p-3 border rounded cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
                   value="easy"
                   checked={difficulty === 'easy'}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="h-4 w-4 text-blue-600"
+                  className="sr-only"
                 />
+                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'easy' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
                 <div>
                   <span className="font-bold block">Easy</span>
-                  <span className="text-sm text-gray-500">25% margin of error</span>
+                  <span className="text-sm">25% margin of error</span>
                 </div>
               </label>
-              
-              <label className="flex items-center space-x-3 p-3 border rounded cursor-pointer hover:bg-gray-50">
+
+              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
                   value="medium"
                   checked={difficulty === 'medium'}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="h-4 w-4 text-blue-600"
+                  className="sr-only"
                 />
+                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'medium' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
                 <div>
                   <span className="font-bold block">Medium</span>
-                  <span className="text-sm text-gray-500">15% margin of error</span>
+                  <span className="text-sm">15% margin of error</span>
                 </div>
               </label>
 
-              <label className="flex items-center space-x-3 p-3 border rounded cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
                   value="hard"
                   checked={difficulty === 'hard'}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="h-4 w-4 text-blue-600"
+                  className="sr-only"
                 />
+                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'hard' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
                 <div>
                   <span className="font-bold block">Hard</span>
-                  <span className="text-sm text-gray-500">5% margin of error</span>
+                  <span className="text-sm">5% margin of error</span>
                 </div>
               </label>
             </div>
@@ -76,13 +79,13 @@ const CreateSingleGameModal = ({ onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="hand-drawn-btn px-4 py-2 opacity-70 hover:opacity-100"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-bold shadow"
+              className="hand-drawn-btn px-6 py-2 font-bold"
             >
               Start Game
             </button>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import socketService from '../services/socketService';
 import PlayerList from './PlayerList';
 import ChatBox from './ChatBox';
+import HandDrawnNumberInput from './HandDrawnNumberInput';
 
 const GameLobby = () => {
   const navigate = useNavigate();
@@ -127,7 +128,7 @@ const GameLobby = () => {
         window.prompt('Copy the room code:', gameSettings.roomCode);
         setCopiedNotice(true);
         setTimeout(() => setCopiedNotice(false), 2500);
-      } catch (_) {}
+      } catch (_) { }
     }
   };
 
@@ -153,7 +154,7 @@ const GameLobby = () => {
 
   const handleSettingsUpdate = () => {
     if (!isHost || !tempSettings) return;
-    
+
     // Validate that all fields have valid numeric values
     if (tempSettings.rounds === '' || tempSettings.playersLimit === '' || tempSettings.powerUps === '' || tempSettings.answerTime === '' || tempSettings.correctGuessThreshold === '') {
       alert('All fields must be filled out with valid values');
@@ -165,17 +166,17 @@ const GameLobby = () => {
       alert('Rounds must be between 1 and 10');
       return;
     }
-    
+
     if (tempSettings.playersLimit < 2 || tempSettings.playersLimit > 10) {
       alert('Max players must be between 2 and 10');
       return;
     }
-    
+
     if (tempSettings.powerUps < 0 || tempSettings.powerUps > 100) {
       alert('Steals must be between 0 and 100');
       return;
     }
-    
+
     socketService.socket?.emit('room:updateSettings', {
       roomId: parseInt(roomId),
       settings: tempSettings
@@ -189,8 +190,8 @@ const GameLobby = () => {
         ...prev,
         ...changes
       };
-      
-      
+
+
       return updated;
     });
   };
@@ -201,7 +202,7 @@ const GameLobby = () => {
       setTempSettings(prev => ({ ...prev, [field]: '' }));
       return;
     }
-    
+
     const numVal = parseInt(value);
     if (isNaN(numVal)) return;
 
@@ -233,44 +234,41 @@ const GameLobby = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block mb-2">Rounds</label>
-              <input
-                type="number"
+              <HandDrawnNumberInput
                 value={tempSettings.rounds}
                 onChange={(e) => handleNumericInputChange('rounds', e.target.value)}
                 min="1"
                 max="10"
-                className="w-full p-2 border rounded"
+                className="w-full hand-drawn-input"
               />
             </div>
             <div>
               <label className="block mb-2">Max Players</label>
-              <input
-                type="number"
+              <HandDrawnNumberInput
                 value={tempSettings.playersLimit}
                 onChange={(e) => handleNumericInputChange('playersLimit', e.target.value)}
                 min="2"
                 max="10"
-                className="w-full p-2 border rounded"
+                className="w-full hand-drawn-input"
               />
             </div>
             <div>
               <label className="block mb-2 flex items-center gap-3">
                 <span>Steals</span>
                 <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
-                  <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                  <span className="material-symbols-outlined text-[24px] leading-none">help</span>
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                     Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
                   </span>
                 </span>
               </label>
-              <input
-                type="number"
+              <HandDrawnNumberInput
                 value={tempSettings.powerUps}
                 onChange={(e) => handleNumericInputChange('powerUps', e.target.value)}
                 min="0"
                 max={100}
-                className="w-full p-2 border rounded"
+                className="w-full hand-drawn-input"
               />
             </div>
             <div>
@@ -278,7 +276,7 @@ const GameLobby = () => {
               <select
                 value={tempSettings.answerTime}
                 onChange={(e) => handleSettingsChange({ answerTime: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded"
+                className="w-full hand-drawn-input"
               >
                 {[10, 20, 30, 40, 50, 60].map(duration => (
                   <option key={duration} value={duration}>{duration}s</option>
@@ -289,17 +287,17 @@ const GameLobby = () => {
               <label className="block mb-2 flex items-center gap-3">
                 <span>Guess Accuracy Threshold</span>
                 <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About price match difficulty">
-                  <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                  <span className="material-symbols-outlined text-[24px] leading-none">help</span>
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                     Controls how close a player's guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
                   </span>
                 </span>
               </label>
               <select
                 value={tempSettings.correctGuessThreshold}
                 onChange={(e) => handleSettingsChange({ correctGuessThreshold: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded"
+                className="w-full hand-drawn-input"
               >
                 {[5, 10, 15].map(percent => (
                   <option key={percent} value={percent}>{percent}%</option>
@@ -313,13 +311,13 @@ const GameLobby = () => {
                 setIsEditingSettings(false);
                 setTempSettings(gameSettings);
               }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 border rounded"
+              className="hand-drawn-btn px-4 py-2 opacity-70 hover:opacity-100"
             >
               Cancel
             </button>
             <button
               onClick={handleSettingsUpdate}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="hand-drawn-btn px-4 py-2"
             >
               Save Changes
             </button>
@@ -337,10 +335,10 @@ const GameLobby = () => {
           <div className="flex items-center gap-3">
             <span>Steals: {gameSettings.powerUps}</span>
             <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
-              <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
-              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+              <span className="material-symbols-outlined text-[24px] leading-none">help</span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                 Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
-                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
               </span>
             </span>
           </div>
@@ -348,10 +346,10 @@ const GameLobby = () => {
           <div className="flex items-center gap-3">
             <span>Guess Accuracy Threshold: {gameSettings.correctGuessThreshold}%</span>
             <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About price match difficulty">
-              <span className="material-symbols-outlined text-[24px] leading-none text-gray-600">help</span>
-              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-gray-900 text-white text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+              <span className="material-symbols-outlined text-[24px] leading-none">help</span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                 Controls how close a player's guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
-                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-gray-900 border-x-8 border-x-transparent" />
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
               </span>
             </span>
           </div>
@@ -361,7 +359,7 @@ const GameLobby = () => {
           <div className="flex justify-end">
             <button
               onClick={() => setIsEditingSettings(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="hand-drawn-btn px-4 py-2"
             >
               Edit Settings
             </button>
@@ -374,10 +372,10 @@ const GameLobby = () => {
   return (
     <div className="h-screen flex overflow-hidden">
       <PlayerList players={players} showReadyStatus={true} />
-      <div className="flex-1 bg-white flex flex-col items-center justify-center overflow-auto">
+      <div className="flex-1 bg-transparent flex flex-col items-center justify-center overflow-auto">
         <div className="w-full max-w-4xl flex flex-col items-center justify-center">
-          <div className="bg-gray-100 p-4 sm:p-8 w-full rounded-xl shadow-lg">
-            <div className="mb-4 text-lg font-semibold bg-gray-200 p-2 rounded flex items-center justify-between relative">
+          <div className="hand-drawn-panel p-4 sm:p-8 w-full">
+            <div className="mb-4 text-lg font-semibold border-2 border-black p-2 rounded-lg flex items-center justify-between relative">
               <div className="flex items-center gap-3">
                 <span>
                   Room Code: {' '}
@@ -393,10 +391,10 @@ const GameLobby = () => {
                 <button
                   onClick={() => setShowRoomCode(v => !v)}
                   title={showRoomCode ? 'Hide room code' : 'Show room code'}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-300 focus:outline-none"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-transparent focus:outline-none"
                   aria-label={showRoomCode ? 'Hide room code' : 'Show room code'}
                 >
-                  <span className="material-symbols-outlined text-[22px] text-gray-700">
+                  <span className="material-symbols-outlined text-[22px]">
                     {showRoomCode ? 'visibility_off' : 'visibility'}
                   </span>
                 </button>
@@ -405,18 +403,18 @@ const GameLobby = () => {
                 <button
                   onClick={handleCopyRoomCode}
                   disabled={!gameSettings?.roomCode}
-                  className={`px-2 py-1 text-sm rounded text-white ${gameSettings?.roomCode ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`}
+                  className={`hand-drawn-btn px-2 py-1 text-sm ${!gameSettings?.roomCode ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Copy
                 </button>
               </div>
               {copiedNotice && (
                 <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-4 sm:-top-5 z-20">
-                  <div className="flex items-center gap-2 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-full shadow-lg ring-1 ring-black/10 fade-out-once">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-emerald-400">
+                  <div className="flex items-center gap-2 bg-[#FAEBD7] text-black text-sm px-3 py-1.5 rounded-full shadow-lg border-2 border-black fade-out-once">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-black">
                       <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-7.25 9.25a.75.75 0 01-1.128.06L3.17 9.079A.75.75 0 014.33 8.02l4.036 3.954 6.695-8.54a.75.75 0 011.052-.143z" clipRule="evenodd" />
                     </svg>
-                    <span className="font-medium">Room code copied</span>
+                    <span className="font-medium font-['Gloria_Hallelujah']">Room code copied!</span>
                   </div>
                 </div>
               )}
@@ -431,29 +429,33 @@ const GameLobby = () => {
           <div className="p-4 flex flex-wrap justify-center items-center space-x-0 sm:space-x-4 mt-8 gap-4">
             <button
               onClick={handleLeaveRoom}
-              className="px-6 py-3 rounded-lg font-bold bg-red-500 text-white hover:bg-red-600"
+              className="hand-drawn-btn px-6 py-3 font-bold"
             >
               Leave Room
             </button>
             <button
               onClick={handleReadyToggle}
-              className={`px-6 py-3 rounded-lg font-bold ${
-                isReady
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-300 text-gray-700'
-              }`}
+              className={`hand-drawn-btn px-6 py-3 font-bold inline-flex items-center justify-center gap-2 ${isReady
+                ? 'border-green-600 text-green-600'
+                : ''
+                }`}
+              style={isReady ? { borderColor: '#16a34a', color: '#16a34a' } : {}}
             >
-              {isReady ? "Ready!" : "Click to be Ready"}
+              {isReady && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
+                </svg>
+              )}
+              <span>{isReady ? "Ready!" : "Click to be Ready"}</span>
             </button>
             {isHost && (
               <button
                 onClick={handleStartGame}
                 disabled={!allPlayersReady}
-                className={`px-6 py-3 rounded-lg font-bold ${
-                  allPlayersReady
-                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`hand-drawn-btn px-6 py-3 font-bold ${!allPlayersReady
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+                  }`}
               >
                 Start Game
               </button>
@@ -461,7 +463,7 @@ const GameLobby = () => {
           </div>
         </div>
       </div>
-      <ChatBox 
+      <ChatBox
         messages={messages}
         newMessage={newMessage}
         setNewMessage={setNewMessage}

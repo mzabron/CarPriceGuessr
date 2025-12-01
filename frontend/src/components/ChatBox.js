@@ -31,51 +31,65 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage, forceScro
   }, [forceScrollTrigger]);
 
   return (
-    <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-gray-100 flex flex-col border-l border-gray-300">
+    <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-transparent flex flex-col border-l-2 border-black">
       <div ref={chatContainerRef} className="flex-1 p-2 overflow-y-auto thin-scrollbar">
         <div className="space-y-1">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`p-1.5 rounded shadow-sm text-xs sm:text-sm break-words ${
-                msg.type === 'system'
-                  ? msg.text.includes('joined')
-                    ? 'bg-green-50 text-green-600 italic'
-                    : msg.text.includes('left') || msg.text.includes('disconnected')
-                      ? 'bg-red-50 text-red-600 italic'
-                      : 'bg-gray-100 text-gray-600 italic'
-                  : msg.type === 'round'
-                    ? 'bg-blue-50 text-blue-600 italic font-semibold'
-                    : 'bg-white'
-              }`}
-            >
-              {msg.type === 'system' || msg.type === 'round' ? (
-                <div>{msg.text}</div>
-              ) : (
-                <>
-                  <span className="font-bold">{msg.player}: </span>
-                  <span>{msg.text}</span>
-                </>
-              )}
-              <div className="text-xs text-gray-500">
-                {new Date(msg.timestamp).toLocaleTimeString()}
+          {messages.map((msg, index) => {
+            let textColorClass = 'text-black';
+            let borderColorClass = 'border-black';
+            let bgClass = 'bg-transparent';
+
+            if (msg.type === 'system') {
+              const lowerText = (msg.text || '').toLowerCase();
+              // Check for disconnect/left messages first (before 'connected' to avoid false matches)
+              if (lowerText.includes('left') || lowerText.includes('disconnected') || lowerText.includes('left the room')) {
+                textColorClass = 'text-red-600';
+                borderColorClass = 'border-red-600';
+              } else if (lowerText.includes('joined') || lowerText.includes('connected')) {
+                textColorClass = 'text-green-600';
+                borderColorClass = 'border-green-600';
+              } else {
+                textColorClass = 'text-blue-600';
+                borderColorClass = 'border-blue-600';
+              }
+              bgClass = 'bg-transparent font-bold border-2';
+            } else if (msg.type === 'round') {
+              bgClass = 'bg-transparent font-bold border-2';
+            }
+
+            return (
+              <div
+                key={index}
+                className={`p-1.5 border rounded shadow-none text-xs sm:text-sm break-words ${borderColorClass} ${textColorClass} ${bgClass}`}
+              >
+                {msg.type === 'system' || msg.type === 'round' ? (
+                  <div>{msg.text}</div>
+                ) : (
+                  <>
+                    <span className="font-bold">{msg.player}: </span>
+                    <span>{msg.text}</span>
+                  </>
+                )}
+                <div className="text-xs opacity-50">
+                  {new Date(msg.timestamp).toLocaleTimeString()}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
-      <form onSubmit={onSendMessage} className="p-2 bg-gray-200">
+      <form onSubmit={onSendMessage} className="p-2 bg-transparent border-t-2 border-black">
         <div className="flex space-x-1">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 px-2 py-1 text-sm rounded border"
+            className="flex-1 hand-drawn-input text-sm"
           />
           <button
             type="submit"
-            className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+            className="hand-drawn-btn px-3 py-1 text-sm"
           >
             Send
           </button>

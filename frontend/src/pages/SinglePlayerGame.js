@@ -157,7 +157,7 @@ const SinglePlayerGame = () => {
   };
 
   const renderCarDetailsGrid = (car) => (
-    <div className="w-full max-w-2xl mb-2 text-sm md:text-base" style={{ maxHeight: '15.5em', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#a3a3a3 #f3f4f6' }}>
+    <div className="w-full max-w-2xl mb-2 text-sm md:text-base thin-scrollbar" style={{ maxHeight: '35vh', overflowY: 'auto' }}>
       <div className="grid grid-cols-2 gap-2 mb-1">
         <div className="flex flex-col items-start gap-1">
           <div><span className="font-semibold">Make:</span><span className="ml-2">{car?.make || 'No Information'}</span></div>
@@ -226,24 +226,24 @@ const SinglePlayerGame = () => {
     );
 
     return (
-      <div className="h-screen bg-gray-100 flex flex-col items-center p-4 overflow-y-auto">
-        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-6xl mb-8 shrink-0">
-          <h1 className="text-4xl font-bold text-center text-red-600 mb-2">Game Over</h1>
-          <p className="text-xl text-center text-gray-600 mb-8">You ran out of lives!</p>
+      <div className="h-screen bg-[#FAEBD7] flex flex-col items-center p-4 overflow-y-auto thin-scrollbar">
+        <div className="hand-drawn-panel p-8 w-full max-w-6xl mb-8 shrink-0">
+          <h1 className="text-4xl font-bold text-center mb-2">Game Over</h1>
+          <p className="text-xl text-center mb-8">You ran out of lives!</p>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-blue-50 p-6 rounded-lg text-center border border-blue-100">
-              <div className="text-gray-600 font-semibold mb-1">Final Score</div>
-              <div className="text-4xl font-bold text-blue-600">{score}</div>
+            <div className="p-6 rounded-lg text-center border-2 border-black">
+              <div className="font-semibold mb-1">Final Score</div>
+              <div className="text-4xl font-bold">{score}</div>
             </div>
-            <div className="bg-green-50 p-6 rounded-lg text-center border border-green-100">
-              <div className="text-gray-600 font-semibold mb-1">Avg. Price Deviation</div>
-              <div className="text-4xl font-bold text-green-600">{avgDeviation}%</div>
+            <div className="p-6 rounded-lg text-center border-2 border-black">
+              <div className="font-semibold mb-1">Avg. Price Deviation</div>
+              <div className="text-4xl font-bold">{avgDeviation}%</div>
             </div>
-            <div className="bg-purple-50 p-6 rounded-lg text-center border border-purple-100">
-              <div className="text-gray-600 font-semibold mb-1">Time Played</div>
-              <div className="text-4xl font-bold text-purple-600">{timeString}</div>
+            <div className="p-6 rounded-lg text-center border-2 border-black">
+              <div className="font-semibold mb-1">Time Played</div>
+              <div className="text-4xl font-bold">{timeString}</div>
             </div>
           </div>
 
@@ -258,32 +258,28 @@ const SinglePlayerGame = () => {
                 setCars([]);
                 setSelectedCarIndex(null);
                 setGameHistory([]);
-                // Reset start time implicitly by component remount or we could add a key, 
-                // but here we just continue. Ideally we might want to reset startTime too.
-                // Since startTime is a const from useState(Date.now()), we can't reset it easily without remounting.
-                // Let's force a remount or navigation to reset everything cleanly.
-                navigate(0); // Reload page to reset everything
+                navigate(0);
               }}
-              className="px-8 py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition shadow-lg"
+              className="hand-drawn-btn px-8 py-3 font-bold"
             >
               Play Again
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-8 py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition shadow-lg"
+              className="hand-drawn-btn px-8 py-3 font-bold"
             >
               Back to Home
             </button>
           </div>
 
           {/* Game History */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Game History</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">Game History</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {uniqueRoundHistory.map((roundData, index) => (
-              <div key={index} className="border rounded-lg overflow-hidden hover:shadow-lg transition-all bg-white">
-                <div className="bg-gray-50 text-center py-2 border-b flex justify-between px-4 items-center">
-                  <span className="font-bold text-gray-700">Round {roundData.round}</span>
-                  <span className={`text-sm font-bold px-2 py-1 rounded ${roundData.correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              <div key={index} className="border-2 border-black rounded-lg overflow-hidden hover:shadow-lg transition-all bg-transparent">
+                <div className="bg-transparent border-b-2 border-black text-center py-2 flex justify-between px-4 items-center">
+                  <span className="font-bold">Round {roundData.round}</span>
+                  <span className={`text-sm font-bold px-2 py-1 rounded border-2 border-black ${roundData.correct ? 'bg-black text-[#FAEBD7]' : 'bg-transparent text-black'}`}>
                     {roundData.correct ? 'Correct' : 'Incorrect'}
                   </span>
                 </div>
@@ -294,19 +290,19 @@ const SinglePlayerGame = () => {
                       <img
                         src={roundData.car.thumbnailImages[0].imageUrl}
                         alt={roundData.car.title}
-                        className="w-full h-48 object-cover rounded cursor-pointer"
+                        className="w-full h-48 object-cover rounded cursor-pointer border-2 border-black"
                         onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center"
                         onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}>
-                        <span className="opacity-0 group-hover:opacity-100 bg-white px-3 py-1 rounded-full text-sm font-bold shadow">View on eBay</span>
+                        <span className="opacity-0 group-hover:opacity-100 bg-white px-3 py-1 rounded-full text-sm font-bold shadow border-2 border-black text-black">View on eBay</span>
                       </div>
                     </div>
                   )}
 
                   <div className="space-y-2">
                     <div
-                      className="font-semibold text-gray-800 line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors h-12"
+                      className="font-semibold line-clamp-2 cursor-pointer hover:underline transition-colors h-12"
                       onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
                       title={roundData.car.title}
                     >
@@ -314,14 +310,14 @@ const SinglePlayerGame = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                      <div className="text-gray-500">Your Guess:</div>
+                      <div className="opacity-70">Your Guess:</div>
                       <div className="font-semibold text-right">${roundData.guess.toLocaleString()}</div>
 
-                      <div className="text-gray-500">Actual Price:</div>
-                      <div className="font-bold text-green-600 text-right">${roundData.actualPrice.toLocaleString()}</div>
+                      <div className="opacity-70">Actual Price:</div>
+                      <div className="font-bold text-right">${roundData.actualPrice.toLocaleString()}</div>
 
-                      <div className="text-gray-500">Deviation:</div>
-                      <div className={`font-semibold text-right ${roundData.deviation <= difficultyThreshold ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className="opacity-70">Deviation:</div>
+                      <div className={`font-semibold text-right ${roundData.deviation <= difficultyThreshold ? 'font-bold' : ''}`}>
                         {roundData.deviation.toFixed(1)}%
                       </div>
                     </div>
@@ -331,7 +327,7 @@ const SinglePlayerGame = () => {
                         href={roundData.car.itemWebUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full text-center mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-sm font-semibold"
+                        className="block w-full text-center mt-4 hand-drawn-btn py-2 px-4 text-sm font-semibold"
                       >
                         View on eBay
                       </a>
@@ -347,20 +343,20 @@ const SinglePlayerGame = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#FAEBD7] flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow p-4">
+      <header className="bg-transparent border-b-2 border-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-semibold transition-colors"
+              className="hand-drawn-btn px-4 py-2 flex items-center gap-2"
               title="Go back to main page"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
               </svg>
-              <span>Go back to main page</span>
+              <span>Go back</span>
             </button>
             <div className="text-xl font-bold">Round {round}</div>
             <div className="flex gap-1">
@@ -370,30 +366,30 @@ const SinglePlayerGame = () => {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="currentColor"
-                  className={`w-8 h-8 ${i < lives ? 'text-red-500' : 'text-gray-300'}`}
+                  className={`w-8 h-8 ${i < lives ? 'text-black' : 'text-gray-300'}`}
                 >
                   <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
                 </svg>
               ))}
             </div>
           </div>
-          <div className="text-xl font-bold text-blue-600">Score: {score}</div>
+          <div className="text-xl font-bold">Score: {score}</div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto p-4 overflow-y-auto">
+      <main className="flex-1 container mx-auto p-4 overflow-y-auto thin-scrollbar">
         {phase === 'voting' && (
           <div className="flex flex-col items-center">
             <h2 className="text-2xl font-bold mb-6">Choose a Category</h2>
             {cars.length === 0 ? (
-              <div className="text-xl text-gray-500">Loading cars...</div>
+              <div className="text-xl">Loading cars...</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
                 {cars.map((car, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleCarSelect(idx)}
-                    className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${selectedCarIndex === idx ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
+                    className={`w-full p-4 sm:p-6 rounded-xl border-2 border-black text-left text-base font-semibold shadow-none transition-all duration-150 ${selectedCarIndex === idx ? 'bg-black text-[#FAEBD7] scale-105' : 'bg-transparent hover:scale-102'
                       }`}
                     style={{ minHeight: '90px' }}
                   >
@@ -406,14 +402,33 @@ const SinglePlayerGame = () => {
         )}
 
         {phase === 'playing' && cars[selectedCarIndex] && (
-          <div className="flex flex-col items-center w-full max-w-6xl mx-auto bg-white p-4 rounded-lg shadow">
+          <div className="flex flex-col items-center w-full max-w-6xl mx-auto hand-drawn-panel p-4">
             <div className="text-2xl font-bold mb-2 text-center">{cars[selectedCarIndex].title}</div>
+            <div className="w-full flex justify-center mb-2">
+              <div
+                className="text-base text-gray-600 w-full"
+                style={{
+                  textAlign: "left",
+                }}
+              >
+                <div
+                  className="px-2 thin-scrollbar leading-relaxed pb-1"
+                  style={{
+                    whiteSpace: 'pre-line',
+                    maxHeight: '6em', // ~3.5 lines
+                    overflowY: 'auto',
+                  }}
+                >
+                  {cars[selectedCarIndex]?.shortDescription || 'No Description Available'}
+                </div>
+              </div>
+            </div>
 
             {/* Image and Details */}
             <div className="flex flex-col lg:flex-row gap-4 w-full mb-4">
               {/* Carousel */}
               <div className="w-full lg:w-1/2 relative">
-                <div className="aspect-video relative bg-black rounded-lg overflow-hidden">
+                <div className="aspect-video relative bg-black rounded-lg overflow-hidden border-2 border-black">
                   <img
                     src={cars[selectedCarIndex].thumbnailImages?.[currentImageIndex]?.imageUrl}
                     alt="Car"
@@ -421,14 +436,14 @@ const SinglePlayerGame = () => {
                   />
                   <button
                     onClick={() => setCurrentImageIndex(prev => prev === 0 ? (cars[selectedCarIndex].thumbnailImages?.length || 1) - 1 : prev - 1)}
-                    className="no-press absolute left-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-r hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                    className="no-press absolute left-0 top-[40%] bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-3 rounded-r z-10 text-3xl md:text-4xl leading-none"
                     aria-label="Previous image"
                   >
                     ‹
                   </button>
                   <button
                     onClick={() => setCurrentImageIndex(prev => prev === (cars[selectedCarIndex].thumbnailImages?.length || 1) - 1 ? 0 : prev + 1)}
-                    className="no-press absolute right-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-l hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                    className="no-press absolute right-0 top-[40%] bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-3 rounded-l z-10 text-3xl md:text-4xl leading-none"
                     aria-label="Next image"
                   >
                     ›
@@ -438,7 +453,7 @@ const SinglePlayerGame = () => {
                       setFullscreenImageIndex(currentImageIndex);
                       setShowFullscreenImage(true);
                     }}
-                    className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
+                    className="absolute top-4 right-4 bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-2 rounded z-10"
                     title="View fullscreen"
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -451,7 +466,7 @@ const SinglePlayerGame = () => {
                     <button
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
-                      className={`w-2 h-2 rounded-full ${idx === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300'}`}
+                      className={`w-2 h-2 rounded-full border border-black ${idx === currentImageIndex ? 'bg-black' : 'bg-transparent'}`}
                     />
                   ))}
                 </div>
@@ -464,22 +479,8 @@ const SinglePlayerGame = () => {
             </div>
 
             {/* Guessing Controls */}
-            <div className="w-full max-w-3xl border-t pt-4">
+            <div className="w-full max-w-3xl border-t-2 border-black pt-4">
               <div className="flex justify-center gap-4 mb-4">
-                {/* Hearts above slider */}
-                <div className="flex gap-1">
-                  {[...Array(3)].map((_, i) => (
-                    <svg
-                      key={i}
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className={`w-8 h-8 ${i < lives ? 'text-red-500' : 'text-gray-300'}`}
-                    >
-                      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                    </svg>
-                  ))}
-                </div>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4 justify-center">
@@ -487,9 +488,9 @@ const SinglePlayerGame = () => {
                   <button
                     key={range.label}
                     onClick={() => handleRangeClick(range)}
-                    className={`px-4 py-2 rounded-lg border text-sm transition-all ${selectedRange.label === range.label
-                      ? 'bg-blue-200 border-blue-400 font-bold'
-                      : 'bg-white border-gray-300 hover:bg-blue-50'
+                    className={`px-4 py-2 rounded-lg border-2 border-black text-sm transition-all ${selectedRange.label === range.label
+                      ? 'bg-black text-[#FAEBD7] font-bold'
+                      : 'bg-transparent hover:bg-black/10'
                       }`}
                   >
                     {range.label}
@@ -505,26 +506,63 @@ const SinglePlayerGame = () => {
                   step={100}
                   value={sliderPrice}
                   onChange={handleSliderChange}
-                  className="w-full max-w-lg h-8 accent-blue-500"
+                  className="w-full max-w-lg h-3 hand-drawn-slider border-2 border-black rounded-full cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #000000 0%, #000000 ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent 100%)`
+                  }}
                 />
 
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold">$</span>
-                  <input
-                    type="number"
-                    value={guessPrice}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setGuessPrice(val);
-                      setSliderPrice(val);
-                    }}
-                    className="text-2xl font-bold border-2 border-blue-400 rounded px-3 py-1 w-40 text-right"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type="number"
+                      value={guessPrice}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setGuessPrice(val);
+                        setSliderPrice(val);
+                      }}
+                      className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
+                    />
+                    <div className="flex flex-col gap-3 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          let newVal = Number(guessPrice) + 100;
+                          if (newVal > selectedRange.max) newVal = selectedRange.max;
+                          setGuessPrice(newVal);
+                          setSliderPrice(newVal);
+                        }}
+                        className="hover:scale-110 transition-transform focus:outline-none"
+                        aria-label="Increase price"
+                      >
+                        <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          let newVal = Number(guessPrice) - 100;
+                          if (newVal < selectedRange.min) newVal = selectedRange.min;
+                          setGuessPrice(newVal);
+                          setSliderPrice(newVal);
+                        }}
+                        className="hover:scale-110 transition-transform focus:outline-none"
+                        aria-label="Decrease price"
+                      >
+                        <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {feedbackMessage && (
-                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-green-600' :
-                    feedbackMessage.includes('Low') ? 'text-blue-600' : 'text-red-600'
+                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-black' :
+                    feedbackMessage.includes('Low') ? 'text-black' : 'text-black'
                     }`}>
                     {feedbackMessage}
                   </div>
@@ -533,7 +571,7 @@ const SinglePlayerGame = () => {
                 <button
                   onClick={handleGuess}
                   disabled={!!feedbackMessage && feedbackMessage.includes('Correct')}
-                  className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold text-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transform transition hover:scale-105"
+                  className="hand-drawn-btn px-8 py-3 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Confirm Guess
                 </button>

@@ -63,7 +63,7 @@ const Game = ({ gameSettings }) => {
     });
 
     // Request current player list when component mounts
-    socketService.socket?.emit('rooms:join', { 
+    socketService.socket?.emit('rooms:join', {
       roomId: parseInt(roomId),
       playerName: socketService.getCurrentUser()?.name,
       isHost: socketService.getCurrentUser()?.isHost || false,
@@ -94,10 +94,10 @@ const Game = ({ gameSettings }) => {
   };
 
   return (
-    <div className="h-screen flex flex-row overflow-hidden">
+    <div className="h-screen flex flex-row overflow-hidden bg-[#FAEBD7]">
       <PlayerList players={players} showReadyStatus={false} />
       <GameContent gameSettings={gameSettings} players={players} />
-      <ChatBox 
+      <ChatBox
         messages={messages}
         newMessage={newMessage}
         setNewMessage={setNewMessage}

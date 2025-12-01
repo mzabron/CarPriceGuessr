@@ -1,0 +1,30 @@
+/* Hand Drawn Slider Thumb */
+.hand-drawn-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+
+.hand-drawn-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #000000;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin-top: 0px;
+    /* Center 24px thumb on 16px track (input border-box): (24-16)/2 = 4px overhang each side */
+}
+
+.hand-drawn-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #000000;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-sizing: border-box;
+}

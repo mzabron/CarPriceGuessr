@@ -36,23 +36,23 @@ function getClasses(player) {
 
 const PlayerList = ({ players, showReadyStatus = false }) => {
   return (
-    <div className="h-full w-48 md:w-60 xl:w-64 bg-gray-800 flex flex-col p-2 overflow-hidden">
-      <h2 className="text-xl font-bold text-white mb-2">Players</h2>
+    <div className="h-full w-48 md:w-60 xl:w-64 bg-transparent border-r-2 border-black flex flex-col p-2 overflow-hidden">
+      <h2 className="text-xl font-bold mb-2">Players</h2>
       <div className="space-y-2 flex-1 overflow-y-auto thin-scrollbar">
         {players.map((player, index) => {
           const palette = getClasses(player);
           return (
-            <div key={player.id} className="bg-gray-700 rounded-lg p-2 pr-5 sm:pr-6 text-white relative overflow-hidden">
+            <div key={player.id} className="bg-transparent border-2 border-black rounded-lg p-2 pr-5 sm:pr-6 relative overflow-hidden">
               <div
-                className={`absolute top-0 right-0 h-full w-2 sm:w-3 ${palette.bg} ${palette.border} border-l rounded-r-lg`}
+                className={`absolute top-0 right-0 h-full w-2 sm:w-3 ${palette.bg} border-l-2 border-black rounded-r-sm`}
                 aria-hidden="true"
               />
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 min-w-0">
-                  <span className="text-gray-300 mr-1 text-sm">#{index + 1}</span>
+                  <span className="mr-1 text-sm font-bold">#{index + 1}</span>
                   {player.isHost && (
                     <svg
-                      className="text-yellow-600 flex-shrink-0"
+                      className="text-black flex-shrink-0"
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
@@ -66,13 +66,13 @@ const PlayerList = ({ players, showReadyStatus = false }) => {
                   <span className="font-semibold text-sm truncate pr-2" title={player.name}>{player.name}</span>
                 </div>
               </div>
-              <div className="mt-1 text-gray-300 text-sm">Points: {player.points || 0}</div>
+              <div className="mt-1 text-sm font-bold">Points: {player.points || 0}</div>
               {typeof player.stealsRemaining === 'number' && (
-                <div className="mt-1 text-gray-300 text-sm">Steals: {player.stealsRemaining}</div>
+                <div className="mt-1 text-sm">Steals: {player.stealsRemaining}</div>
               )}
               <div className="absolute bottom-1 right-4 sm:right-5 flex flex-col items-end gap-0.5">
                 {showReadyStatus && 'isReady' in player && (
-                  <span className={`${player.isReady ? 'text-green-500' : 'text-red-500'} text-base font-semibold tracking-tight`}>
+                  <span className={`${player.isReady ? 'text-black' : 'text-black opacity-50'} text-base font-bold tracking-tight`}>
                     {player.isReady ? 'Ready' : 'Not Ready'}
                   </span>
                 )}

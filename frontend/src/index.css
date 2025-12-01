@@ -2,9 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
+
+:root {
+  --bg-color: #FAEBD7;
+  --text-color: #000000;
+}
+
 body {
-  @apply bg-gray-50;
-  overflow: hidden; /* Prevent scrollbar on full page */
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Gloria Hallelujah', cursive;
+  overflow-x: hidden;
 }
 
 /* Custom thin scrollbar styles */
@@ -16,74 +25,156 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .thin-scrollbar::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 8px;
+    height: 8px;
   }
-  
+
   .thin-scrollbar::-webkit-scrollbar-track {
     background: transparent;
+    border-left: 2px solid #000000;
   }
-  
+
   .thin-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
+    background: #000000;
+    border: 2px solid #000000;
+    border-radius: 0;
   }
-  
+
   .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #333333;
   }
-  
+
   /* For Firefox */
   .thin-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-  }
-  
-  /* Hide scrollbar when not in use */
-  .thin-scrollbar:not(:hover)::-webkit-scrollbar-thumb {
-    background: transparent;
+    scrollbar-color: #000000 transparent;
   }
 }
 
-/* removed .text-outline-black utility */
+/* Hand Drawn Styles */
 
-  /* Simple one-shot fade-out utility for ephemeral notices */
-  @keyframes fadeOutSlideUp {
-    0% { opacity: 1; transform: translateY(0); }
-    70% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-4px); }
+.hand-drawn-btn {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+  border: 3px solid var(--text-color) !important;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+  font-family: 'Gloria Hallelujah', cursive !important;
+  font-weight: bold !important;
+  box-shadow: none !important;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+}
+
+.hand-drawn-btn:hover {
+  animation: wiggle 0.4s infinite steps(2);
+}
+
+.hand-drawn-input {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+  border: 2px solid var(--text-color) !important;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+  font-family: 'Gloria Hallelujah', cursive !important;
+  padding: 0.5rem 1rem;
+  outline: none;
+}
+
+.hand-drawn-input:focus {
+  border-width: 3px !important;
+}
+
+.hand-drawn-panel {
+  background-color: var(--bg-color);
+  border: 3px solid var(--text-color);
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 1);
+}
+
+.hand-drawn-modal {
+  background-color: var(--bg-color) !important;
+  border: 4px solid var(--text-color) !important;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
+  box-shadow: 10px 10px 0px 0px rgba(0, 0, 0, 1) !important;
+}
+
+.hand-drawn-logo {
+  mix-blend-mode: multiply;
+  max-height: 100px;
+  /* Increased size */
+  display: block;
+  /* filter: drop-shadow(0 0 1px black) drop-shadow(0 0 1px black); */
+  /* Thicker look removed as per request to remove border */
+  /* Thicker look */
+}
+
+@keyframes wiggle {
+  0% {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    transform: scale(1.01) rotate(0.5deg);
   }
 
-  .fade-out-once {
-    animation: fadeOutSlideUp 2.4s ease forwards;
+  50% {
+    border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+    transform: scale(1.01) rotate(-0.5deg);
   }
 
-  /* Global press/click animation for buttons */
-  :where(button, [role="button"]) {
-    /* Improve tap responsiveness on mobile */
-    touch-action: manipulation;
-    /* Smooth press animation */
-    transition: transform 120ms ease-out, filter 120ms ease-out;
-    /* Create own composite layer, reduces jank */
-    transform: translateZ(0);
+  100% {
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    transform: scale(1.01) rotate(0.5deg);
   }
+}
 
-  @media (prefers-reduced-motion: reduce) {
-    :where(button, [role="button"]) {
-      transition: none;
-    }
-  }
+/* Global Overrides */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div,
+a,
+li {
+  color: var(--text-color);
+  font-family: 'Gloria Hallelujah', cursive;
+}
 
-  :where(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) {
-    transform: translateY(1px) scale(0.98);
-    filter: brightness(0.98);
-  }
+/* Override Tailwind bg colors where necessary to enforce theme */
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.bg-gray-200,
+.bg-gray-800,
+.bg-gray-900 {
+  background-color: transparent !important;
+}
 
-  /* Opt-out utility for special cases */
-  .no-press,
-  .no-press:active {
-    transform: none !important;
-    filter: none !important;
-  }
+/* Specific overrides for common components that might have hardcoded colors */
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+  color: var(--text-color) !important;
+}
+
+/* Modal Overlay */
+.fixed.inset-0.bg-black.bg-opacity-50 {
+  background-color: rgba(0, 0, 0, 0.2);
+  /* Lighter overlay */
+  backdrop-filter: blur(2px);
+}
+
+/* Hide number input spinners */
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+}

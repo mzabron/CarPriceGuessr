@@ -123,7 +123,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       if (turnData.turnNumber === 1 || turnData.roundId !== currentTurn?.roundId || turnData.gameId !== currentTurn?.gameId) {
         setLastGuess(null);
       }
-      
+
       // Close round modal when a new turn starts (new round in progress)
       closeRoundModal();
     });
@@ -188,12 +188,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCars(carList.itemSummaries || []);
       setCurrentImageIndex(0);
       setSelectedCarIndex(null);
-      
+
       // Reset price guessing state for new round
       setGuessPrice('');
       setSliderPrice(10000);
       setSelectedRange(PRICE_RANGES[0]);
-      
+
       // Close round modal when new cars are received (new round started)
       closeRoundModal();
     });
@@ -207,8 +207,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setHasClickedSkipVoting(false);
       setSkipVotingReadyCount(0);
       setSkipVotingTotal(players?.length || 0);
-  // Do not reset cooldown; it's per-player time-based.
-      
+      // Do not reset cooldown; it's per-player time-based.
+
       // Close round modal when voting starts (new round in progress)
       closeRoundModal();
       const interval = setInterval(() => {
@@ -303,6 +303,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:nextRoundProgress');
     };
   }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
+
+  // Fix for 0/0 skip voting count in first round: update total if players load after voting starts
+  useEffect(() => {
+    if (voting && skipVotingTotal === 0 && players.length > 0) {
+      setSkipVotingTotal(players.length);
+    }
+  }, [players, voting, skipVotingTotal]);
 
   // Listen for structured cooldown errors from the server to sync precisely during spam clicking
   useEffect(() => {
@@ -439,7 +446,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       // Special cases for slider boundaries
       if (value === sliderMin && r.label === selectedRange.label) return true;
       if (value === sliderMax && r.label === selectedRange.label) return true;
-      
+
       // For the last range, just check if value is >= min
       if (index === PRICE_RANGES.length - 1) {
         return value >= r.min;
@@ -481,7 +488,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const renderCarDetailsGrid = (car) => (
-    <div className="w-full max-w-2xl mb-2 text-sm md:text-base" style={{ maxHeight: '15.5em', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: '#a3a3a3 #f3f4f6' }}>
+    <div className="w-full max-w-2xl mb-2 text-sm md:text-base thin-scrollbar" style={{ maxHeight: '35vh', overflowY: 'auto' }}>
       <div className="grid grid-cols-2 gap-2 mb-1">
         <div className="flex flex-col items-start gap-1">
           <div>
@@ -533,15 +540,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
       </div>
       <div className="mt-1">
         <span className="font-semibold">Condition Description:</span>
-        <span
+        <div
           className="ml-2 block rounded p-1"
           style={{
             whiteSpace: 'pre-line',
-            // No maxHeight, no overflow, no scrollbar for description
           }}
         >
           {car?.conditionDescription || 'No Information'}
-        </span>
+        </div>
       </div>
     </div>
   );
@@ -550,7 +556,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   useEffect(() => {
     if (
       turnTimeLeft === 0 &&
-  currentTurn?.playerId === playerId &&
+      currentTurn?.playerId === playerId &&
       !guessSubmitted &&
       currentTurn &&
       guessPrice !== '' &&
@@ -575,7 +581,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
   useEffect(() => {
     if (
-  currentTurn?.playerId === playerId &&
+      currentTurn?.playerId === playerId &&
       guessPrice &&
       !isNaN(Number(guessPrice))
     ) {
@@ -683,8 +689,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
   }, [roundModalTimer, finalGameData, hasNavigatedToResults, roundResult, showRoundModal, navigate, roomId]);
 
   const handleSteal = () => {
-  const currentPlayer = players.find(p => p.id === playerId);
-    
+    const currentPlayer = players.find(p => p.id === playerId);
+
     // Check if player has steals remaining
     if (!currentPlayer || currentPlayer.stealsRemaining <= 0) {
       alert('You have no steals remaining!');
@@ -696,41 +702,41 @@ const GameContent = ({ gameSettings, players = [] }) => {
       alert(`Steal is on cooldown (${secs}s left)`);
       return;
     }
-    
+
     // Check if it's already their turn
-  if (currentTurn?.playerId === playerId) {
+    if (currentTurn?.playerId === playerId) {
       alert('It is already your turn!');
       return;
     }
-    
+
     // Emit steal event
     socketService.socket.emit('game:useSteal', { roomId });
   };
 
   const getCurrentPlayerSteals = () => {
-  const currentPlayer = players.find(p => p.id === playerId);
+    const currentPlayer = players.find(p => p.id === playerId);
     return currentPlayer ? currentPlayer.stealsRemaining : 0;
   };
 
   const canUseSteal = () => {
-  const currentPlayer = players.find(p => p.id === playerId);
+    const currentPlayer = players.find(p => p.id === playerId);
     const onCooldown = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
     return (
       currentPlayer &&
       currentPlayer.stealsRemaining > 0 &&
       !onCooldown &&
-  currentTurn?.playerId !== playerId &&
+      currentTurn?.playerId !== playerId &&
       currentTurn // Make sure there is an active turn
     );
   };
 
   return (
-    <div className="flex-1 bg-white p-2 sm:p-4 h-full">
+    <div className="flex-1 bg-transparent p-2 sm:p-4 h-full">
       <div className="h-full flex flex-col max-w-screen-xl mx-auto">
-        <div className="flex-1 bg-gray-100 rounded-lg p-2 sm:p-4 overflow-y-auto thin-scrollbar">
+        <div className="flex-1 hand-drawn-panel p-2 sm:p-4 overflow-y-auto thin-scrollbar">
           {showRoundModal && roundResult && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className="bg-white rounded-lg p-6 shadow-lg text-center max-w-md w-full">
+              <div className="hand-drawn-modal p-6 text-center max-w-md w-full">
                 <h2 className="text-2xl font-bold mb-4">Round Finished!</h2>
                 {roundResult.playerName ? (
                   <>
@@ -741,25 +747,24 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       Actual price: <span className="font-semibold">${roundResult.actualPrice}</span>
                     </p>
                     {roundResult.accuracyPoints && roundResult.turnBonus && (
-                      <div className="mb-4 p-3 bg-green-50 rounded-lg">
-                        <p className="text-sm font-semibold text-green-800 mb-2">Points Breakdown:</p>
-                        <div className="text-sm text-green-700">
+                      <div className="mb-4 p-3 border-2 border-black rounded-lg">
+                        <p className="text-sm font-semibold mb-2">Points Breakdown:</p>
+                        <div className="text-sm">
                           <p>Accuracy: {roundResult.accuracyPoints} points</p>
                           <p>Turn Bonus: {roundResult.turnBonus} points ({roundResult.turnsPlayed} turns × 5)</p>
-                          <p className="font-bold border-t pt-1 mt-1">Total: {roundResult.pointsAwarded} points</p>
+                          <p className="font-bold border-t border-black pt-1 mt-1">Total: {roundResult.pointsAwarded} points</p>
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
-                  <p className="mb-4 text-gray-600">{roundResult.message || "Round ended with no winner"}</p>
+                  <p className="mb-4">{roundResult.message || "Round ended with no winner"}</p>
                 )}
                 <button
-                  className={`mt-4 px-6 py-2 rounded-lg font-bold transition transform duration-150 ${
-                    hasClickedNextRound
-                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-500 shadow-inner ring-1 ring-gray-400'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
-                  }`}
+                  className={`mt-4 hand-drawn-btn px-6 py-2 font-bold ${hasClickedNextRound
+                    ? 'opacity-70'
+                    : ''
+                    }`}
                   onClick={handleNextRoundToggle}
                   disabled={roundAdvanceLocked || (!(roundResult?.isLastRound) && (nextRoundReadyCount === nextRoundTotal && nextRoundTotal > 0))}
                   title={roundResult?.isLastRound ? 'View results now' : (hasClickedNextRound ? 'Click to undo readiness' : 'Click to mark ready for next round')}
@@ -767,7 +772,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 >
                   <span className="inline-flex items-center gap-2">
                     {hasClickedNextRound && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-800" fill="currentColor" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-black" fill="currentColor" aria-hidden="true">
                         <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
                       </svg>
                     )}
@@ -803,12 +808,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       return player ? { id: player.id, name: player.name } : { id: idOrName, name: idOrName };
                     });
                   return (
+
                     <button
                       key={idx}
                       onClick={() => handleVote(idx)}
-                      className={`w-full p-4 sm:p-6 rounded-xl border-2 text-left text-base font-semibold shadow transition-all duration-150 ${
-                        (votes[playerId] === idx || votes[playerName] === idx) ? 'bg-blue-200 border-blue-400 scale-105' : 'bg-white border-gray-300 hover:scale-102'
-                      }`}
+                      className={`w-full p-4 sm:p-6 rounded-xl border-2 border-black text-left text-base font-semibold shadow-none transition-all duration-150 ${(votes[playerId] === idx || votes[playerName] === idx) ? 'bg-black text-[#FAEBD7] scale-105' : 'bg-transparent hover:scale-102'
+                        }`}
                       style={{ minHeight: '90px' }}
                     >
                       {getDisplayText(car)}
@@ -824,30 +829,22 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 })}
               </div>
               {/* Skip Voting button relocated to bottom-right under categories */}
-              <div className="flex justify-end mt-4 max-w-4xl mx-auto">
+              <div className="mt-4 text-center">
                 <button
-                  className={`px-6 py-2 rounded-lg font-bold transition transform duration-150 ${
-                    hasClickedSkipVoting
-                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-500 shadow-inner ring-1 ring-gray-400'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow'
-                  }`}
                   onClick={handleSkipVotingToggle}
-                  disabled={skipVotingReadyCount === skipVotingTotal && skipVotingTotal > 0}
-                  title={hasClickedSkipVoting ? 'Click to undo skip' : 'Click to skip voting now'}
+                  className={`hand-drawn-btn px-6 py-2 font-bold inline-flex items-center justify-center gap-2 transition-all ${hasClickedSkipVoting
+                    ? '!bg-green-600 !text-white !border-green-800 shadow-inner'
+                    : 'hover:bg-black/5'
+                    }`}
+                  title={hasClickedSkipVoting ? "Click to un-skip" : "Click to skip voting"}
                   aria-pressed={hasClickedSkipVoting}
                 >
-                  <span className="inline-flex items-center gap-2">
-                    {hasClickedSkipVoting && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-800" fill="currentColor" aria-hidden="true">
-                        <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
-                      </svg>
-                    )}
-                    {(() => {
-                      const base = `Skip (${votingTimeLeft}s)`;
-                      const progress = skipVotingTotal > 0 ? ` (${skipVotingReadyCount}/${skipVotingTotal})` : '';
-                      return base + progress;
-                    })()}
-                  </span>
+                  {hasClickedSkipVoting && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
+                    </svg>
+                  )}
+                  <span>Skip Voting ({skipVotingReadyCount}/{skipVotingTotal})</span>
                 </button>
               </div>
             </div>
@@ -864,19 +861,17 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
               <div className="w-full flex justify-center mb-2">
                 <div
-                  className="text-base text-gray-600 max-w-4xl w-full"
+                  className="text-base text-gray-600 w-full"
                   style={{
                     textAlign: "left",
                   }}
                 >
                   <div
-                    className="px-2"
+                    className="px-2 thin-scrollbar leading-relaxed pb-1"
                     style={{
                       whiteSpace: 'pre-line',
-                      maxHeight: '6em',
+                      maxHeight: '9em', // ~5-6 lines
                       overflowY: 'auto',
-                      scrollbarWidth: 'thin',
-                      scrollbarColor: '#a3a3a3 #f3f4f6',
                     }}
                   >
                     {cars[getActiveCarIndex()]?.shortDescription || 'No Description Available'}
@@ -887,10 +882,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
               <div className="flex flex-col lg:flex-row gap-3 w-full mb-2">
                 {/* Carousel */}
                 <div className="w-full lg:w-1/2 flex-shrink-0 relative mx-auto">
-                  <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh]" style={{ maxHeight: '35vh' }}>
+                  <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh] border-2 border-black rounded-lg overflow-hidden" style={{ maxHeight: '35vh' }}>
                     <button
                       onClick={handlePrevImage}
-                      className="no-press absolute left-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-l hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                      className="no-press absolute left-0 top-[40%] bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-3 rounded-r z-10 text-3xl md:text-4xl leading-none"
                       aria-label="Previous image"
                     >
                       ‹
@@ -898,47 +893,37 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <img
                       src={cars[getActiveCarIndex()]?.thumbnailImages?.[currentImageIndex]?.imageUrl}
                       alt="Car"
-                      className="absolute inset-0 w-full h-full object-contain bg-black rounded-lg"
+                      className="absolute inset-0 w-full h-full object-contain"
                     />
                     <button
                       onClick={() => {
                         setFullscreenImageIndex(currentImageIndex);
                         setShowFullscreenImage(true);
                       }}
-                      className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded hover:bg-opacity-75 z-10"
+                      className="absolute top-4 right-4 bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-2 rounded z-10"
                       title="View fullscreen"
                     >
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
                       </svg>
                     </button>
                     <button
                       onClick={handleNextImage}
-                      className="no-press absolute right-0 top-[40%] bg-black bg-opacity-50 text-white p-3 rounded-r hover:bg-opacity-75 z-10 text-3xl md:text-4xl leading-none"
+                      className="no-press absolute right-0 top-[40%] bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-3 rounded-l z-10 text-3xl md:text-4xl leading-none"
                       aria-label="Next image"
                     >
                       ›
                     </button>
-                    <div
-                      className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-wrap gap-1 justify-center w-full px-4"
-                      style={{
-                        pointerEvents: 'auto',
-                        maxWidth: '95%',
-                        rowGap: '2px',
-                      }}
-                    >
-                      {cars[getActiveCarIndex()]?.thumbnailImages?.map((_, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentImageIndex(index)}
-                          className={`w-2 h-2 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                            }`}
-                          style={{
-                            flex: '0 0 auto',
-                          }}
-                        />
-                      ))}
-                    </div>
+                  </div>
+                  <div className="flex justify-center gap-1 mt-2 flex-wrap">
+                    {cars[getActiveCarIndex()]?.thumbnailImages?.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-2 h-2 rounded-full border border-black ${index === currentImageIndex ? 'bg-black' : 'bg-transparent'}`}
+                        style={{ flex: '0 0 auto' }}
+                      />
+                    ))}
                   </div>
                 </div>
                 {/* Car details */}
@@ -948,16 +933,16 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
 
               {/* Guess the price section - moved directly under car images/details */}
-              <div className="w-full mt-1">
+              <div className="w-full mt-1 border-t-2 border-black pt-4">
                 <div className="mb-2 font-bold text-lg text-center">Guess the price:</div>
                 <div className="flex flex-wrap gap-2 mb-3 justify-center">
                   {PRICE_RANGES.map((range) => (
                     <button
                       key={range.label}
                       onClick={() => handleRangeClick(range)}
-                      className={`px-4 py-2 rounded-lg border text-sm transition-all duration-100 ${selectedRange.label === range.label
-                          ? 'bg-blue-200 border-blue-400 font-bold scale-105'
-                          : 'bg-white border-gray-300 hover:bg-blue-50'
+                      className={`px-4 py-2 rounded-lg border-2 border-black text-sm transition-all duration-100 ${selectedRange.label === range.label
+                        ? 'bg-black text-[#FAEBD7] font-bold scale-105'
+                        : 'bg-transparent hover:bg-black/10'
                         }`}
                     >
                       {range.label}
@@ -972,75 +957,74 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     step={100}
                     value={sliderPrice}
                     onChange={handleSliderChange}
-                    className="w-full md:w-[500px] accent-blue-500 h-8"
+                    className="w-full md:w-[500px] h-3 hand-drawn-slider border-2 border-black rounded-full cursor-pointer"
                     style={{
-                      accentColor: "#2563eb",
-                      height: "2rem",
-                      borderRadius: "0.5rem",
+                      background: `linear-gradient(to right, #000000 0%, #000000 ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
                     }}
                   />
-                  <button
-                    type="button"
-                    className="ml-1 px-2 py-1 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center disabled:opacity-50"
-                    onClick={() => {
-                      let newValue = Number(sliderPrice) - 100;
-                      if (newValue < 0) newValue = 0; // Only prevent going below 0
-                      setSliderPrice(newValue);
-                      setGuessPrice(newValue);
-                      const foundRange = PRICE_RANGES.find((r, index) => {
-                        // For the last range, just check if newValue is >= min
-                        if (index === PRICE_RANGES.length - 1) {
-                          return newValue >= r.min;
-                        }
-                        // For other ranges, check if newValue is within the range
-                        return newValue >= r.min && newValue < r.max;
-                      });
-                      if (foundRange && foundRange.label !== selectedRange.label) {
-                        setSelectedRange(foundRange);
-                      }
-                    }}
-                    aria-label="Decrease price"
-                    disabled={Number(sliderPrice) <= 0}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 18 18" className="fill-gray-600">
-                      <polygon points="12,4 6,9 12,14" />
-                    </svg>
-                  </button>
-                  <input
-                    type="text"
-                    value={guessPrice}
-                    onChange={handleInputChange}
-                    className="w-28 md:w-36 border-2 border-blue-400 rounded-lg px-3 py-1 text-xl font-bold text-right shadow"
-                    placeholder="Enter price"
-                    inputMode="numeric"
-                  />
-                  <span className="ml-1 font-semibold text-xl">$</span>
-                  <button
-                    type="button"
-                    className="ml-1 px-2 py-1 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                    onClick={() => {
-                      let newValue = Number(sliderPrice) + 100;
-                      if (newValue > getSliderMax()) newValue = getSliderMax();
-                      setSliderPrice(newValue);
-                      setGuessPrice(newValue);
-                      const foundRange = PRICE_RANGES.find((r, index) => {
-                        // For the last range, just check if newValue is >= min
-                        if (index === PRICE_RANGES.length - 1) {
-                          return newValue >= r.min;
-                        }
-                        // For other ranges, check if newValue is within the range
-                        return newValue >= r.min && newValue < r.max;
-                      });
-                      if (foundRange && foundRange.label !== selectedRange.label) {
-                        setSelectedRange(foundRange);
-                      }
-                    }}
-                    aria-label="Increase price"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 18 18" className="fill-gray-600">
-                      <polygon points="6,4 12,9 6,14" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">$</span>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        value={guessPrice}
+                        onChange={handleInputChange}
+                        className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
+                        placeholder="Enter price"
+                        inputMode="numeric"
+                      />
+                      <div className="flex flex-col gap-3 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            let newValue = Number(sliderPrice) + 100;
+                            if (newValue > getSliderMax()) newValue = getSliderMax();
+                            setSliderPrice(newValue);
+                            setGuessPrice(newValue);
+                            const foundRange = PRICE_RANGES.find((r, index) => {
+                              if (index === PRICE_RANGES.length - 1) {
+                                return newValue >= r.min;
+                              }
+                              return newValue >= r.min && newValue < r.max;
+                            });
+                            if (foundRange && foundRange.label !== selectedRange.label) {
+                              setSelectedRange(foundRange);
+                            }
+                          }}
+                          className="hover:scale-110 transition-transform focus:outline-none"
+                          aria-label="Increase price"
+                        >
+                          <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            let newValue = Number(sliderPrice) - 100;
+                            if (newValue < 0) newValue = 0;
+                            setSliderPrice(newValue);
+                            setGuessPrice(newValue);
+                            const foundRange = PRICE_RANGES.find((r, index) => {
+                              if (index === PRICE_RANGES.length - 1) {
+                                return newValue >= r.min;
+                              }
+                              return newValue >= r.min && newValue < r.max;
+                            });
+                            if (foundRange && foundRange.label !== selectedRange.label) {
+                              setSelectedRange(foundRange);
+                            }
+                          }}
+                          className="hover:scale-110 transition-transform focus:outline-none"
+                          aria-label="Decrease price"
+                        >
+                          <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 {/* Who's turn, steal, confirm guess */}
                 <div className="flex flex-col items-center gap-1">
@@ -1048,9 +1032,39 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <span className="font-bold text-base">
                       Turn: <span className={getPlayerBadgeClassesById(currentTurn?.playerId, players)}>{currentTurn?.playerName || "..."}</span>
                     </span>
-                    <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded text-base font-mono">
-                      {turnTimeLeft !== null ? `${turnTimeLeft}s` : ""}
-                    </span>
+                    <div className={`hand-drawn-btn w-20 h-10 flex items-center justify-center ${turnTimeLeft <= 5 ? 'bg-red-100 text-red-600 border-red-600' : ''}`}>
+                      <span className="text-lg font-bold">{turnTimeLeft}s</span>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <button
+                        onClick={handleSteal}
+                        disabled={!canUseSteal()}
+                        className={`hand-drawn-btn px-4 py-2 font-bold transition-all duration-200 ${canUseSteal()
+                          ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-105 border-red-800'
+                          : 'opacity-50 cursor-not-allowed bg-gray-300 border-gray-400'
+                          }`}
+                        title={
+                          !players.find(p => p.id === playerId)?.stealsRemaining ? "No steals remaining" :
+                            stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil ? `Cooldown: ${Math.ceil(stealCooldownLeftMs / 1000)}s` :
+                              currentTurn?.playerId === playerId ? "It's already your turn" :
+                                "Steal turn!"
+                        }
+                        style={canUseSteal() ? { backgroundColor: '#dc2626', color: 'white', borderColor: 'black' } : {}}
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                            <path d="M11 21l-1-9H4l10-10 1 9h6L11 21z" />
+                          </svg>
+                          <span>Steal! ({getCurrentPlayerSteals()})</span>
+                        </div>
+                      </button>
+                      {stealCooldownLeftMs > 0 && (
+                        <div className="text-xs font-bold text-red-600 animate-pulse">
+                          Cooldown: {Math.ceil(stealCooldownLeftMs / 1000)}s
+                        </div>
+                      )}
+                    </div>
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
@@ -1077,44 +1091,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSteal}
-                      className={`relative px-6 py-2 rounded-lg font-bold text-base shadow transition active:scale-95 focus:outline-none overflow-hidden ${
-                        canUseSteal()
-                          ? 'bg-red-600 hover:bg-red-700 text-white'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                      style={{ minWidth: '100px' }}
-                      disabled={!canUseSteal()}
-                      title={(() => {
-                        if (getCurrentPlayerSteals() <= 0) return 'No steals remaining';
-                        if (currentTurn?.playerId === playerId) return 'Already your turn';
-                         const onCd = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
-                        if (onCd) {
-                           const secs = Math.ceil((stealCooldownUntil - (Date.now() + serverTimeOffsetMs)) / 1000);
-                          return `Steal on cooldown (${secs}s)`;
-                        }
-                        return `Steal (${getCurrentPlayerSteals()} left)`;
-                      })()}
-                    >
-                      Steal {getCurrentPlayerSteals() > 0 ? `(${getCurrentPlayerSteals()})` : ''}
-                      {(() => {
-                        const onCd = stealCooldownUntil && (Date.now() + serverTimeOffsetMs) < stealCooldownUntil;
-                        const stealsLeft = getCurrentPlayerSteals();
-                        // Do not render cooldown bar if user has no steals left
-                        if (!onCd || !stealCooldownMs || stealsLeft <= 0) return null;
-                        const left = Math.max(0, stealCooldownUntil - (Date.now() + serverTimeOffsetMs));
-                        const pct = Math.max(0, Math.min(100, (1 - left / stealCooldownMs) * 100));
-                        return (
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute left-0 bottom-0 h-1 bg-gradient-to-r from-red-500 to-rose-500"
-                            style={{ width: `${pct}%` }}
-                          />
-                        );
-                      })()}
-                    </button>
+
                     <button
                       onClick={e => {
                         if (currentTurn?.playerId !== playerId || guessSubmitted) return;
@@ -1125,17 +1102,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           btn.classList.remove('scale-95', 'ring', 'ring-green-400');
                         }, 180);
                       }}
-                      className={`px-6 py-2 rounded-lg font-bold text-base transition shadow active:scale-95 focus:outline-none ${(currentTurn?.playerId === playerId) && !guessSubmitted
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
+                      className={`hand-drawn-btn px-6 py-2 font-bold text-base disabled:opacity-50 disabled:cursor-not-allowed`}
                       disabled={
                         guessPrice === '' ||
                         isNaN(Number(guessPrice)) ||
                         currentTurn?.playerId !== playerId ||
                         guessSubmitted
                       }
-                      style={{ transition: 'transform 0.15s, box-shadow 0.15s', minWidth: '140px' }}
+                      style={{ minWidth: '140px' }}
                     >
                       Confirm Guess
                     </button>
@@ -1204,52 +1178,54 @@ const GameContent = ({ gameSettings, players = [] }) => {
           )}
         </div>
       </div>
-      
+
       {/* Fullscreen image viewer */}
-      {showFullscreenImage && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
-          {/* Close button fixed to viewport for consistent placement */}
-          <button
-            onClick={() => setShowFullscreenImage(false)}
-            aria-label="Close fullscreen"
-            className="no-press fixed top-4 right-4 z-50 bg-black/70 text-white p-3 rounded-full hover:bg-black/80 shadow-lg text-4xl leading-none"
-            title="Close fullscreen"
-          >
-            ×
-          </button>
-          <div className="relative w-full h-full max-w-5xl max-h-[90vh]">
-            {/* Fullscreen navigation arrows positioned outside image, fixed for consistent placement */}
+      {
+        showFullscreenImage && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
+            {/* Close button fixed to viewport for consistent placement */}
             <button
-              onClick={() => {
-                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
-                setFullscreenImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
-              }}
-              className="no-press fixed left-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
-              title="Previous image"
-              aria-label="Previous image"
+              onClick={() => setShowFullscreenImage(false)}
+              aria-label="Close fullscreen"
+              className="no-press fixed top-4 right-4 z-50 bg-black/70 text-white p-3 rounded-full hover:bg-black/80 shadow-lg text-4xl leading-none"
+              title="Close fullscreen"
             >
-              ‹
+              ×
             </button>
-            <button
-              onClick={() => {
-                const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
-                setFullscreenImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
-              }}
-              className="no-press fixed right-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
-              title="Next image"
-              aria-label="Next image"
-            >
-              ›
-            </button>
-            <img
-              src={cars[getActiveCarIndex()]?.thumbnailImages?.[fullscreenImageIndex]?.imageUrl}
-              alt="Fullscreen Car"
-              className="w-full h-full object-contain rounded-lg"
-            />
+            <div className="relative w-full h-full max-w-5xl max-h-[90vh]">
+              {/* Fullscreen navigation arrows positioned outside image, fixed for consistent placement */}
+              <button
+                onClick={() => {
+                  const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                  setFullscreenImageIndex((prev) => (prev === 0 ? totalImages - 1 : prev - 1));
+                }}
+                className="no-press fixed left-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
+                title="Previous image"
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => {
+                  const totalImages = cars[getActiveCarIndex()]?.thumbnailImages?.length || 0;
+                  setFullscreenImageIndex((prev) => (prev === totalImages - 1 ? 0 : prev + 1));
+                }}
+                className="no-press fixed right-4 top-1/2 -translate-y-1/2 text-white text-7xl hover:text-gray-300 z-50 leading-none p-5"
+                title="Next image"
+                aria-label="Next image"
+              >
+                ›
+              </button>
+              <img
+                src={cars[getActiveCarIndex()]?.thumbnailImages?.[fullscreenImageIndex]?.imageUrl}
+                alt="Fullscreen Car"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

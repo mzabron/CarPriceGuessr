@@ -51,21 +51,21 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
       ></div>
 
       {/* Modal */}
-      <div className="relative w-full max-w-sm bg-white rounded-xl shadow-xl p-6">
+      <div className="relative w-full max-w-sm hand-drawn-modal p-6">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+          className="absolute top-3 right-3 text-black hover:text-gray-600 focus:outline-none font-bold text-xl"
         >
           ×
         </button>
 
-        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+        <h3 className="text-xl font-semibold mb-1">
           {initialName ? 'Change your nickname' : 'Set your nickname'}
         </h3>
-        <p className="text-sm text-gray-500 mb-5">This name will be shown to other players.</p>
+        <p className="text-sm mb-5">This name will be shown to other players.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -75,7 +75,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your nickname"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full hand-drawn-input"
               autoFocus
               maxLength={12}
             />
@@ -83,7 +83,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
 
           {/* Preferred color selector */}
           <div>
-            <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="color" className="block text-sm font-medium mb-2">
               Preferred color
             </label>
             <div className="flex items-center justify-between gap-3">
@@ -91,7 +91,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               <button
                 type="button"
                 onClick={() => setColorIndex((i) => (i - 1 + COLOR_OPTIONS.length) % COLOR_OPTIONS.length)}
-                className="p-2 rounded-md hover:bg-gray-100 text-gray-700"
+                className="hand-drawn-btn p-2 border-2"
                 aria-label="Previous color"
                 title="Previous color"
               >
@@ -103,10 +103,10 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               {/* Color sample and name */}
               <div className="flex items-center gap-3">
                 <span
-                  className={`inline-flex w-9 h-9 rounded-full border border-gray-300 shadow-inner ${COLOR_OPTIONS[colorIndex].bgClass}`}
+                  className={`inline-flex w-9 h-9 rounded-full border-2 border-black shadow-inner ${COLOR_OPTIONS[colorIndex].bgClass}`}
                   aria-label={`Selected color ${COLOR_OPTIONS[colorIndex].name}`}
                 />
-                <span className="text-sm font-medium text-gray-800 min-w-[5.5rem]">
+                <span className="text-sm font-medium min-w-[5.5rem]">
                   {COLOR_OPTIONS[colorIndex].name}
                 </span>
               </div>
@@ -115,7 +115,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               <button
                 type="button"
                 onClick={() => setColorIndex((i) => (i + 1) % COLOR_OPTIONS.length)}
-                className="p-2 rounded-md hover:bg-gray-100 text-gray-700"
+                className="hand-drawn-btn p-2 border-2"
                 aria-label="Next color"
                 title="Next color"
               >
@@ -129,7 +129,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
           <button
             type="submit"
             disabled={!name.trim()}
-            className="w-full inline-flex justify-center items-center rounded-lg bg-indigo-600 px-4 py-2.5 text-white font-medium shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full hand-drawn-btn px-4 py-2.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Submit
           </button>
