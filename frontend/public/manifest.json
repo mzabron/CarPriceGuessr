@@ -3,9 +3,15 @@
   "name": "CarPriceGuessr - Multiplayer Car Pricing Game",
   "icons": [
     {
-      "src": "icon.svg?v=20251121i",
-      "type": "image/svg+xml",
-      "sizes": "any",
+      "src": "car_image.png?v=20251204",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "car_image.png?v=20251204",
+      "type": "image/png",
+      "sizes": "512x512",
       "purpose": "any"
     }
   ],
