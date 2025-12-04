@@ -101,7 +101,7 @@ body {
 
 .hand-drawn-logo {
   mix-blend-mode: multiply;
-  max-height: 100px;
+  max-height: 64px;
   /* Increased size */
   display: block;
   /* filter: drop-shadow(0 0 1px black) drop-shadow(0 0 1px black); */
