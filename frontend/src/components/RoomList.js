@@ -103,16 +103,16 @@ const RoomList = ({ onClose, user }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="hand-drawn-modal p-6 w-full max-w-2xl">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Join Game</h2>
-          <button
-            onClick={onClose}
-            className="text-black hover:text-gray-700 font-bold text-xl"
-          >
-            ✕
-          </button>
-        </div>
+      <div className="hand-drawn-modal p-6 w-full max-w-2xl relative">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+        >
+          ×
+        </button>
+        <h2 className="text-2xl font-bold mb-4">Join Game</h2>
 
         {!user && (
           <div className="mb-4 p-2 bg-transparent border-2 border-black rounded">

@@ -17,6 +17,8 @@ const CreateGameModal = ({ onClose, user }) => {
   });
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isDuplicateName, setIsDuplicateName] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const checkDuplicateRoomName = async (roomName) => {
     try {
@@ -28,8 +30,33 @@ const CreateGameModal = ({ onClose, user }) => {
     }
   };
 
+  // Live validation: debounce duplicate name check when roomName changes
+  React.useEffect(() => {
+    const name = (formData.roomName || '').trim();
+    if (!name) {
+      setIsDuplicateName(false);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const dup = await checkDuplicateRoomName(name);
+        setIsDuplicateName(dup);
+        if (dup) {
+          setError('A room with this name already exists');
+        } else if (error === 'A room with this name already exists') {
+          setError('');
+        }
+      } catch (_) {
+        // Non-fatal: ignore live check errors
+      }
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.roomName]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitAttempted(true);
     setError('');
 
     if (!formData.roomName.trim()) {
@@ -119,10 +146,18 @@ const CreateGameModal = ({ onClose, user }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="hand-drawn-modal p-6 w-full max-w-md">
+      <div className="hand-drawn-modal p-6 w-full max-w-md relative">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+        >
+          ×
+        </button>
         <h2 className="text-2xl font-bold mb-4">Create New Game</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <label className="block mb-2">Room Name</label>
             <input
@@ -130,7 +165,6 @@ const CreateGameModal = ({ onClose, user }) => {
               name="roomName"
               value={formData.roomName}
               onChange={handleChange}
-              required
               className="w-full hand-drawn-input"
               placeholder="Enter room name"
               minLength="3"
@@ -239,25 +273,22 @@ const CreateGameModal = ({ onClose, user }) => {
             </select>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm mt-2 font-bold">
-              {error}
-            </div>
-          )}
+          {(() => {
+            const nameEmpty = !(formData.roomName || '').trim();
+            let msg = '';
+            if (isDuplicateName) msg = 'A room with this name already exists';
+            else if (error) msg = error;
+            else if (submitAttempted && nameEmpty) msg = 'Room name is required';
+            return msg ? (
+              <div className="text-red-600 text-sm mt-2 font-bold">{msg}</div>
+            ) : null;
+          })()}
 
           <div className="flex justify-end space-x-4 mt-6">
             <button
-              type="button"
-              onClick={onClose}
-              className="hand-drawn-btn px-4 py-2 opacity-70 hover:opacity-100"
-              disabled={isCreating}
-            >
-              Cancel
-            </button>
-            <button
               type="submit"
               className="hand-drawn-btn px-4 py-2"
-              disabled={!formData.roomName.trim() || isCreating || formData.maxPlayers === '' || formData.rounds === '' || formData.powerUps === '' || formData.roundDuration === '' || formData.correctGuessThreshold === ''}
+              disabled={isCreating}
             >
               {isCreating ? 'Creating...' : 'Create Game'}
             </button>

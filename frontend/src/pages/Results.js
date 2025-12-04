@@ -44,8 +44,8 @@ const Results = () => {
 
   if (!gameData) {
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="h-screen bg-[#FAEBD7] flex items-center justify-center">
+        <div className="text-center text-black">
           <div className="text-2xl font-bold mb-2">Preparing final results…</div>
           <div className="opacity-80">Waiting for game summary from server</div>
         </div>

@@ -18,7 +18,15 @@ const CreateSingleGameModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="hand-drawn-modal p-6 w-full max-w-md">
+      <div className="hand-drawn-modal p-6 w-full max-w-md relative">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+        >
+          ×
+        </button>
         <h2 className="text-2xl font-bold mb-4">Single Player Mode</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -76,13 +84,6 @@ const CreateSingleGameModal = ({ onClose }) => {
           </div>
 
           <div className="flex justify-end space-x-4 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="hand-drawn-btn px-4 py-2 opacity-70 hover:opacity-100"
-            >
-              Cancel
-            </button>
             <button
               type="submit"
               className="hand-drawn-btn px-6 py-2 font-bold"

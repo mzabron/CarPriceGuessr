@@ -41,15 +41,6 @@ const SinglePlayerGame = () => {
       const data = await apiService.getCars();
       if (data && data.itemSummaries) {
         setCars(data.itemSummaries);
-        // Pre-load images
-        data.itemSummaries.forEach(car => {
-          if (car.thumbnailImages) {
-            car.thumbnailImages.forEach(img => {
-              const image = new Image();
-              image.src = img.imageUrl;
-            });
-          }
-        });
       }
     } catch (error) {
       console.error('Failed to fetch cars:', error);

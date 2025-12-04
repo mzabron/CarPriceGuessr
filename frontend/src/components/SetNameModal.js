@@ -57,7 +57,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-3 right-3 text-black hover:text-gray-600 focus:outline-none font-bold text-xl"
+          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
         >
           ×
         </button>

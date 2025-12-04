@@ -327,29 +327,18 @@ const GameContent = ({ gameSettings, players = [] }) => {
   }, []);
 
   useEffect(() => {
+    // Preload only the images for the winning car once it is known.
     if (winningIndex !== null && cars[winningIndex]?.thumbnailImages) {
       cars[winningIndex].thumbnailImages.forEach(img => {
-        const image = new window.Image();
-        image.src = img.imageUrl;
+        if (img && img.imageUrl) {
+          const image = new window.Image();
+          image.src = img.imageUrl;
+        }
       });
     }
   }, [winningIndex, cars]);
 
-  // Pre-load images for all cars as soon as they are received (voting phase)
-  useEffect(() => {
-    if (cars && cars.length > 0) {
-      cars.forEach(car => {
-        if (car.thumbnailImages) {
-          car.thumbnailImages.forEach(img => {
-            if (img && img.imageUrl) {
-              const image = new window.Image();
-              image.src = img.imageUrl;
-            }
-          });
-        }
-      });
-    }
-  }, [cars]);
+  // Remove bulk preloading: do not preload images for all cars during voting.
 
   const getDisplayText = (car) => {
     if (car.conditionDescription) {
