@@ -29,6 +29,7 @@ const SinglePlayerGame = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
+  const [showChosenText, setShowChosenText] = useState(false);
 
   // New state for summary
   const [gameHistory, setGameHistory] = useState([]);
@@ -51,17 +52,31 @@ const SinglePlayerGame = () => {
     fetchCars();
   }, [fetchCars, round]);
 
+  // Preload images for the selected car immediately after selection
+  useEffect(() => {
+    if (selectedCarIndex !== null && cars[selectedCarIndex]?.thumbnailImages) {
+      cars[selectedCarIndex].thumbnailImages.forEach((img) => {
+        if (img && img.imageUrl) {
+          const image = new Image();
+          image.src = img.imageUrl;
+        }
+      });
+    }
+  }, [selectedCarIndex, cars]);
+
   const handleCarSelect = (index) => {
     setSelectedCarIndex(index);
-    // Small delay to show highlight
+    // Show transition screen similar to multiplayer: "... was chosen!"
+    setShowChosenText(true);
     setTimeout(() => {
+      setShowChosenText(false);
       setPhase('playing');
       setCurrentImageIndex(0);
       setSliderPrice(10000);
       setGuessPrice(10000);
       setSelectedRange(PRICE_RANGES[0]);
       setFeedbackMessage('');
-    }, 500);
+    }, 2000);
   };
 
   const handleGuess = () => {
@@ -368,8 +383,14 @@ const SinglePlayerGame = () => {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto p-4 overflow-y-auto thin-scrollbar">
-        {phase === 'voting' && (
+      <main className={`flex-1 container mx-auto p-4 overflow-y-auto thin-scrollbar ${showChosenText && selectedCarIndex !== null ? 'flex items-center justify-center' : ''}`}>
+        {showChosenText && selectedCarIndex !== null ? (
+          <div className="text-center w-full">
+            <h2 className="text-3xl font-extrabold text-green-700 mb-4 text-center">
+              {getDisplayText(cars[selectedCarIndex])} was chosen!
+            </h2>
+          </div>
+        ) : phase === 'voting' && (
           <div className="flex flex-col items-center">
             <h2 className="text-2xl font-bold mb-6">Choose a Category</h2>
             {cars.length === 0 ? (
