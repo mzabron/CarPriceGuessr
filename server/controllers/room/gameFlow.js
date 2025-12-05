@@ -146,6 +146,8 @@ function finishVoting(roomId) {
   const topIndexes = tally.map((v, i) => v === maxVotes ? i : -1).filter(i => i !== -1);
   const winningIndex = topIndexes.length > 0 ? topIndexes[Math.floor(Math.random() * topIndexes.length)] : Math.floor(Math.random() * carCount);
   io?.to(`room-${roomId}`).emit('game:votingResult', { winningIndex, votes: tally });
+  // Persist chosen index on the room for late joiners
+  if (room) room.currentWinningIndex = winningIndex;
   const chosenPrice = cars?.itemSummaries?.[winningIndex]?.price || 0;
   setCarPrice(chosenPrice);
 

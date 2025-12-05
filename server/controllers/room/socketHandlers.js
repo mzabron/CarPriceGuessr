@@ -1,4 +1,4 @@
-const { setIo, getIo, getRooms, setRooms, getRoomVotes, correctGuessThreshold, setCars } = require('./state');
+const { setIo, getIo, getRooms, setRooms, getRoomVotes, correctGuessThreshold, setCars, getCars, getCarPrice } = require('./state');
 const { getSafeRooms, getSafeRoom, generateRoomCode, getDeviation } = require('./utils');
 const { sendSystemMessage } = require('./messaging');
 const { startNextTurn, finishGame, startVotingPhase, initializePlayerQueue, shiftQueueForNextRound, getCurrentPlayerFromQueue, advanceQueueToNextPlayer, handleStealInQueue } = require('./gameFlow');
@@ -34,6 +34,8 @@ function triggerRoundStart(room, socket) {
   }
   room.currentRoundTurns = 0;
   room.stealUsedThisRound = false;
+  // Reset chosen car index for the new round
+  room.currentWinningIndex = null;
   if (!room.gameHistory) room.gameHistory = [];
 
   io.to(roomChannel).emit('game:startRound', { roomId: room.id });
@@ -71,6 +73,55 @@ function triggerRoundStart(room, socket) {
 function setupRoomSocketHandlers(io) {
   setIo(io);
   const roomsAccessor = { getRooms, setRooms };
+
+  // Safely remove a player from the active queue and advance the game if needed
+  function removePlayerFromQueueAndAdvance(room, removedPlayerId) {
+    if (!room) return;
+    if (!room.playerQueue || !Array.isArray(room.playerQueue)) return;
+
+    const wasInQueueIndex = room.playerQueue.indexOf(removedPlayerId);
+    if (wasInQueueIndex === -1) return; // not in queue; nothing to adjust
+
+    const wasCurrentPlayerId = room.playerQueue[room.currentQueueIndex];
+
+    // Remove the player from queue
+    room.playerQueue = room.playerQueue.filter(pid => pid !== removedPlayerId);
+
+    // Reset currentTurnIndex to match queue position if possible
+    if (room.currentTurnIndex != null && room.currentTurnIndex >= 0) {
+      const currentPlayer = getCurrentPlayerFromQueue(room);
+      room.currentTurnIndex = currentPlayer ? room.players.findIndex(p => p.id === currentPlayer.id) : -1;
+    }
+
+    // If queue became empty, stop timers and do nothing further (round will end elsewhere)
+    if (room.playerQueue.length === 0) {
+      if (room.turnTimer) { clearTimeout(room.turnTimer); room.turnTimer = null; }
+      room.currentQueueIndex = 0;
+      room.turnDeadline = null;
+      return;
+    }
+
+    // Adjust currentQueueIndex to remain valid
+    if (typeof room.currentQueueIndex !== 'number' || room.currentQueueIndex < 0) {
+      room.currentQueueIndex = 0;
+    }
+    if (room.currentQueueIndex >= room.playerQueue.length) {
+      room.currentQueueIndex = 0;
+    }
+
+    // If the removed player was the current one, advance to next player and start a new turn
+    if (wasCurrentPlayerId === removedPlayerId) {
+      if (room.turnTimer) { clearTimeout(room.turnTimer); room.turnTimer = null; }
+      advanceQueueToNextPlayer(room);
+      startNextTurn(room);
+      return;
+    }
+
+    // If a player before the current index was removed, shift currentQueueIndex left by one
+    if (wasInQueueIndex < room.currentQueueIndex) {
+      room.currentQueueIndex = Math.max(0, room.currentQueueIndex - 1);
+    }
+  }
 
   io.on('connection', (socket) => {
     console.log('A user connected: ', socket.id);
@@ -154,6 +205,45 @@ function setupRoomSocketHandlers(io) {
         io.to(`room-${roomId}`).emit('playerList', room.players);
         socket.emit('room:settings', room.settings);
         if (room.chatHistory?.length) socket.emit('chat:history', room.chatHistory);
+        // Emit rooms:joined for rejoin to ensure client updates currentUser.id
+        const existingPlayer = room.players.find(p => p.id === socket.id);
+        if (existingPlayer) {
+          socket.emit('rooms:joined', { room: getSafeRoom(room), player: existingPlayer });
+        }
+        // Also sync in-progress game state for rejoining clients
+        if (room.gameStarted) {
+          const cars = getCars();
+          if (cars && cars.itemSummaries) {
+            socket.emit('game:cars', cars);
+          }
+          const roomVotes = getRoomVotes();
+          if (roomVotes[roomId]) {
+            socket.emit('game:votingStarted');
+            const readyCount = room.skipVotingReady ? room.skipVotingReady.size : 0;
+            const totalPlayers = room.players.length;
+            socket.emit('game:skipVotingProgress', { readyCount, totalPlayers });
+          } else {
+            const winningIdx = typeof room.currentWinningIndex === 'number' ? room.currentWinningIndex : -1;
+            if (winningIdx !== -1 && winningIdx != null) {
+              socket.emit('game:votingResult', { winningIndex: winningIdx });
+            }
+            if (typeof room.currentQueueIndex === 'number' && room.currentQueueIndex >= 0) {
+              const currentPlayerId = room.playerQueue?.[room.currentQueueIndex];
+              const currentPlayer = room.players.find(p => p.id === currentPlayerId);
+              const answerTime = room.settings.answerTime || 30;
+              const deadline = room.turnDeadline || (Date.now() + answerTime * 1000);
+              socket.emit('game:turn', {
+                playerId: currentPlayer?.id,
+                playerName: currentPlayer?.name,
+                deadline,
+                answerTime,
+                stealUsedThisRound: room.stealUsedThisRound || false,
+                queuePosition: (room.currentQueueIndex || 0) + 1,
+                totalPlayers: room.playerQueue?.length || room.players.length,
+              });
+            }
+          }
+        }
         return;
       }
 
@@ -185,10 +275,48 @@ function setupRoomSocketHandlers(io) {
         socket.roomId = roomId;
         socket.emit('room:settings', room.settings);
         if (room.chatHistory?.length) socket.emit('chat:history', room.chatHistory);
+        // Inform client of joined event to sync currentUser.id
+        socket.emit('rooms:joined', { room: getSafeRoom(room), player });
         io.to(`room-${roomId}`).emit('playerList', room.players);
         try {
           console.log(`[room ${roomId}] Players after join (in-game):`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
         } catch (e) {}
+        // Sync current round phase to the newly joined player
+        const cars = getCars();
+        if (cars && cars.itemSummaries) {
+          socket.emit('game:cars', cars);
+        }
+        const roomVotes = getRoomVotes();
+        if (roomVotes[roomId]) {
+          // Voting phase is active; notify about voting and current skip-voting progress
+          socket.emit('game:votingStarted');
+          const readyCount = room.skipVotingReady ? room.skipVotingReady.size : 0;
+          const totalPlayers = room.players.length;
+          socket.emit('game:skipVotingProgress', { readyCount, totalPlayers });
+        } else {
+          // Guessing phase: emit voting result (chosen car) and current turn state
+          const winningIdx = typeof room.currentWinningIndex === 'number' ? room.currentWinningIndex : -1;
+          if (winningIdx !== -1 && winningIdx != null) {
+            socket.emit('game:votingResult', { winningIndex: winningIdx });
+          }
+          // Emit current turn to the new player so they see the slider and countdown
+          if (typeof room.currentQueueIndex === 'number' && room.currentQueueIndex >= 0) {
+            const currentPlayerId = room.playerQueue?.[room.currentQueueIndex];
+            const currentPlayer = room.players.find(p => p.id === currentPlayerId);
+            const answerTime = room.settings.answerTime || 30;
+            const deadline = room.turnDeadline || (Date.now() + answerTime * 1000);
+            socket.emit('game:turn', {
+              playerId: currentPlayer?.id,
+              playerName: currentPlayer?.name,
+              deadline,
+              answerTime,
+              stealUsedThisRound: room.stealUsedThisRound || false,
+              queuePosition: (room.currentQueueIndex || 0) + 1,
+              totalPlayers: room.playerQueue?.length || room.players.length,
+            });
+          }
+        }
+        // Also let the room know someone joined during game
         socket.emit('game:startRound', { roomId });
         sendSystemMessage(roomId, `${data.playerName} has joined the game`);
         return;
@@ -228,6 +356,10 @@ function setupRoomSocketHandlers(io) {
       const wasHost = player.isHost;
       socket.leave(roomChannel);
       room.players.splice(playerIndex, 1);
+      // If game is active, remove the player from the queue and advance if needed
+      if (room.gameStarted) {
+        removePlayerFromQueueAndAdvance(room, socket.id);
+      }
       // Remove from next-round readiness and update progress
       if (room.nextRoundReady) {
         room.nextRoundReady.delete(socket.id);
@@ -282,7 +414,11 @@ function setupRoomSocketHandlers(io) {
       if (idx === -1) return;
       const player = room.players[idx];
       const wasHost = player.isHost;
-  room.players.splice(idx, 1);
+      room.players.splice(idx, 1);
+      // If game is active, remove the player from the queue and advance if needed
+      if (room.gameStarted) {
+        removePlayerFromQueueAndAdvance(room, socket.id);
+      }
       // Remove from next-round readiness and update progress
       if (room.nextRoundReady) {
         room.nextRoundReady.delete(socket.id);
