@@ -4,6 +4,7 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.currentUser = null;
+    this.currentRoomId = null;
   }
 
   connect() {
@@ -46,6 +47,7 @@ class SocketService {
       : this.currentUser?.preferredColor?.key || null;
     console.log('Emitting rooms:join:', { roomId, playerName, preferredColorKey });
     
+    this.currentRoomId = roomId;
     this.socket.emit('rooms:join', { 
       roomId,
       playerName,
@@ -62,6 +64,9 @@ class SocketService {
       roomId,
       playerName
     });
+    if (this.currentRoomId === roomId) {
+      this.currentRoomId = null;
+    }
   }
 
   getRoomsList() {
@@ -94,15 +99,23 @@ class SocketService {
     this.socket.on('rooms:joined', (data) => {
       try {
         const joinedPlayerId = data?.player?.id;
+        const joinedRoomId = data?.room?.id || data?.roomId;
         if (joinedPlayerId) {
           if (!this.currentUser) this.currentUser = {};
           this.currentUser.id = joinedPlayerId;
+        }
+        if (joinedRoomId) {
+          this.currentRoomId = joinedRoomId;
         }
       } catch (e) {
         // Non-fatal; just log
         console.warn('Failed to set currentUser.id from rooms:joined', e);
       }
     });
+  }
+
+  getCurrentRoomId() {
+    return this.currentRoomId;
   }
 
   // Event listeners

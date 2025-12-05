@@ -105,8 +105,8 @@ const CreateGameModal = ({ onClose, user }) => {
       await socketService.joinRoom(response.room.id);
 
       onClose();
-      // Navigate to the lobby with the new room ID
-      navigate(`/lobby/${response.room.id}`);
+      // Navigate to the lobby without exposing room ID in URL
+      navigate(`/lobby`);
     } catch (error) {
       console.error('Failed to create room:', error);
       setError(error.message || 'Failed to create room. Please try again.');

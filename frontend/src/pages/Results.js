@@ -77,7 +77,7 @@ const Results = () => {
   const handleBackToLobby = () => {
     // Emit a request to reset the room to lobby state and reset player ready status
     socketService.socket?.emit('game:resetToLobby', { roomId });
-    navigate(`/lobby/${roomId}`);
+    navigate(`/lobby`);
   };
 
   return (

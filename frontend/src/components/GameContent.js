@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 
 // Use the exact same bg colors as SetNameModal and PlayerList
@@ -39,7 +39,7 @@ function getPlayerBadgeClassesById(id, players) {
 }
 
 const GameContent = ({ gameSettings, players = [] }) => {
-  const { roomId } = useParams();
+  const roomId = socketService.getCurrentRoomId();
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -65,6 +65,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
   const [nextRoundTotal, setNextRoundTotal] = useState(0);
   const [hasClickedNextRound, setHasClickedNextRound] = useState(false);
   const [roundAdvanceLocked, setRoundAdvanceLocked] = useState(false);
+  const [votingIntervalRef, setVotingIntervalRef] = useState(null);
   // Results handling (last round): cache final data and control navigation
   const [finalGameData, setFinalGameData] = useState(null);
   const [requestedResultsNow, setRequestedResultsNow] = useState(false);
@@ -211,6 +212,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
       // Close round modal when voting starts (new round in progress)
       closeRoundModal();
+      // Ensure only a single voting countdown interval runs
+      if (votingIntervalRef) {
+        clearInterval(votingIntervalRef);
+      }
       const interval = setInterval(() => {
         setVotingTimeLeft(t => {
           if (t <= 1) {
@@ -220,7 +225,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
           return t - 1;
         });
       }, 1000);
-      return () => clearInterval(interval);
+      setVotingIntervalRef(interval);
     });
 
     socketService.socket?.on('game:votesUpdate', (votesUpdate) => {
@@ -301,8 +306,11 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket?.off('game:finishRound');
       socketService.socket?.off('game:finishGame');
       socketService.socket?.off('game:nextRoundProgress');
+      if (votingIntervalRef) {
+        clearInterval(votingIntervalRef);
+      }
     };
-  }, [closeRoundModal, modalTimerRef, countdownTimerRef, players, playerName, roomId, navigate]);
+  }, [closeRoundModal, players]);
 
   // Fix for 0/0 skip voting count in first round: update total if players load after voting starts
   useEffect(() => {
@@ -409,11 +417,14 @@ const GameContent = ({ gameSettings, players = [] }) => {
   };
 
   const handleVote = (carIdx) => {
-    socketService.socket.emit('game:vote', { roomId, playerId, playerName, carIndex: carIdx });
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (numericRoomId == null) return;
+    socketService.socket.emit('game:vote', { roomId: numericRoomId, playerId, playerName, carIndex: carIdx });
   };
 
   const handleSkipVotingToggle = () => {
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (numericRoomId == null) return;
     if (!hasClickedSkipVoting) {
       socketService.socket.emit('game:skipVotingClick', { roomId: numericRoomId });
       setHasClickedSkipVoting(true);
@@ -559,8 +570,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
   function submitGuess() {
     if (guessPrice === '' || isNaN(Number(guessPrice))) return;
     setGuessSubmitted(true);
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (numericRoomId == null) return;
     socketService.socket.emit('game:confirmGuess', {
-      roomId,
+      roomId: numericRoomId,
       playerId,
       playerName,
       price: Number(guessPrice),
@@ -574,8 +587,10 @@ const GameContent = ({ gameSettings, players = [] }) => {
       guessPrice &&
       !isNaN(Number(guessPrice))
     ) {
+      const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+      if (numericRoomId == null) return;
       socketService.socket.emit('game:updatePendingGuess', {
-        roomId,
+        roomId: numericRoomId,
         playerId,
         playerName,
         price: Number(guessPrice)
@@ -699,7 +714,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
     }
 
     // Emit steal event
-    socketService.socket.emit('game:useSteal', { roomId });
+    const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
+    if (numericRoomId == null) return;
+    socketService.socket.emit('game:useSteal', { roomId: numericRoomId });
   };
 
   const getCurrentPlayerSteals = () => {
@@ -958,7 +975,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                         type="number"
                         value={guessPrice}
                         onChange={handleInputChange}
-                        className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
+                        className="text-2xl font-bold hand-drawn-input w-48 text-right no-spinner"
                         placeholder="Enter price"
                         inputMode="numeric"
                       />

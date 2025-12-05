@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 import PlayerList from './PlayerList';
 import ChatBox from './ChatBox';
@@ -7,7 +7,7 @@ import HandDrawnNumberInput from './HandDrawnNumberInput';
 
 const GameLobby = () => {
   const navigate = useNavigate();
-  const { roomId } = useParams();
+  const roomId = socketService.getCurrentRoomId();
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -28,7 +28,9 @@ const GameLobby = () => {
     }
 
     // Request current room state when component mounts
-    socketService.socket?.emit('room:requestState', { roomId: parseInt(roomId) });
+    if (roomId != null) {
+      socketService.socket?.emit('room:requestState', { roomId: parseInt(roomId) });
+    }
 
     socketService.socket?.on('playerList', (updatedPlayers) => {
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
@@ -50,7 +52,7 @@ const GameLobby = () => {
     socketService.socket?.on('game:startRound', ({ roomId }) => {
       // Force scroll to bottom when the game starts
       setScrollTrigger(t => t + 1);
-      navigate(`/game/${roomId}`);
+      navigate(`/game`);
     });
 
     socketService.socket?.on('chat:newMessage', (message) => {

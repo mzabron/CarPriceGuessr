@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
 import PlayerList from '../components/PlayerList';
 import ChatBox from '../components/ChatBox';
@@ -7,7 +7,7 @@ import GameContent from '../components/GameContent';
 
 const Game = ({ gameSettings }) => {
   const navigate = useNavigate();
-  const { roomId } = useParams();
+  const roomId = socketService.getCurrentRoomId();
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -63,12 +63,14 @@ const Game = ({ gameSettings }) => {
     });
 
     // Request current player list when component mounts
-    socketService.socket?.emit('rooms:join', {
-      roomId: parseInt(roomId),
+    if (roomId != null) {
+      socketService.socket?.emit('rooms:join', {
+        roomId: parseInt(roomId),
       playerName: socketService.getCurrentUser()?.name,
       isHost: socketService.getCurrentUser()?.isHost || false,
       rejoin: true // Add this flag to indicate we're rejoining after game start
-    });
+      });
+    }
 
     return () => {
       socketService.socket?.off('playerList');

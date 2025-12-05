@@ -48,7 +48,7 @@ const RoomList = ({ onClose, user }) => {
       }
       await socketService.joinRoom(roomId);
       onClose();
-      navigate(`/lobby/${roomId}`);
+      navigate(`/lobby`);
     } catch (error) {
       console.error('Error joining room:', error);
       setError('Failed to join room');
@@ -93,7 +93,7 @@ const RoomList = ({ onClose, user }) => {
 
       await socketService.joinRoom(room.id);
       onClose();
-      navigate(`/lobby/${room.id}`);
+      navigate(`/lobby`);
     } catch (error) {
       console.error('Error joining room:', error);
       setError('Failed to join room');
