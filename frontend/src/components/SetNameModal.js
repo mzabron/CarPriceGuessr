@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSfx } from '../services/soundService';
 
 // Align color options with unified palette (PLAYER_BG_COLOR)
 // Keys correspond to assignedColorKey/preferredColorKey stored on server.
@@ -19,6 +20,7 @@ export const COLOR_OPTIONS = [
 const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onSubmit }) => {
   const [name, setName] = useState(initialName);
   const [colorIndex, setColorIndex] = useState(0); // default to 'random'
+  const { play } = useSfx();
 
   useEffect(() => {
     setName(initialName || '');
@@ -38,6 +40,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
     if (!trimmed) return;
     if (trimmed.length > 15) return;
     const selected = COLOR_OPTIONS[colorIndex] || COLOR_OPTIONS[0];
+    play('toggle');
     onSubmit?.({ name: trimmed, preferredColor: selected });
   };
 
@@ -46,7 +49,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={() => { play('toggle'); onClose(); }}
         aria-hidden="true"
       ></div>
 
@@ -55,7 +58,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
         {/* Close button */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
           className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
         >
@@ -90,7 +93,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               {/* Prev arrow */}
               <button
                 type="button"
-                onClick={() => setColorIndex((i) => (i - 1 + COLOR_OPTIONS.length) % COLOR_OPTIONS.length)}
+                onClick={() => { play('toggle'); setColorIndex((i) => (i - 1 + COLOR_OPTIONS.length) % COLOR_OPTIONS.length); }}
                 className="hand-drawn-btn p-2 border-2"
                 aria-label="Previous color"
                 title="Previous color"
@@ -114,7 +117,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
               {/* Next arrow */}
               <button
                 type="button"
-                onClick={() => setColorIndex((i) => (i + 1) % COLOR_OPTIONS.length)}
+                onClick={() => { play('toggle'); setColorIndex((i) => (i + 1) % COLOR_OPTIONS.length); }}
                 className="hand-drawn-btn p-2 border-2"
                 aria-label="Next color"
                 title="Next color"

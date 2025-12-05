@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
+import { useSfx } from '../services/soundService';
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { play } = useSfx();
   const initialState = location.state || {};
   const [gameData, setGameData] = useState(initialState.gameData || null);
   const [pending, setPending] = useState(!!initialState.pendingResults && !initialState.gameData);
@@ -66,6 +68,7 @@ const Results = () => {
   };
 
   const handleQuit = () => {
+    play('toggle');
     // Leave the room before navigating to home
     socketService.socket?.emit('rooms:leave', {
       roomId: parseInt(roomId),
@@ -75,6 +78,7 @@ const Results = () => {
   };
 
   const handleBackToLobby = () => {
+    play('toggle');
     // Emit a request to reset the room to lobby state and reset player ready status
     socketService.socket?.emit('game:resetToLobby', { roomId });
     navigate(`/lobby`);

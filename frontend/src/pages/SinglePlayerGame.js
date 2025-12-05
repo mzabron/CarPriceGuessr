@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import apiService from '../services/apiService';
+import { useSfx } from '../services/soundService';
 
 const PRICE_RANGES = [
   { label: '0 - 20k', min: 0, max: 20000 },
@@ -13,6 +14,7 @@ const SinglePlayerGame = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const difficultyThreshold = location.state?.difficulty || 15;
+  const { play } = useSfx();
 
   const [phase, setPhase] = useState('voting'); // voting, playing, gameover
   const [cars, setCars] = useState([]);
@@ -42,6 +44,9 @@ const SinglePlayerGame = () => {
       const data = await apiService.getCars();
       if (data && data.itemSummaries) {
         setCars(data.itemSummaries);
+        if (phase === 'voting' && data.itemSummaries.length > 0) {
+          play('voting_start');
+        }
       }
     } catch (error) {
       console.error('Failed to fetch cars:', error);
@@ -67,6 +72,7 @@ const SinglePlayerGame = () => {
   const handleCarSelect = (index) => {
     setSelectedCarIndex(index);
     // Show transition screen similar to multiplayer: "... was chosen!"
+    play('confirm');
     setShowChosenText(true);
     setTimeout(() => {
       setShowChosenText(false);
@@ -82,6 +88,7 @@ const SinglePlayerGame = () => {
   const handleGuess = () => {
     const car = cars[selectedCarIndex];
     if (!car) return;
+    play('confirm');
 
     let actualPrice = car.price;
     if (typeof actualPrice === 'string') {
@@ -132,6 +139,7 @@ const SinglePlayerGame = () => {
       if (newLives <= 0) {
         setEndTime(Date.now());
         setPhase('gameover');
+        play('game_end');
       } else {
         const direction = guess < actualPrice ? 'low' : 'high';
         setFeedbackMessage(`Too ${direction}`);
@@ -202,6 +210,7 @@ const SinglePlayerGame = () => {
     const middle = Math.round((range.min + range.max) / 2 / 100) * 100;
     setSliderPrice(middle);
     setGuessPrice(middle);
+    play('toggle', { volume: 0.5 });
   };
 
   // Calculate stats
@@ -257,6 +266,7 @@ const SinglePlayerGame = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <button
               onClick={() => {
+                play('toggle');
                 setPhase('voting');
                 setRound(1);
                 setScore(0);
@@ -271,7 +281,10 @@ const SinglePlayerGame = () => {
               Play Again
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                play('toggle');
+                navigate('/');
+              }}
               className="hand-drawn-btn px-8 py-3 font-bold"
             >
               Back to Home
@@ -355,7 +368,10 @@ const SinglePlayerGame = () => {
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                play('toggle');
+                navigate('/');
+              }}
               className="hand-drawn-btn px-4 py-2 flex items-center gap-2"
               title="Go back to main page"
             >
@@ -462,6 +478,7 @@ const SinglePlayerGame = () => {
                   </button>
                   <button
                     onClick={() => {
+                      play('toggle');
                       setFullscreenImageIndex(currentImageIndex);
                       setShowFullscreenImage(true);
                     }}
@@ -596,7 +613,10 @@ const SinglePlayerGame = () => {
       {showFullscreenImage && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-90 z-50 p-4">
           <button
-            onClick={() => setShowFullscreenImage(false)}
+            onClick={() => {
+              play('toggle');
+              setShowFullscreenImage(false);
+            }}
             className="fixed top-4 right-4 z-50 bg-black/70 text-white p-3 rounded-full hover:bg-black/80 shadow-lg text-4xl leading-none"
           >
             ×

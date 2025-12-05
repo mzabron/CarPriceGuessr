@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useSfx } from '../services/soundService';
 import { useNavigate } from 'react-router-dom';
 
 const CreateSingleGameModal = ({ onClose }) => {
   const navigate = useNavigate();
+  const { play } = useSfx();
   const [difficulty, setDifficulty] = useState('medium'); // default to medium (15%)
 
   const handleSubmit = (e) => {
@@ -12,6 +14,7 @@ const CreateSingleGameModal = ({ onClose }) => {
     if (difficulty === 'easy') threshold = 25;
     if (difficulty === 'hard') threshold = 5;
 
+    play('toggle');
     onClose();
     navigate('/single-player', { state: { difficulty: threshold } });
   };
@@ -21,7 +24,7 @@ const CreateSingleGameModal = ({ onClose }) => {
       <div className="hand-drawn-modal p-6 w-full max-w-md relative">
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
           className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
         >
@@ -39,7 +42,7 @@ const CreateSingleGameModal = ({ onClose }) => {
                   name="difficulty"
                   value="easy"
                   checked={difficulty === 'easy'}
-                  onChange={(e) => setDifficulty(e.target.value)}
+                  onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
                 <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'easy' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
@@ -55,7 +58,7 @@ const CreateSingleGameModal = ({ onClose }) => {
                   name="difficulty"
                   value="medium"
                   checked={difficulty === 'medium'}
-                  onChange={(e) => setDifficulty(e.target.value)}
+                  onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
                 <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'medium' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
@@ -71,7 +74,7 @@ const CreateSingleGameModal = ({ onClose }) => {
                   name="difficulty"
                   value="hard"
                   checked={difficulty === 'hard'}
-                  onChange={(e) => setDifficulty(e.target.value)}
+                  onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
                 <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'hard' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />

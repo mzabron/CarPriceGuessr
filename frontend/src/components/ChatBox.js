@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
+import { useSfx } from '../services/soundService';
 
 const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage, forceScrollTrigger = 0 }) => {
+  const { play } = useSfx();
   const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {

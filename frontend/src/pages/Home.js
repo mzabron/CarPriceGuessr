@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSfx } from '../services/soundService';
 import CreateGameModal from '../components/CreateGameModal';
 import CreateSingleGameModal from '../components/CreateSingleGameModal';
 import RoomList from '../components/RoomList';
@@ -6,6 +7,7 @@ import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 import handDrawnLogo from '../assets/logo_handdrawn.png';
 
 const Home = () => {
+  const { play } = useSfx();
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showSingleGame, setShowSingleGame] = useState(false);
   const [showRoomList, setShowRoomList] = useState(false);
@@ -43,7 +45,7 @@ const Home = () => {
             </div>
             <div className="flex items-center">
               <button
-                onClick={() => setShowSetName(true)}
+                onClick={() => { play('toggle'); setShowSetName(true); }}
                 className={`hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5`}
                 title={user?.name ? 'Change name' : 'Set name'}
               >
@@ -125,19 +127,19 @@ const Home = () => {
 
           <div className="flex justify-center space-x-6">
             <button
-              onClick={() => setShowSingleGame(true)}
+              onClick={() => { play('toggle'); setShowSingleGame(true); }}
               className="hand-drawn-btn px-8 py-4 text-lg"
             >
               Single Player Mode
             </button>
             <button
-              onClick={() => setShowCreateGame(true)}
+              onClick={() => { play('toggle'); setShowCreateGame(true); }}
               className="hand-drawn-btn px-8 py-4 text-lg"
             >
               Create New Game
             </button>
             <button
-              onClick={() => setShowRoomList(true)}
+              onClick={() => { play('toggle'); setShowRoomList(true); }}
               className="hand-drawn-btn px-8 py-4 text-lg"
             >
               Join Game

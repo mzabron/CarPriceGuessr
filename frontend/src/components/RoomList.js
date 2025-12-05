@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import socketService from '../services/socketService';
 import apiService from '../services/apiService';
 import { useNavigate } from 'react-router-dom';
+import { useSfx } from '../services/soundService';
 
 const RoomList = ({ onClose, user }) => {
   const navigate = useNavigate();
+  const { play } = useSfx();
   const [rooms, setRooms] = useState([]);
   const [allRooms, setAllRooms] = useState([]);
   const [joinCode, setJoinCode] = useState('');
@@ -106,7 +108,7 @@ const RoomList = ({ onClose, user }) => {
       <div className="hand-drawn-modal p-6 w-full max-w-2xl relative">
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
           className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
         >
@@ -125,7 +127,7 @@ const RoomList = ({ onClose, user }) => {
         {/* Join by Code Section */}
         <div className="mb-6 p-4 border-2 border-black rounded-lg">
           <h3 className="text-lg font-semibold mb-3">Join room by code</h3>
-          <form onSubmit={handleJoinByCode} className="flex gap-2">
+          <form onSubmit={(e) => { play('toggle'); handleJoinByCode(e); }} className="flex gap-2">
             <input
               type="text"
               value={joinCode}
@@ -151,7 +153,7 @@ const RoomList = ({ onClose, user }) => {
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold">Available Rooms</h3>
             <button
-              onClick={fetchRooms}
+              onClick={() => { play('toggle'); fetchRooms(); }}
               disabled={loading}
               className="hand-drawn-btn px-3 py-1 text-sm flex items-center gap-2"
             >
@@ -187,7 +189,7 @@ const RoomList = ({ onClose, user }) => {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleJoinRoom(room.id)}
+                    onClick={() => { play('toggle'); handleJoinRoom(room.id); }}
                     className="hand-drawn-btn px-4 py-2"
                     disabled={room.players.length >= room.settings.playersLimit}
                   >

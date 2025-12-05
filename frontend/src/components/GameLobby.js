@@ -4,9 +4,11 @@ import socketService from '../services/socketService';
 import PlayerList from './PlayerList';
 import ChatBox from './ChatBox';
 import HandDrawnNumberInput from './HandDrawnNumberInput';
+import { useSfx } from '../services/soundService';
 
 const GameLobby = () => {
   const navigate = useNavigate();
+  const { play } = useSfx();
   const roomId = socketService.getCurrentRoomId();
   const [players, setPlayers] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -106,17 +108,20 @@ const GameLobby = () => {
   };
 
   const handleReadyToggle = () => {
+    play('toggle');
     setIsReady(!isReady);
     socketService.socket?.emit('playerReady', !isReady);
   };
 
   const handleStartGame = () => {
+    play('toggle');
     if (isHost && allPlayersReady) {
       socketService.startGame();
     }
   };
 
   const handleCopyRoomCode = async () => {
+    play('toggle');
     if (!gameSettings?.roomCode) return;
     try {
       await navigator.clipboard.writeText(gameSettings.roomCode);
@@ -135,6 +140,7 @@ const GameLobby = () => {
   };
 
   const handleLeaveRoom = () => {
+    play('toggle');
     socketService.socket?.emit('rooms:leave', {
       roomId: parseInt(roomId),
       playerName: socketService.getCurrentUser()?.name
@@ -155,6 +161,7 @@ const GameLobby = () => {
   };
 
   const handleSettingsUpdate = () => {
+    play('toggle');
     if (!isHost || !tempSettings) return;
 
     // Validate that all fields have valid numeric values
@@ -309,10 +316,7 @@ const GameLobby = () => {
           </div>
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => {
-                setIsEditingSettings(false);
-                setTempSettings(gameSettings);
-              }}
+              onClick={() => { play('toggle'); setIsEditingSettings(false); setTempSettings(gameSettings); }}
               className="hand-drawn-btn px-4 py-2 opacity-70 hover:opacity-100"
             >
               Cancel
@@ -360,7 +364,7 @@ const GameLobby = () => {
         {isHost && (
           <div className="flex justify-end">
             <button
-              onClick={() => setIsEditingSettings(true)}
+              onClick={() => { play('toggle'); setIsEditingSettings(true); }}
               className="hand-drawn-btn px-4 py-2"
             >
               Edit Settings
@@ -391,7 +395,7 @@ const GameLobby = () => {
                   </span>
                 </span>
                 <button
-                  onClick={() => setShowRoomCode(v => !v)}
+                  onClick={() => { play('toggle'); setShowRoomCode(v => !v); }}
                   title={showRoomCode ? 'Hide room code' : 'Show room code'}
                   className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-transparent focus:outline-none"
                   aria-label={showRoomCode ? 'Hide room code' : 'Show room code'}

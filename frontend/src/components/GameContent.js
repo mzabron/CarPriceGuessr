@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import socketService from '../services/socketService';
+import { useSfx } from '../services/soundService';
 
 // Use the exact same bg colors as SetNameModal and PlayerList
 const PLAYER_BG_COLOR = {
@@ -39,6 +40,7 @@ function getPlayerBadgeClassesById(id, players) {
 }
 
 const GameContent = ({ gameSettings, players = [] }) => {
+  const { play } = useSfx();
   const roomId = socketService.getCurrentRoomId();
   const navigate = useNavigate();
   const [cars, setCars] = useState([]);
@@ -131,6 +133,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
     socketService.socket?.on('game:stealUsed', (data) => {
       // If I am the stealing player, set my local cooldown clock
+      play('steal');
       if (data.stealingPlayerId && data.stealingPlayerId === playerId) {
         const duration = typeof data.cooldownMs === 'number' ? data.cooldownMs : 5000;
         setStealCooldownMs(duration);
@@ -164,6 +167,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
     return () => clearInterval(interval);
   }, [turnTimeLeft]);
 
+  // No ticking sound for the last seconds per requirements
+
   // Smooth ticking for steal cooldown progress based on server time
   useEffect(() => {
     if (!stealCooldownUntil) {
@@ -189,6 +194,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setCars(carList.itemSummaries || []);
       setCurrentImageIndex(0);
       setSelectedCarIndex(null);
+      play('round_start');
 
       // Reset price guessing state for new round
       setGuessPrice('');
@@ -201,6 +207,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
     socketService.socket?.on('game:votingStarted', () => {
       setVoting(true);
+      play('voting_start');
       setVotes({});
       setWinningIndex(null);
       setVotingTimeLeft(15);
@@ -242,6 +249,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       setWinningIndex(winningIndex);
       setVoting(false);
       setShowChosenText(true);
+      play('confirm');
       setTimeout(() => setShowChosenText(false), 2000);
     });
 
@@ -249,15 +257,22 @@ const GameContent = ({ gameSettings, players = [] }) => {
     socketService.socket?.on('game:guessResult', (data) => {
       setLastGuess({ playerId: data.playerId, playerName: data.playerName, price: data.price });
       setGuessSubmitted(false);
+      if (data.playerId !== playerId) {
+        play('confirm');
+      }
     });
     socketService.socket?.on('game:guessConfirmed', (data) => {
       setLastGuess({ playerId: data.playerId, playerName: data.playerName, price: data.price });
       setGuessSubmitted(false);
+      if (data.playerId !== playerId) {
+        play('confirm');
+      }
     });
 
     socketService.socket?.on('game:finishRound', (data) => {
       setRoundResult(data);
       setShowRoundModal(true);
+      play('round_end');
       setRoundModalTimer(10); // Reset timer to 10 seconds
       setNextRoundReadyCount(0);
       setNextRoundTotal(players?.length || 0);
@@ -273,6 +288,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
 
     socketService.socket?.on('game:finishGame', (data) => {
       // Cache final game data globally; navigate only if this user clicked "View Results"
+      play('game_end');
       // or when the local timer runs down.
       const payload = {
         players: data.players,
@@ -401,6 +417,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     setCurrentImageIndex((prev) =>
       prev === 0 ? cars[idx].thumbnailImages.length - 1 : prev - 1
     );
+    // No sound for carousel navigation
   };
 
   const handleNextImage = () => {
@@ -409,17 +426,20 @@ const GameContent = ({ gameSettings, players = [] }) => {
     setCurrentImageIndex((prev) =>
       prev === cars[idx].thumbnailImages.length - 1 ? 0 : prev + 1
     );
+    // No sound for carousel navigation
   };
 
   const handleCarSelect = (index) => {
     setSelectedCarIndex(index);
     setCurrentImageIndex(0);
+    // No sound when selecting a car before voting
   };
 
   const handleVote = (carIdx) => {
     const numericRoomId = typeof roomId === 'string' ? parseInt(roomId) : roomId;
     if (numericRoomId == null) return;
     socketService.socket.emit('game:vote', { roomId: numericRoomId, playerId, playerName, carIndex: carIdx });
+    play('toggle');
   };
 
   const handleSkipVotingToggle = () => {
@@ -432,6 +452,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket.emit('game:skipVotingUnclick', { roomId: numericRoomId });
       setHasClickedSkipVoting(false);
     }
+    play('toggle');
   };
 
   const handleSliderChange = (e) => {
@@ -467,6 +488,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
     const middle = Math.round((range.min + range.max) / 2 / 100) * 100;
     setSliderPrice(middle);
     setGuessPrice(middle);
+    play('toggle', { volume: 0.5 });
   };
 
   const handleInputChange = (e) => {
@@ -578,6 +600,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       playerName,
       price: Number(guessPrice),
     });
+    play('confirm');
     // Do not setLastGuess here; let the backend event handle it for all players
   }
 
@@ -655,6 +678,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
         // Ask server to emit finishGame once globally (guarded server-side)
         socketService.socket.emit('game:requestFinishGame', { roomId: numericRoomId });
       }
+      play('confirm');
       // Navigate immediately: with data if we have it, otherwise in pending mode
       if (!hasNavigatedToResults) {
         setHasNavigatedToResults(true);
@@ -674,6 +698,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       socketService.socket.emit('game:nextRoundUnclick', { roomId: numericRoomId });
       setHasClickedNextRound(false);
     }
+    play('toggle');
   };
 
   // If timer elapses on the last round: ensure finish is requested and navigate when data exists.

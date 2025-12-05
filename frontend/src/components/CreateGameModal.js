@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useSfx } from '../services/soundService';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/apiService';
 import socketService from '../services/socketService';
 import HandDrawnNumberInput from './HandDrawnNumberInput';
 
 const CreateGameModal = ({ onClose, user }) => {
+  const { play } = useSfx();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     roomName: '',
@@ -149,7 +151,7 @@ const CreateGameModal = ({ onClose, user }) => {
       <div className="hand-drawn-modal p-6 w-full max-w-md relative">
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
           className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
         >
@@ -157,7 +159,7 @@ const CreateGameModal = ({ onClose, user }) => {
         </button>
         <h2 className="text-2xl font-bold mb-4">Create New Game</h2>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <form onSubmit={(e) => { play('toggle'); handleSubmit(e); }} noValidate className="space-y-4">
           <div>
             <label className="block mb-2">Room Name</label>
             <input
