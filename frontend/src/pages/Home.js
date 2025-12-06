@@ -5,6 +5,7 @@ import CreateSingleGameModal from '../components/CreateSingleGameModal';
 import RoomList from '../components/RoomList';
 import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 import handDrawnLogo from '../assets/logo_handdrawn.png';
+import SettingsModal from '../components/SettingsModal';
 
 const Home = () => {
   const { play } = useSfx();
@@ -13,6 +14,7 @@ const Home = () => {
   const [showRoomList, setShowRoomList] = useState(false);
   const [user, setUser] = useState(null);
   const [showSetName, setShowSetName] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     // Rehydrate saved nickname & preferred color from localStorage (Home page persistence only)
@@ -43,10 +45,10 @@ const Home = () => {
                 className="hand-drawn-logo"
               />
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => { play('toggle'); setShowSetName(true); }}
-                className={`hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5`}
+                className={`hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5 h-12`}
                 title={user?.name ? 'Change name' : 'Set name'}
               >
                 {user?.name ? (
@@ -108,6 +110,26 @@ const Home = () => {
                     </svg>
                   </>
                 )}
+              </button>
+              <button
+                onClick={() => { play('toggle'); setShowSettings(true); }}
+                className="hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5 h-12"
+                title="Settings"
+              >
+                <span className="text-base font-medium leading-none">Settings</span>
+                <svg
+                  className="w-5 h-5 text-black"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009.4 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004 15.4 1.65 1.65 0 002.49 14H2a2 2 0 110-4h.49A1.65 1.65 0 004 9.4a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 007.4 4.6 1.65 1.65 0 009 3.49V3a2 2 0 114 0v.49A1.65 1.65 0 0014.6 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9.4 1.65 1.65 0 0020.51 11H21a2 2 0 110 4h-.49A1.65 1.65 0 0019.4 15z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -183,6 +205,10 @@ const Home = () => {
             setShowSetName(false);
           }}
         />
+      )}
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
       )}
     </div>
   );
