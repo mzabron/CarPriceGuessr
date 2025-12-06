@@ -34,6 +34,12 @@ const GameLobby = () => {
       socketService.socket?.emit('room:requestState', { roomId: parseInt(roomId) });
     }
 
+    socketService.socket?.on('room:state', (state) => {
+      if (state && state.isGameActive) {
+        navigate('/game', { replace: true });
+      }
+    });
+
     socketService.socket?.on('playerList', (updatedPlayers) => {
       const sortedPlayers = [...updatedPlayers].sort((a, b) => b.points - a.points);
       setPlayers(sortedPlayers);
@@ -100,6 +106,7 @@ const GameLobby = () => {
       socketService.socket?.off('room:settings');
       socketService.socket?.off('room:settingsUpdated');
       socketService.socket?.off('hostStatus');
+      socketService.socket?.off('room:state');
     };
   }, [navigate]);
 

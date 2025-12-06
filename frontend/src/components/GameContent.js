@@ -301,7 +301,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       // If this client explicitly requested results now, navigate immediately
       if ((requestedResultsNow || roundModalTimer === 0) && !hasNavigatedToResults) {
         setHasNavigatedToResults(true);
-        navigate('/results', { state: { gameData: payload } });
+        navigate('/results', { state: { gameData: payload }, replace: true });
       }
     });
 
@@ -683,9 +683,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
       if (!hasNavigatedToResults) {
         setHasNavigatedToResults(true);
         if (finalGameData) {
-          navigate('/results', { state: { gameData: finalGameData } });
+          navigate('/results', { state: { gameData: finalGameData }, replace: true });
         } else {
-          navigate('/results', { state: { roomId: numericRoomId, pendingResults: true } });
+          navigate('/results', { state: { roomId: numericRoomId, pendingResults: true }, replace: true });
         }
       }
       return;
@@ -712,7 +712,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
       }
       if (finalGameData && !hasNavigatedToResults) {
         setHasNavigatedToResults(true);
-        navigate('/results', { state: { gameData: finalGameData } });
+        navigate('/results', { state: { gameData: finalGameData }, replace: true });
       }
     }
   }, [roundModalTimer, finalGameData, hasNavigatedToResults, roundResult, showRoundModal, navigate, roomId]);

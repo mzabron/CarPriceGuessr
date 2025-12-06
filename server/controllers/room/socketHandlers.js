@@ -146,6 +146,13 @@ function setupRoomSocketHandlers(io) {
       const rooms = getRooms();
       const room = rooms.find(r => r.id === socket.roomId);
       if (!room) return;
+
+      // Prevent starting if game is already active
+      if (room.gameStarted) {
+        socket.emit('room:state', { isGameActive: true });
+        return;
+      }
+
       const player = room.players.find(p => p.id === socket.id);
       if (player && player.isHost && room.players.every(p => p.isReady)) {
         triggerRoundStart(room, socket);
@@ -253,7 +260,7 @@ function setupRoomSocketHandlers(io) {
 
       // Collect already assigned colors in this room
       const assignedColorsInUse = new Set(room.players.map(p => p.assignedColorKey).filter(Boolean));
-      const COLOR_POOL = ['red','blue','green','yellow','purple','pink','cyan','amber','orange','gray'];
+      const COLOR_POOL = ['red', 'blue', 'green', 'yellow', 'purple', 'pink', 'cyan', 'amber', 'orange', 'gray'];
       function pickAssignedColor(preferredColorKey) {
         let chosen = null;
         if (preferredColorKey && COLOR_POOL.includes(preferredColorKey) && !assignedColorsInUse.has(preferredColorKey)) {
@@ -280,7 +287,7 @@ function setupRoomSocketHandlers(io) {
         io.to(`room-${roomId}`).emit('playerList', room.players);
         try {
           console.log(`[room ${roomId}] Players after join (in-game):`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
-        } catch (e) {}
+        } catch (e) { }
         // Sync current round phase to the newly joined player
         const cars = getCars();
         if (cars && cars.itemSummaries) {
@@ -334,7 +341,7 @@ function setupRoomSocketHandlers(io) {
       io.to(roomChannel).emit('playerList', room.players);
       try {
         console.log(`[room ${roomId}] Players after join:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
-      } catch (e) {}
+      } catch (e) { }
       sendSystemMessage(roomId, `${playerName} has joined the room`);
       socket.emit('rooms:joined', { room: getSafeRoom(room), player });
       io.to(roomChannel).emit('rooms:playerJoined', { roomId, playerName, players: room.players });
@@ -399,7 +406,7 @@ function setupRoomSocketHandlers(io) {
       io.to(roomChannel).emit('rooms:playerLeft', { roomId, playerName, players: room.players });
       try {
         console.log(`[room ${roomId}] Players after leave:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
-      } catch (e) {}
+      } catch (e) { }
       socket.roomId = null;
       io.emit('rooms:list', getSafeRooms(getRooms()));
     });
@@ -456,7 +463,7 @@ function setupRoomSocketHandlers(io) {
       io.to(`room-${roomId}`).emit('rooms:playerLeft', { roomId, playerId: socket.id, playerName: player.name, players: room.players });
       try {
         console.log(`[room ${roomId}] Players after disconnect:`, room.players.map(p => ({ name: p.name, preferredColorKey: p.preferredColorKey, assignedColorKey: p.assignedColorKey })));
-      } catch (e) {}
+      } catch (e) { }
       io.emit('rooms:list', getSafeRooms(getRooms()));
     });
 
@@ -687,9 +694,9 @@ function setupRoomSocketHandlers(io) {
       if (!room.nextRoundReady) room.nextRoundReady = new Set();
       // Add this player's id
       room.nextRoundReady.add(socket.id);
-  const readyCount = room.nextRoundReady.size;
-  const totalPlayers = room.players.length;
-  io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
+      const readyCount = room.nextRoundReady.size;
+      const totalPlayers = room.players.length;
+      io.to(`room-${effectiveRoomId}`).emit('game:nextRoundProgress', { readyCount, totalPlayers });
       // If everyone clicked, start the next round immediately
       if (readyCount === totalPlayers) {
         triggerRoundStart(room, socket);
