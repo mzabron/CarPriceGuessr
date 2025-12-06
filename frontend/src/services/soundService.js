@@ -20,14 +20,14 @@ const DEFAULT_SOUNDS = {
 };
 
 const SoundContext = createContext({
-  play: (/* key, opts */) => {},
+  play: (/* key, opts */) => { },
   enabled: true,
-  setEnabled: () => {},
+  setEnabled: () => { },
   volume: 1,
-  setVolume: () => {},
+  setVolume: () => { },
 });
 
-export function SoundProvider({ children, sounds = {} , poolSize = 4 }) {
+export function SoundProvider({ children, sounds = {}, poolSize = 4 }) {
   const soundMap = useMemo(() => ({ ...DEFAULT_SOUNDS, ...sounds }), [sounds]);
   const poolsRef = useRef({}); // key -> { nodes: Audio[], idx: number }
   const audioCtxRef = useRef(null);
@@ -113,35 +113,35 @@ export function SoundProvider({ children, sounds = {} , poolSize = 4 }) {
 
     switch (key) {
       case 'synth:click':
-        return tone(1500, 0.03, 'square', 0.12);
+        return tone(1500, 0.03, 'square', 0.25);
       case 'synth:confirm':
-        tone(660, 0.06, 'sine', 0.12);
-        setTimeout(() => tone(880, 0.08, 'sine', 0.12), 60);
+        tone(660, 0.06, 'sine', 0.25);
+        setTimeout(() => tone(880, 0.08, 'sine', 0.25), 60);
         return;
       case 'synth:voting_start':
-        tone(523, 0.06); setTimeout(() => tone(659, 0.06), 70); setTimeout(() => tone(784, 0.08), 140);
+        tone(523, 0.06, 'sine', 0.3); setTimeout(() => tone(659, 0.06, 'sine', 0.3), 70); setTimeout(() => tone(784, 0.08, 'sine', 0.3), 140);
         return;
       case 'synth:round_start':
-        tone(392, 0.06); setTimeout(() => tone(523, 0.06), 70); setTimeout(() => tone(659, 0.1), 140);
+        tone(392, 0.06, 'sine', 0.3); setTimeout(() => tone(523, 0.06, 'sine', 0.3), 70); setTimeout(() => tone(659, 0.1, 'sine', 0.3), 140);
         return;
       case 'synth:round_end':
-        tone(659, 0.06); setTimeout(() => tone(523, 0.06), 70); setTimeout(() => tone(392, 0.1), 140);
+        tone(659, 0.06, 'sine', 0.3); setTimeout(() => tone(523, 0.06, 'sine', 0.3), 70); setTimeout(() => tone(392, 0.1, 'sine', 0.3), 140);
         return;
       case 'synth:game_end':
-        tone(523, 0.12); setTimeout(() => tone(659, 0.12), 120); setTimeout(() => tone(784, 0.18), 240);
+        tone(523, 0.12, 'sine', 0.3); setTimeout(() => tone(659, 0.12, 'sine', 0.3), 120); setTimeout(() => tone(784, 0.18, 'sine', 0.3), 240);
         return;
       case 'synth:turn_start':
-        return tone(988, 0.08, 'triangle', 0.14);
+        return tone(988, 0.08, 'triangle', 0.3);
       case 'synth:guess_ping':
         // Use the exact same sound profile as 'turn_start' per requirement
-        return tone(988, 0.08, 'triangle', 0.14);
+        return tone(988, 0.08, 'triangle', 0.3);
       case 'synth:steal':
-        return noise(0.25, 0.09, 1400);
+        return noise(0.25, 0.2, 1400);
       case 'synth:toggle':
-        return tone(440, 0.05, 'sine', 0.1);
+        return tone(440, 0.05, 'sine', 0.25);
       default:
         // generic tiny beep
-        return tone(880, 0.05, 'square', 0.08);
+        return tone(880, 0.05, 'square', 0.2);
     }
   }, [ensureCtx, volume]);
 
@@ -186,7 +186,7 @@ export function SoundProvider({ children, sounds = {} , poolSize = 4 }) {
       }
       const p = node.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(() => {});
+        p.catch(() => { });
       }
     } catch (e) {
       synth('synth:beep', opts);
