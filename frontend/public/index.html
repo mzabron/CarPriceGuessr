@@ -51,6 +51,16 @@
     <title>CarPriceGuessr</title>
   </head>
   <body>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('cpg:theme');
+          if (saved === 'dark') {
+            document.body.classList.add('dark-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <noscript></noscript>
     <div id="root"></div>
     <!--

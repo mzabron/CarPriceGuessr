@@ -881,7 +881,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
             </div>
           ) : showChosenText && winningIndex !== null ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <h2 className="text-3xl font-extrabold text-green-700 mb-4">
+              <h2 className="text-3xl font-extrabold text-[color:var(--text-color)] mb-4">
                 {getDisplayText(cars[winningIndex])} was chosen!
               </h2>
             </div>
@@ -1071,9 +1071,13 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       <button
                         onClick={handleSteal}
                         disabled={!canUseSteal()}
-                        className={`hand-drawn-btn px-4 py-2 font-bold transition-all duration-200 ${canUseSteal()
-                          ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-105 border-red-800'
-                          : 'opacity-50 cursor-not-allowed bg-gray-300 border-gray-400'
+                        className={`hand-drawn-btn px-4 py-2 font-bold transition-all duration-200 relative overflow-hidden ${canUseSteal()
+                          ? 'steal-active hover:scale-105'
+                          : stealCooldownLeftMs > 0
+                            ? 'steal-cooldown cursor-not-allowed'
+                            : players.find(p => p.id === playerId)?.stealsRemaining > 0
+                              ? 'steal-active opacity-50 cursor-not-allowed'
+                              : 'opacity-50 cursor-not-allowed bg-gray-300 border-gray-400'
                           }`}
                         title={
                           !players.find(p => p.id === playerId)?.stealsRemaining ? "No steals remaining" :
@@ -1081,20 +1085,19 @@ const GameContent = ({ gameSettings, players = [] }) => {
                               currentTurn?.playerId === playerId ? "It's already your turn" :
                                 "Steal turn!"
                         }
-                        style={canUseSteal() ? { backgroundColor: '#dc2626', color: 'white', borderColor: 'var(--text-color)' } : {}}
+                        style={{
+                          ...(stealCooldownLeftMs > 0 ? {
+                            background: `linear-gradient(to top, #dc2626 ${Math.max(0, Math.min(100, 100 - (stealCooldownLeftMs / stealCooldownMs * 100)))}%, transparent ${Math.max(0, Math.min(100, 100 - (stealCooldownLeftMs / stealCooldownMs * 100)))}%)`,
+                          } : {})
+                        }}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 relative z-10">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
                             <path d="M11 21l-1-9H4l10-10 1 9h6L11 21z" />
                           </svg>
                           <span>Steal! ({getCurrentPlayerSteals()})</span>
                         </div>
                       </button>
-                      {stealCooldownLeftMs > 0 && (
-                        <div className="text-xs font-bold text-red-600 animate-pulse">
-                          Cooldown: {Math.ceil(stealCooldownLeftMs / 1000)}s
-                        </div>
-                      )}
                     </div>
                     {/* Last guess message next to timer */}
                     {lastGuess && (

@@ -402,7 +402,7 @@ const SinglePlayerGame = () => {
       <main className={`flex-1 container mx-auto p-4 overflow-y-auto thin-scrollbar ${showChosenText && selectedCarIndex !== null ? 'flex items-center justify-center' : ''}`}>
         {showChosenText && selectedCarIndex !== null ? (
           <div className="text-center w-full">
-            <h2 className="text-3xl font-extrabold text-green-700 mb-4 text-center">
+            <h2 className="text-3xl font-extrabold text-[color:var(--text-color)] mb-4 text-center">
               {getDisplayText(cars[selectedCarIndex])} was chosen!
             </h2>
           </div>

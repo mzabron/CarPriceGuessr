@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import socketService from '../services/socketService';
 
 // Unified color palette matching GameContent PLAYER_BG_COLOR
 const COLOR_BG = {
@@ -35,6 +36,26 @@ function getClasses(player) {
 }
 
 const PlayerList = ({ players, showReadyStatus = false }) => {
+  const [activeStealId, setActiveStealId] = useState(null);
+
+  useEffect(() => {
+    const onStealUsed = (data) => {
+      if (data.stealingPlayerId) {
+        setActiveStealId(data.stealingPlayerId);
+        // Clear after animation duration (3s)
+        setTimeout(() => {
+          setActiveStealId(prev => (prev === data.stealingPlayerId ? null : prev));
+        }, 3000);
+      }
+    };
+
+    socketService.socket?.on('game:stealUsed', onStealUsed);
+
+    return () => {
+      socketService.socket?.off('game:stealUsed', onStealUsed);
+    };
+  }, []);
+
   return (
     <div className="h-full w-48 md:w-60 xl:w-64 bg-transparent border-r-2 border-[color:var(--text-color)] flex flex-col p-2 overflow-hidden">
       <h2 className="text-xl font-bold mb-2">Players</h2>
@@ -77,6 +98,13 @@ const PlayerList = ({ players, showReadyStatus = false }) => {
                   </span>
                 )}
               </div>
+
+              {/* Steal Animation Overlay */}
+              {activeStealId === player.id && (
+                <div className="absolute inset-0 bg-red-600 z-10 flex items-center justify-center steal-animation">
+                  <span className="text-white font-bold text-xl uppercase tracking-wider">Steal!</span>
+                </div>
+              )}
             </div>
           );
         })}
