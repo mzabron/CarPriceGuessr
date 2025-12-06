@@ -66,9 +66,9 @@ const Game = ({ gameSettings }) => {
     if (roomId != null) {
       socketService.socket?.emit('rooms:join', {
         roomId: parseInt(roomId),
-      playerName: socketService.getCurrentUser()?.name,
-      isHost: socketService.getCurrentUser()?.isHost || false,
-      rejoin: true // Add this flag to indicate we're rejoining after game start
+        playerName: socketService.getCurrentUser()?.name,
+        isHost: socketService.getCurrentUser()?.isHost || false,
+        rejoin: true // Add this flag to indicate we're rejoining after game start
       });
     }
 
@@ -96,7 +96,7 @@ const Game = ({ gameSettings }) => {
   };
 
   return (
-    <div className="h-screen flex flex-row overflow-hidden bg-[#FAEBD7]">
+    <div className="h-screen flex flex-row overflow-hidden bg-[color:var(--bg-color)]">
       <PlayerList players={players} showReadyStatus={false} />
       <GameContent gameSettings={gameSettings} players={players} />
       <ChatBox

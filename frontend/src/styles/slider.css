@@ -10,7 +10,7 @@
     appearance: none;
     width: 24px;
     height: 24px;
-    background: #000000;
+    background: var(--text-color);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -22,7 +22,7 @@
 .hand-drawn-slider::-moz-range-thumb {
     width: 24px;
     height: 24px;
-    background: #000000;
+    background: var(--text-color);
     border: none;
     border-radius: 50%;
     cursor: pointer;

@@ -778,12 +778,12 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       Actual price: <span className="font-semibold">${roundResult.actualPrice}</span>
                     </p>
                     {roundResult.accuracyPoints && roundResult.turnBonus && (
-                      <div className="mb-4 p-3 border-2 border-black rounded-lg">
+                      <div className="mb-4 p-3 border-2 border-[color:var(--text-color)] rounded-lg">
                         <p className="text-sm font-semibold mb-2">Points Breakdown:</p>
                         <div className="text-sm">
                           <p>Accuracy: {roundResult.accuracyPoints} points</p>
                           <p>Turn Bonus: {roundResult.turnBonus} points ({roundResult.turnsPlayed} turns × 5)</p>
-                          <p className="font-bold border-t border-black pt-1 mt-1">Total: {roundResult.pointsAwarded} points</p>
+                          <p className="font-bold border-t border-[color:var(--text-color)] pt-1 mt-1">Total: {roundResult.pointsAwarded} points</p>
                         </div>
                       </div>
                     )}
@@ -803,7 +803,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                 >
                   <span className="inline-flex items-center gap-2">
                     {hasClickedNextRound && (
-                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-black" fill="currentColor" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" className="text-[color:var(--text-color)]" fill="currentColor" aria-hidden="true">
                         <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z" />
                       </svg>
                     )}
@@ -843,7 +843,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     <button
                       key={idx}
                       onClick={() => handleVote(idx)}
-                      className={`w-full p-4 sm:p-6 rounded-xl border-2 border-black text-left text-base font-semibold shadow-none transition-all duration-150 ${(votes[playerId] === idx || votes[playerName] === idx) ? 'bg-black text-[#FAEBD7] scale-105' : 'bg-transparent hover:scale-102'
+                      className={`w-full p-4 sm:p-6 rounded-xl border-2 border-[color:var(--text-color)] text-left text-base font-semibold shadow-none transition-all duration-150 ${(votes[playerId] === idx || votes[playerName] === idx) ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)] scale-105' : 'bg-transparent hover:scale-102'
                         }`}
                       style={{ minHeight: '90px' }}
                     >
@@ -892,7 +892,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
               <div className="w-full flex justify-center mb-2">
                 <div
-                  className="text-base text-gray-600 w-full"
+                  className="text-base text-[color:var(--text-color)] opacity-80 w-full"
                   style={{
                     textAlign: "left",
                   }}
@@ -913,7 +913,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
               <div className="flex flex-col lg:flex-row gap-3 w-full mb-2">
                 {/* Carousel */}
                 <div className="w-full lg:w-1/2 flex-shrink-0 relative mx-auto">
-                  <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh] border-2 border-black rounded-lg overflow-hidden" style={{ maxHeight: '35vh' }}>
+                  <div className="aspect-video relative 3xl:max-h-[30vh] 4xl:max-h-[25vh] border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden" style={{ maxHeight: '35vh' }}>
                     <button
                       onClick={handlePrevImage}
                       className="no-press absolute left-0 top-[40%] bg-black text-[#FAEBD7] opacity-70 hover:opacity-100 p-3 rounded-r z-10 text-3xl md:text-4xl leading-none"
@@ -951,7 +951,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                       <button
                         key={index}
                         onClick={() => setCurrentImageIndex(index)}
-                        className={`w-2 h-2 rounded-full border border-black ${index === currentImageIndex ? 'bg-black' : 'bg-transparent'}`}
+                        className={`w-2 h-2 rounded-full border border-[color:var(--text-color)] ${index === currentImageIndex ? 'bg-[color:var(--text-color)]' : 'bg-transparent'}`}
                         style={{ flex: '0 0 auto' }}
                       />
                     ))}
@@ -964,15 +964,15 @@ const GameContent = ({ gameSettings, players = [] }) => {
               </div>
 
               {/* Guess the price section - moved directly under car images/details */}
-              <div className="w-full mt-1 border-t-2 border-black pt-4">
+              <div className="w-full mt-1 border-t-2 border-[color:var(--text-color)] pt-4">
                 <div className="mb-2 font-bold text-lg text-center">Guess the price:</div>
                 <div className="flex flex-wrap gap-2 mb-3 justify-center">
                   {PRICE_RANGES.map((range) => (
                     <button
                       key={range.label}
                       onClick={() => handleRangeClick(range)}
-                      className={`px-4 py-2 rounded-lg border-2 border-black text-sm transition-all duration-100 ${selectedRange.label === range.label
-                        ? 'bg-black text-[#FAEBD7] font-bold scale-105'
+                      className={`px-4 py-2 rounded-lg border-2 border-[color:var(--text-color)] text-sm transition-all duration-100 ${selectedRange.label === range.label
+                        ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)] font-bold scale-105'
                         : 'bg-transparent hover:bg-black/10'
                         }`}
                     >
@@ -988,9 +988,9 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     step={100}
                     value={sliderPrice}
                     onChange={handleSliderChange}
-                    className="w-full md:w-[500px] h-3 hand-drawn-slider border-2 border-black rounded-full cursor-pointer"
+                    className="w-full md:w-[500px] h-3 hand-drawn-slider border-2 border-[color:var(--text-color)] rounded-full cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #000000 0%, #000000 ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
+                      background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
                     }}
                   />
                   <div className="flex items-center gap-2">
@@ -1026,7 +1026,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           aria-label="Increase price"
                         >
                           <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </button>
                         <button
@@ -1050,7 +1050,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           aria-label="Decrease price"
                         >
                           <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </button>
                       </div>
@@ -1081,7 +1081,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                               currentTurn?.playerId === playerId ? "It's already your turn" :
                                 "Steal turn!"
                         }
-                        style={canUseSteal() ? { backgroundColor: '#dc2626', color: 'white', borderColor: 'black' } : {}}
+                        style={canUseSteal() ? { backgroundColor: '#dc2626', color: 'white', borderColor: 'var(--text-color)' } : {}}
                       >
                         <div className="flex items-center gap-2">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
@@ -1112,8 +1112,8 @@ const GameContent = ({ gameSettings, players = [] }) => {
                           actualPrice = Number(actualPrice);
                           const guess = Number(lastGuess.price);
                           if (!isNaN(actualPrice) && !isNaN(guess)) {
-                            if (guess < actualPrice) return <span className="ml-1 text-black">and it was too <span className="text-blue-700 font-bold">low</span></span>;
-                            if (guess > actualPrice) return <span className="ml-1 text-black">and it was too <span className="text-red-700 font-bold">high</span></span>;
+                            if (guess < actualPrice) return <span className="ml-1 text-[color:var(--text-color)]">and it was too <span className="text-blue-700 font-bold">low</span></span>;
+                            if (guess > actualPrice) return <span className="ml-1 text-[color:var(--text-color)]">and it was too <span className="text-red-700 font-bold">high</span></span>;
                             if (guess === actualPrice) return <span className="ml-1 text-green-700">and it was correct!</span>;
                           }
                           return null;

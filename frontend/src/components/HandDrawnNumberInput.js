@@ -91,7 +91,7 @@ const HandDrawnNumberInput = ({
                     aria-label="Increase"
                 >
                     <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
                 <button
@@ -102,7 +102,7 @@ const HandDrawnNumberInput = ({
                     aria-label="Decrease"
                 >
                     <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                 </button>
             </div>

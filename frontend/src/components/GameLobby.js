@@ -266,9 +266,9 @@ const GameLobby = () => {
                 <span>Steals</span>
                 <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
                   <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                     Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
                   </span>
                 </span>
               </label>
@@ -297,9 +297,9 @@ const GameLobby = () => {
                 <span>Guess Accuracy Threshold</span>
                 <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About price match difficulty">
                   <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                     Controls how close a player's guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
                   </span>
                 </span>
               </label>
@@ -342,9 +342,9 @@ const GameLobby = () => {
             <span>Steals: {gameSettings.powerUps}</span>
             <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About steals">
               <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                 Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
-                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
               </span>
             </span>
           </div>
@@ -353,9 +353,9 @@ const GameLobby = () => {
             <span>Guess Accuracy Threshold: {gameSettings.correctGuessThreshold}%</span>
             <span className="inline-flex items-center justify-center cursor-help relative group select-none ml-1" aria-label="About price match difficulty">
               <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                 Controls how close a player's guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
-                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
               </span>
             </span>
           </div>
@@ -381,7 +381,7 @@ const GameLobby = () => {
       <div className="flex-1 bg-transparent flex flex-col items-center justify-center overflow-auto">
         <div className="w-full max-w-4xl flex flex-col items-center justify-center">
           <div className="hand-drawn-panel p-4 sm:p-8 w-full">
-            <div className="mb-4 text-lg font-semibold border-2 border-black p-2 rounded-lg flex items-center justify-between relative">
+            <div className="mb-4 text-lg font-semibold border-2 border-[color:var(--text-color)] p-2 rounded-lg flex items-center justify-between relative">
               <div className="flex items-center gap-3">
                 <span>
                   Room Code: {' '}
@@ -416,8 +416,8 @@ const GameLobby = () => {
               </div>
               {copiedNotice && (
                 <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-4 sm:-top-5 z-20">
-                  <div className="flex items-center gap-2 bg-[#FAEBD7] text-black text-sm px-3 py-1.5 rounded-full shadow-lg border-2 border-black fade-out-once">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-black">
+                  <div className="flex items-center gap-2 bg-[color:var(--bg-color)] text-[color:var(--text-color)] text-sm px-3 py-1.5 rounded-full shadow-lg border-2 border-[color:var(--text-color)] fade-out-once">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-[color:var(--text-color)]">
                       <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-7.25 9.25a.75.75 0 01-1.128.06L3.17 9.079A.75.75 0 014.33 8.02l4.036 3.954 6.695-8.54a.75.75 0 011.052-.143z" clipRule="evenodd" />
                     </svg>
                     <span className="font-medium font-['Gloria_Hallelujah']">Room code copied!</span>

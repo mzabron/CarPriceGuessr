@@ -46,8 +46,8 @@ const Results = () => {
 
   if (!gameData) {
     return (
-      <div className="h-screen bg-[#FAEBD7] flex items-center justify-center">
-        <div className="text-center text-black">
+      <div className="h-screen bg-[color:var(--bg-color)] flex items-center justify-center">
+        <div className="text-center text-[color:var(--text-color)]">
           <div className="text-2xl font-bold mb-2">Preparing final results…</div>
           <div className="opacity-80">Waiting for game summary from server</div>
         </div>
@@ -85,7 +85,7 @@ const Results = () => {
   };
 
   return (
-    <div className="h-screen bg-[#FAEBD7] flex flex-col">
+    <div className="h-screen bg-[color:var(--bg-color)] flex flex-col">
       <div className="flex-1 container mx-auto px-4 py-8 overflow-y-auto thin-scrollbar max-h-full">
         <div className="max-w-4xl mx-auto">
 
@@ -102,9 +102,9 @@ const Results = () => {
               {sortedPlayers.map((player, index) => {
                 const getPlayerStyle = (idx) => {
                   if (idx === 0) return 'bg-yellow-100 border-yellow-600 text-yellow-900'; // Gold
-                  if (idx === 1) return 'bg-gray-100 border-gray-500 text-gray-800'; // Silver
+                  if (idx === 1) return 'bg-gray-300 border-gray-500 text-gray-800'; // Silver
                   if (idx === 2) return 'bg-orange-100 border-orange-600 text-orange-900'; // Bronze
-                  return 'bg-transparent border-black text-black';
+                  return 'bg-transparent border-[color:var(--text-color)] text-[color:var(--text-color)]';
                 };
 
                 return (
@@ -121,7 +121,7 @@ const Results = () => {
                           <span>{player.name}</span>
                           {player.isHost && (
                             <svg
-                              className="text-black"
+                              className={index < 3 ? "text-current" : "text-[color:var(--text-color)]"}
                               width="20"
                               height="20"
                               viewBox="0 0 24 24"
@@ -162,8 +162,8 @@ const Results = () => {
               gameHistory && gameHistory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {gameHistory.map((round, index) => (
-                    <div key={index} className="border-2 border-black rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:scale-105">
-                      <div className="bg-transparent border-b-2 border-black text-center py-2">
+                    <div key={index} className="border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:scale-105">
+                      <div className="bg-transparent border-b-2 border-[color:var(--text-color)] text-center py-2">
                         <h3 className="font-bold text-lg">Round {round.round}</h3>
                       </div>
 
@@ -173,7 +173,7 @@ const Results = () => {
                             <img
                               src={round.car.thumbnailImages[0].imageUrl}
                               alt={round.car.title}
-                              className="w-full h-32 object-cover rounded cursor-pointer border-2 border-black"
+                              className="w-full h-32 object-cover rounded cursor-pointer border-2 border-[color:var(--text-color)]"
                               onClick={() => round.car.itemWebUrl && window.open(round.car.itemWebUrl, '_blank')}
                               title="Click to view on eBay"
                             />

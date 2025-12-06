@@ -153,7 +153,7 @@ const CreateGameModal = ({ onClose, user }) => {
           type="button"
           onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
-          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
         >
           ×
         </button>
@@ -219,9 +219,9 @@ const CreateGameModal = ({ onClose, user }) => {
                 aria-label="About steals"
               >
                 <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                   Steals let you take over another player's turn. After using a steal, there's a 5-second cooldown before you can steal again. Each unused steal grants a bonus points at the end of the game.
-                  <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
                 </span>
               </span>
             </label>
@@ -257,9 +257,9 @@ const CreateGameModal = ({ onClose, user }) => {
                 aria-label="About price match difficulty"
               >
                 <span className="material-symbols-outlined text-[24px] leading-none">help</span>
-                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[#FAEBD7] text-black border-2 border-black text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
+                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 -mt-2 mb-2 w-64 bg-[color:var(--bg-color)] text-[color:var(--text-color)] border-2 border-[color:var(--text-color)] text-xs rounded px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10 whitespace-normal">
                   Controls how close your guess must be to the actual car price to count as a correct hit. Lower percentages make the game harder; higher percentages make it more forgiving.
-                  <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-black border-x-8 border-x-transparent" />
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-t-8 border-t-[color:var(--text-color)] border-x-8 border-x-transparent" />
                 </span>
               </span>
             </label>

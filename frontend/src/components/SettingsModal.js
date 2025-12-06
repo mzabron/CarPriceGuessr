@@ -1,8 +1,10 @@
 import React from 'react';
 import { useSfx } from '../services/soundService';
+import { useTheme } from '../services/themeService';
 
 const SettingsModal = ({ onClose }) => {
   const { play, volume, setVolume, enabled, setEnabled } = useSfx();
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const handleVolumeChange = (e) => {
     setVolume(parseFloat(e.target.value));
@@ -31,7 +33,7 @@ const SettingsModal = ({ onClose }) => {
       <div className="relative w-full max-w-sm hand-drawn-modal p-6 flex flex-col">
         <button
           onClick={() => { play('toggle'); onClose(); }}
-          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
           aria-label="Close"
           title="Close"
         >
@@ -74,12 +76,48 @@ const SettingsModal = ({ onClose }) => {
                 onChange={handleVolumeChange}
                 onMouseUp={handleVolumeRelease}
                 onTouchEnd={handleVolumeRelease}
-                className="w-full hand-drawn-slider h-3 border-2 border-black rounded-full cursor-pointer"
+                className="w-full hand-drawn-slider h-3 border-2 rounded-full cursor-pointer"
                 style={{
-                  background: `linear-gradient(to right, #000000 0%, #000000 ${volumePercentage}%, transparent ${volumePercentage}%, transparent 100%)`
+                  borderColor: 'var(--text-color)',
+                  background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${volumePercentage}%, transparent ${volumePercentage}%, transparent 100%)`
                 }}
               />
             </div>
+          </div>
+
+          <div className="flex justify-between items-center border-t-2 pt-4" style={{ borderColor: 'var(--text-color)' }}>
+            <label className="text-sm font-bold">Dark Mode</label>
+            <button
+              onClick={() => {
+                play('toggle');
+                toggleTheme();
+              }}
+              className="hand-drawn-btn px-4 py-2 text-sm font-bold flex items-center gap-2"
+            >
+              {isDarkMode ? (
+                <>
+                  <span>On</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </>
+              ) : (
+                <>
+                  <span>Off</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

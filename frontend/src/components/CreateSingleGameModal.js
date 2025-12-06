@@ -26,7 +26,7 @@ const CreateSingleGameModal = ({ onClose }) => {
           type="button"
           onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
-          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
         >
           ×
         </button>
@@ -36,7 +36,7 @@ const CreateSingleGameModal = ({ onClose }) => {
           <div>
             <label className="block mb-2 font-semibold">Select Difficulty</label>
             <div className="space-y-2">
-              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
+              <label className="flex items-center space-x-3 p-3 border-2 border-[color:var(--text-color)] rounded-lg cursor-pointer hover:bg-[color:var(--text-color)]/10 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
@@ -45,14 +45,14 @@ const CreateSingleGameModal = ({ onClose }) => {
                   onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
-                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'easy' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
+                <div className={`w-5 h-5 rounded-full border-2 border-[color:var(--text-color)] flex-shrink-0 transition-colors ${difficulty === 'easy' ? 'bg-[color:var(--text-color)]' : 'bg-transparent group-hover:bg-[color:var(--text-color)]/20'}`} />
                 <div>
                   <span className="font-bold block">Easy</span>
                   <span className="text-sm">25% margin of error</span>
                 </div>
               </label>
 
-              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
+              <label className="flex items-center space-x-3 p-3 border-2 border-[color:var(--text-color)] rounded-lg cursor-pointer hover:bg-[color:var(--text-color)]/10 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
@@ -61,14 +61,14 @@ const CreateSingleGameModal = ({ onClose }) => {
                   onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
-                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'medium' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
+                <div className={`w-5 h-5 rounded-full border-2 border-[color:var(--text-color)] flex-shrink-0 transition-colors ${difficulty === 'medium' ? 'bg-[color:var(--text-color)]' : 'bg-transparent group-hover:bg-[color:var(--text-color)]/20'}`} />
                 <div>
                   <span className="font-bold block">Medium</span>
                   <span className="text-sm">15% margin of error</span>
                 </div>
               </label>
 
-              <label className="flex items-center space-x-3 p-3 border-2 border-black rounded-lg cursor-pointer hover:bg-black/5 transition-colors group">
+              <label className="flex items-center space-x-3 p-3 border-2 border-[color:var(--text-color)] rounded-lg cursor-pointer hover:bg-[color:var(--text-color)]/10 transition-colors group">
                 <input
                   type="radio"
                   name="difficulty"
@@ -77,7 +77,7 @@ const CreateSingleGameModal = ({ onClose }) => {
                   onChange={(e) => { play('toggle'); setDifficulty(e.target.value); }}
                   className="sr-only"
                 />
-                <div className={`w-5 h-5 rounded-full border-2 border-black flex-shrink-0 transition-colors ${difficulty === 'hard' ? 'bg-black' : 'bg-transparent group-hover:bg-black/10'}`} />
+                <div className={`w-5 h-5 rounded-full border-2 border-[color:var(--text-color)] flex-shrink-0 transition-colors ${difficulty === 'hard' ? 'bg-[color:var(--text-color)]' : 'bg-transparent group-hover:bg-[color:var(--text-color)]/20'}`} />
                 <div>
                   <span className="font-bold block">Hard</span>
                   <span className="text-sm">5% margin of error</span>

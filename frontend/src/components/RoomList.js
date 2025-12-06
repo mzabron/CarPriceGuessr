@@ -110,14 +110,14 @@ const RoomList = ({ onClose, user }) => {
           type="button"
           onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
-          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
         >
           ×
         </button>
         <h2 className="text-2xl font-bold mb-4">Join Game</h2>
 
         {!user && (
-          <div className="mb-4 p-2 bg-transparent border-2 border-black rounded">
+          <div className="mb-4 p-2 bg-transparent border-2 border-[color:var(--text-color)] rounded">
             <p className="text-sm">
               You didn't set a username but you can still join as a guest.
             </p>
@@ -125,7 +125,7 @@ const RoomList = ({ onClose, user }) => {
         )}
 
         {/* Join by Code Section */}
-        <div className="mb-6 p-4 border-2 border-black rounded-lg">
+        <div className="mb-6 p-4 border-2 border-[color:var(--text-color)] rounded-lg">
           <h3 className="text-lg font-semibold mb-3">Join room by code</h3>
           <form onSubmit={(e) => { play('toggle'); handleJoinByCode(e); }} className="flex gap-2">
             <input
@@ -180,7 +180,7 @@ const RoomList = ({ onClose, user }) => {
               {rooms.map((room) => (
                 <div
                   key={room.id}
-                  className="p-4 border-2 border-black rounded-lg flex justify-between items-center"
+                  className="p-4 border-2 border-[color:var(--text-color)] rounded-lg flex justify-between items-center"
                 >
                   <div>
                     <h4 className="font-semibold">{room.name}</h4>

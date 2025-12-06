@@ -33,12 +33,12 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage, forceScro
   }, [forceScrollTrigger]);
 
   return (
-    <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-transparent flex flex-col border-l-2 border-black">
+    <div className="h-full w-48 sm:w-52 md:w-60 lg:w-68 xl:w-72 bg-transparent flex flex-col border-l-2 border-[color:var(--text-color)]">
       <div ref={chatContainerRef} className="flex-1 p-2 overflow-y-auto thin-scrollbar">
         <div className="space-y-1">
           {messages.map((msg, index) => {
-            let textColorClass = 'text-black';
-            let borderColorClass = 'border-black';
+            let textColorClass = 'text-[color:var(--text-color)]';
+            let borderColorClass = 'border-[color:var(--text-color)]';
             let bgClass = 'bg-transparent';
 
             if (msg.type === 'system') {
@@ -80,7 +80,7 @@ const ChatBox = ({ messages, newMessage, setNewMessage, onSendMessage, forceScro
           })}
         </div>
       </div>
-      <form onSubmit={onSendMessage} className="p-2 bg-transparent border-t-2 border-black">
+      <form onSubmit={onSendMessage} className="p-2 bg-transparent border-t-2 border-[color:var(--text-color)]">
         <div className="flex space-x-1">
           <input
             type="text"

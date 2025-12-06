@@ -7,17 +7,21 @@ import Results from './pages/Results';
 import GameLobby from './components/GameLobby';
 import { SoundProvider } from './services/soundService';
 
+import { ThemeProvider } from './services/themeService';
+
 function App() {
   return (
     <Router>
       <SoundProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/lobby" element={<GameLobby />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/single-player" element={<SinglePlayerGame />} />
-          <Route path="/results" element={<Results />} />
-        </Routes>
+        <ThemeProvider>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/lobby" element={<GameLobby />} />
+            <Route path="/game" element={<Game />} />
+            <Route path="/single-player" element={<SinglePlayerGame />} />
+            <Route path="/results" element={<Results />} />
+          </Routes>
+        </ThemeProvider>
       </SoundProvider>
     </Router>
   );

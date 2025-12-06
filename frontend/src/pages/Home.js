@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useSfx } from '../services/soundService';
 import CreateGameModal from '../components/CreateGameModal';
 import CreateSingleGameModal from '../components/CreateSingleGameModal';
@@ -39,11 +40,13 @@ const Home = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center h-20">
-              <img
-                src={handDrawnLogo}
-                alt="CarPriceGuessr Logo"
-                className="hand-drawn-logo"
-              />
+              <Link to="/" onClick={() => play('toggle')}>
+                <img
+                  src={handDrawnLogo}
+                  alt="CarPriceGuessr Logo"
+                  className="hand-drawn-logo cursor-pointer"
+                />
+              </Link>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -56,13 +59,13 @@ const Home = () => {
                     {/* Avatar: if preferredColor exists (including 'random'), show solid/gradient swatch without letters; otherwise fallback to initials */}
                     {user?.preferredColor ? (
                       <span
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${user.preferredColor.bgClass} border-2 border-black`}
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${user.preferredColor.bgClass} border-2 border-[color:var(--text-color)]`}
                         aria-hidden="true"
                         title={user?.preferredColor?.name || 'Avatar'}
                       />
                     ) : (
                       <span
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent border-2 border-black text-black text-sm font-semibold uppercase`}
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-full bg-transparent border-2 border-[color:var(--text-color)] text-[color:var(--text-color)] text-sm font-semibold uppercase`}
                         aria-hidden="true"
                         title="Avatar"
                       >
@@ -78,7 +81,7 @@ const Home = () => {
                     <span className="max-w-[11rem] truncate font-semibold leading-normal pb-0.5">{user.name}</span>
                     {/* Minimal outline pencil icon */}
                     <svg
-                      className="w-4 h-4 text-black opacity-80"
+                      className="w-4 h-4 text-[color:var(--text-color)] opacity-80"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -96,7 +99,7 @@ const Home = () => {
                     <span className="text-base font-medium leading-none">Set name</span>
                     {/* Minimal standalone person icon */}
                     <svg
-                      className="w-5 h-5 text-black"
+                      className="w-5 h-5 text-[color:var(--text-color)]"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -118,7 +121,7 @@ const Home = () => {
               >
                 <span className="text-base font-medium leading-none">Settings</span>
                 <svg
-                  className="w-5 h-5 text-black"
+                  className="w-5 h-5 text-[color:var(--text-color)]"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"

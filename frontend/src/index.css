@@ -7,6 +7,13 @@
 :root {
   --bg-color: #FAEBD7;
   --text-color: #000000;
+  --shadow-color: #000000;
+}
+
+body.dark-mode {
+  --bg-color: #000000;
+  --text-color: #FAEBD7;
+  --shadow-color: #FAEBD7;
 }
 
 body {
@@ -14,6 +21,7 @@ body {
   color: var(--text-color);
   font-family: 'Gloria Hallelujah', cursive;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom thin scrollbar styles */
@@ -33,23 +41,25 @@ body {
 
   .thin-scrollbar::-webkit-scrollbar-track {
     background: transparent;
-    border-left: 2px solid #000000;
+    border-left: 2px solid var(--text-color);
   }
 
   .thin-scrollbar::-webkit-scrollbar-thumb {
-    background: #000000;
-    border: 2px solid #000000;
+    background: var(--text-color);
+    border: 2px solid var(--text-color);
     border-radius: 0;
   }
 
   .thin-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #333333;
+    /* Keep dark grey or adjust? Let's use opacity or just keep it for now */
+    opacity: 0.8;
   }
 
   /* For Firefox */
   .thin-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: #000000 transparent;
+    scrollbar-color: var(--text-color) transparent;
   }
 }
 
@@ -89,14 +99,14 @@ body {
   background-color: var(--bg-color);
   border: 3px solid var(--text-color);
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  box-shadow: 5px 5px 0px 0px rgba(0, 0, 0, 1);
+  box-shadow: 5px 5px 0px 0px var(--shadow-color);
 }
 
 .hand-drawn-modal {
   background-color: var(--bg-color) !important;
   border: 4px solid var(--text-color) !important;
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
-  box-shadow: 10px 10px 0px 0px rgba(0, 0, 0, 1) !important;
+  box-shadow: 10px 10px 0px 0px var(--shadow-color) !important;
 }
 
 .hand-drawn-logo {
@@ -107,6 +117,11 @@ body {
   /* filter: drop-shadow(0 0 1px black) drop-shadow(0 0 1px black); */
   /* Thicker look removed as per request to remove border */
   /* Thicker look */
+}
+
+body.dark-mode .hand-drawn-logo {
+  filter: invert(1);
+  mix-blend-mode: normal;
 }
 
 @keyframes wiggle {
@@ -159,6 +174,29 @@ li {
 .text-gray-800,
 .text-gray-900 {
   color: var(--text-color) !important;
+}
+
+/* Ensure podium text colors remain visible on their light backgrounds */
+/* Ensure podium text colors remain visible on their light backgrounds */
+.text-yellow-900,
+.text-yellow-900 * {
+  color: #713f12 !important;
+}
+
+.text-gray-800,
+.text-gray-800 * {
+  color: #1f2937 !important;
+}
+
+.text-orange-900,
+.text-orange-900 * {
+  color: #7c2d12 !important;
+}
+
+/* Dropdown options */
+option {
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 /* Modal Overlay */

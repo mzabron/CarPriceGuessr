@@ -241,22 +241,22 @@ const SinglePlayerGame = () => {
     );
 
     return (
-      <div className="h-screen bg-[#FAEBD7] flex flex-col items-center p-4 overflow-y-auto thin-scrollbar">
+      <div className="h-screen bg-[color:var(--bg-color)] flex flex-col items-center p-4 overflow-y-auto thin-scrollbar">
         <div className="hand-drawn-panel p-8 w-full max-w-6xl mb-8 shrink-0">
           <h1 className="text-4xl font-bold text-center mb-2">Game Over</h1>
           <p className="text-xl text-center mb-8">You ran out of lives!</p>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="p-6 rounded-lg text-center border-2 border-black">
+            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
               <div className="font-semibold mb-1">Final Score</div>
               <div className="text-4xl font-bold">{score}</div>
             </div>
-            <div className="p-6 rounded-lg text-center border-2 border-black">
+            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
               <div className="font-semibold mb-1">Avg. Price Deviation</div>
               <div className="text-4xl font-bold">{avgDeviation}%</div>
             </div>
-            <div className="p-6 rounded-lg text-center border-2 border-black">
+            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
               <div className="font-semibold mb-1">Time Played</div>
               <div className="text-4xl font-bold">{timeString}</div>
             </div>
@@ -295,10 +295,10 @@ const SinglePlayerGame = () => {
           <h2 className="text-2xl font-bold mb-6 text-center">Game History</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {uniqueRoundHistory.map((roundData, index) => (
-              <div key={index} className="border-2 border-black rounded-lg overflow-hidden hover:shadow-lg transition-all bg-transparent">
-                <div className="bg-transparent border-b-2 border-black text-center py-2 flex justify-between px-4 items-center">
+              <div key={index} className="border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden hover:shadow-lg transition-all bg-transparent">
+                <div className="bg-transparent border-b-2 border-[color:var(--text-color)] text-center py-2 flex justify-between px-4 items-center">
                   <span className="font-bold">Round {roundData.round}</span>
-                  <span className={`text-sm font-bold px-2 py-1 rounded border-2 border-black ${roundData.correct ? 'bg-black text-[#FAEBD7]' : 'bg-transparent text-black'}`}>
+                  <span className={`text-sm font-bold px-2 py-1 rounded border-2 border-[color:var(--text-color)] ${roundData.correct ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)]' : 'bg-transparent text-[color:var(--text-color)]'}`}>
                     {roundData.correct ? 'Correct' : 'Incorrect'}
                   </span>
                 </div>
@@ -309,12 +309,12 @@ const SinglePlayerGame = () => {
                       <img
                         src={roundData.car.thumbnailImages[0].imageUrl}
                         alt={roundData.car.title}
-                        className="w-full h-48 object-cover rounded cursor-pointer border-2 border-black"
+                        className="w-full h-48 object-cover rounded cursor-pointer border-2 border-[color:var(--text-color)]"
                         onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center"
                         onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}>
-                        <span className="opacity-0 group-hover:opacity-100 bg-white px-3 py-1 rounded-full text-sm font-bold shadow border-2 border-black text-black">View on eBay</span>
+                        <span className="opacity-0 group-hover:opacity-100 bg-[color:var(--bg-color)] px-3 py-1 rounded-full text-sm font-bold shadow border-2 border-[color:var(--text-color)] text-[color:var(--text-color)]">View on eBay</span>
                       </div>
                     </div>
                   )}
@@ -362,9 +362,9 @@ const SinglePlayerGame = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAEBD7] flex flex-col">
+    <div className="min-h-screen bg-[color:var(--bg-color)] flex flex-col">
       {/* Header */}
-      <header className="bg-transparent border-b-2 border-black p-4">
+      <header className="bg-transparent border-b-2 border-[color:var(--text-color)] p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
@@ -388,7 +388,7 @@ const SinglePlayerGame = () => {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="currentColor"
-                  className={`w-8 h-8 ${i < lives ? 'text-black' : 'text-gray-300'}`}
+                  className={`w-8 h-8 ${i < lives ? 'text-[color:var(--text-color)]' : 'text-gray-300'}`}
                 >
                   <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
                 </svg>
@@ -417,7 +417,7 @@ const SinglePlayerGame = () => {
                   <button
                     key={idx}
                     onClick={() => handleCarSelect(idx)}
-                    className={`w-full p-4 sm:p-6 rounded-xl border-2 border-black text-left text-base font-semibold shadow-none transition-all duration-150 ${selectedCarIndex === idx ? 'bg-black text-[#FAEBD7] scale-105' : 'bg-transparent hover:scale-102'
+                    className={`w-full p-4 sm:p-6 rounded-xl border-2 border-[color:var(--text-color)] text-left text-base font-semibold shadow-none transition-all duration-150 ${selectedCarIndex === idx ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)] scale-105' : 'bg-transparent hover:scale-102'
                       }`}
                     style={{ minHeight: '90px' }}
                   >
@@ -434,7 +434,7 @@ const SinglePlayerGame = () => {
             <div className="text-2xl font-bold mb-2 text-center">{cars[selectedCarIndex].title}</div>
             <div className="w-full flex justify-center mb-2">
               <div
-                className="text-base text-gray-600 w-full"
+                className="text-base text-[color:var(--text-color)] opacity-80 w-full"
                 style={{
                   textAlign: "left",
                 }}
@@ -456,7 +456,7 @@ const SinglePlayerGame = () => {
             <div className="flex flex-col lg:flex-row gap-4 w-full mb-4">
               {/* Carousel */}
               <div className="w-full lg:w-1/2 relative">
-                <div className="aspect-video relative bg-black rounded-lg overflow-hidden border-2 border-black">
+                <div className="aspect-video relative bg-black rounded-lg overflow-hidden border-2 border-[color:var(--text-color)]">
                   <img
                     src={cars[selectedCarIndex].thumbnailImages?.[currentImageIndex]?.imageUrl}
                     alt="Car"
@@ -495,7 +495,7 @@ const SinglePlayerGame = () => {
                     <button
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
-                      className={`w-2 h-2 rounded-full border border-black ${idx === currentImageIndex ? 'bg-black' : 'bg-transparent'}`}
+                      className={`w-2 h-2 rounded-full border border-[color:var(--text-color)] ${idx === currentImageIndex ? 'bg-[color:var(--text-color)]' : 'bg-transparent'}`}
                     />
                   ))}
                 </div>
@@ -508,7 +508,7 @@ const SinglePlayerGame = () => {
             </div>
 
             {/* Guessing Controls */}
-            <div className="w-full max-w-3xl border-t-2 border-black pt-4">
+            <div className="w-full max-w-3xl border-t-2 border-[color:var(--text-color)] pt-4">
               <div className="flex justify-center gap-4 mb-4">
               </div>
 
@@ -517,8 +517,8 @@ const SinglePlayerGame = () => {
                   <button
                     key={range.label}
                     onClick={() => handleRangeClick(range)}
-                    className={`px-4 py-2 rounded-lg border-2 border-black text-sm transition-all ${selectedRange.label === range.label
-                      ? 'bg-black text-[#FAEBD7] font-bold'
+                    className={`px-4 py-2 rounded-lg border-2 border-[color:var(--text-color)] text-sm transition-all ${selectedRange.label === range.label
+                      ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)] font-bold'
                       : 'bg-transparent hover:bg-black/10'
                       }`}
                   >
@@ -535,9 +535,9 @@ const SinglePlayerGame = () => {
                   step={100}
                   value={sliderPrice}
                   onChange={handleSliderChange}
-                  className="w-full max-w-lg h-3 hand-drawn-slider border-2 border-black rounded-full cursor-pointer"
+                  className="w-full max-w-lg h-3 hand-drawn-slider border-2 border-[color:var(--text-color)] rounded-full cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #000000 0%, #000000 ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent 100%)`
+                    background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent 100%)`
                   }}
                 />
 
@@ -567,7 +567,7 @@ const SinglePlayerGame = () => {
                         aria-label="Increase price"
                       >
                         <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                       <button
@@ -582,7 +582,7 @@ const SinglePlayerGame = () => {
                         aria-label="Decrease price"
                       >
                         <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                     </div>
@@ -590,8 +590,8 @@ const SinglePlayerGame = () => {
                 </div>
 
                 {feedbackMessage && (
-                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-black' :
-                    feedbackMessage.includes('Low') ? 'text-black' : 'text-black'
+                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-[color:var(--text-color)]' :
+                    feedbackMessage.includes('Low') ? 'text-[color:var(--text-color)]' : 'text-[color:var(--text-color)]'
                     }`}>
                     {feedbackMessage}
                   </div>
