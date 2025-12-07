@@ -38,8 +38,8 @@ const Home = () => {
     <div className="home-refactor-container min-h-screen">
       <header className="home-refactor-header">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center h-20">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+            <div className="flex items-center h-20 justify-center sm:justify-start w-full sm:w-auto">
               <Link to="/" onClick={() => play('toggle')}>
                 <img
                   src={handDrawnLogo}
@@ -48,7 +48,7 @@ const Home = () => {
                 />
               </Link>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => { play('toggle'); setShowSetName(true); }}
                 className={`hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5 h-12`}
@@ -150,22 +150,22 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="flex justify-center space-x-6">
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <button
               onClick={() => { play('toggle'); setShowSingleGame(true); }}
-              className="hand-drawn-btn px-8 py-4 text-lg"
+              className="hand-drawn-btn w-full sm:w-auto px-8 py-4 text-lg"
             >
               Single Player Mode
             </button>
             <button
               onClick={() => { play('toggle'); setShowCreateGame(true); }}
-              className="hand-drawn-btn px-8 py-4 text-lg"
+              className="hand-drawn-btn w-full sm:w-auto px-8 py-4 text-lg"
             >
               Create New Game
             </button>
             <button
               onClick={() => { play('toggle'); setShowRoomList(true); }}
-              className="hand-drawn-btn px-8 py-4 text-lg"
+              className="hand-drawn-btn w-full sm:w-auto px-8 py-4 text-lg"
             >
               Join Game
             </button>
