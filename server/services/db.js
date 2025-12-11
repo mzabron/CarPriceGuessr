@@ -195,7 +195,7 @@ const insertCars = async (cars, cap = 2000) => {
 
     await run('COMMIT');
   } catch (error) {
-    await run('ROLLBACK').catch(() => {});
+    await run('ROLLBACK').catch(() => { });
     throw error;
   }
 

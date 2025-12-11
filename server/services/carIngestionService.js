@@ -11,6 +11,7 @@ const DETAIL_BATCH_SIZE = 15; // effectively unused with per-item fetch
 const MAX_STORED_CARS = 3000;
 const FETCH_INTERVAL_MS = 6 * 60 * 1000;
 const OFFSET_STATE_KEY = 'ebay_offset';
+const MAX_OFFSET = 10000; // cap before wrap-around
 
 let jobTimer = null;
 let jobInFlight = false;
@@ -147,8 +148,27 @@ async function runIngestionCycle() {
       return;
     }
 
-    const currentOffset = Number(await getState(OFFSET_STATE_KEY, '0')) || 0;
-    const searchData = await searchCars(accessToken, currentOffset);
+    // Read and normalize offset to a multiple of SEARCH_LIMIT and cap to MAX_OFFSET
+    const storedOffset = Number(await getState(OFFSET_STATE_KEY, '0')) || 0;
+    let currentOffset = Math.max(0, Math.floor(storedOffset / SEARCH_LIMIT) * SEARCH_LIMIT);
+    if (currentOffset !== storedOffset) {
+      await setState(OFFSET_STATE_KEY, currentOffset);
+    }
+    if (currentOffset >= MAX_OFFSET) {
+      console.log(`[eBayWorker] Offset ${currentOffset} >= ${MAX_OFFSET}. Wrapping to 0.`);
+      currentOffset = 0;
+      await setState(OFFSET_STATE_KEY, 0);
+    }
+
+    let searchData;
+    try {
+      searchData = await searchCars(accessToken, currentOffset);
+    } catch (error) {
+      // On any response error, reset offset to 0 per request
+      console.warn('[eBayWorker] Search failed, resetting offset to 0.', error.message || error);
+      await setState(OFFSET_STATE_KEY, 0);
+      return;
+    }
     const summaries = searchData?.itemSummaries || [];
 
     if (!summaries.length) {
@@ -183,7 +203,11 @@ async function runIngestionCycle() {
 
     const stats = await insertCars(merged, MAX_STORED_CARS);
 
-    const nextOffset = currentOffset + summaries.length;
+    // Advance strictly by SEARCH_LIMIT (15) regardless of returned count
+    let nextOffset = currentOffset + SEARCH_LIMIT;
+    if (nextOffset >= MAX_OFFSET) {
+      nextOffset = 0;
+    }
     await setState(OFFSET_STATE_KEY, nextOffset);
 
     console.log('[eBayWorker] Cycle complete', {
@@ -198,7 +222,8 @@ async function runIngestionCycle() {
       detailBatchCalls,
     });
   } catch (error) {
-    console.error('[eBayWorker] Cycle failed', error);
+    const ts = new Date().toISOString();
+    console.error(`[eBayWorker] ${ts} Cycle failed`, error);
   } finally {
     jobInFlight = false;
   }
