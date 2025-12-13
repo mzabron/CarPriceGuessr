@@ -7,6 +7,7 @@ import RoomList from '../components/RoomList';
 import SetNameModal, { COLOR_OPTIONS } from '../components/SetNameModal';
 import handDrawnLogo from '../assets/logo_handdrawn.png';
 import SettingsModal from '../components/SettingsModal';
+import AboutModal from '../components/AboutModal';
 
 const Home = () => {
   const { play } = useSfx();
@@ -16,6 +17,7 @@ const Home = () => {
   const [user, setUser] = useState(null);
   const [showSetName, setShowSetName] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     // Rehydrate saved nickname & preferred color from localStorage (Home page persistence only)
@@ -212,6 +214,28 @@ const Home = () => {
 
       {showSettings && (
         <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
+
+      {/* About Button - Bottom Left */}
+      <button
+        onClick={() => { play('toggle'); setShowAbout(true); }}
+        className="fixed bottom-6 left-6 hand-drawn-btn px-6 py-3 text-lg font-bold z-40 hidden md:block"
+        title="About & Donate"
+      >
+        About
+      </button>
+
+      {/* Mobile About Button (Icon only) - positioned slightly differently to avoid overlap if needed, or same */}
+      <button
+        onClick={() => { play('toggle'); setShowAbout(true); }}
+        className="fixed bottom-4 left-4 hand-drawn-btn w-12 h-12 flex items-center justify-center rounded-full z-40 md:hidden"
+        title="About & Donate"
+      >
+        <span className="text-xl font-bold">?</span>
+      </button>
+
+      {showAbout && (
+        <AboutModal onClose={() => setShowAbout(false)} />
       )}
     </div>
   );
