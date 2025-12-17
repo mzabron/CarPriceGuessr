@@ -127,7 +127,7 @@ const RoomList = ({ onClose, user }) => {
         {/* Join by Code Section */}
         <div className="mb-6 p-4 border-2 border-[color:var(--text-color)] rounded-lg">
           <h3 className="text-lg font-semibold mb-3">Join room by code</h3>
-          <form onSubmit={(e) => { play('toggle'); handleJoinByCode(e); }} className="flex gap-2">
+          <form onSubmit={(e) => { play('toggle'); handleJoinByCode(e); }} className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <input
               type="text"
               value={joinCode}

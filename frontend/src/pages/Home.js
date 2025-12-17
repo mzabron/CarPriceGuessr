@@ -48,10 +48,10 @@ const Home = () => {
                 />
               </Link>
             </div>
-            <div className="flex items-center justify-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => { play('toggle'); setShowSetName(true); }}
-                className={`hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5 h-12`}
+                className={`hand-drawn-btn inline-flex items-center justify-center gap-2 sm:gap-3 px-5 py-2.5 h-12`}
                 title={user?.name ? 'Change name' : 'Set name'}
               >
                 {user?.name ? (
@@ -116,7 +116,7 @@ const Home = () => {
               </button>
               <button
                 onClick={() => { play('toggle'); setShowSettings(true); }}
-                className="hand-drawn-btn inline-flex items-center gap-3 px-5 py-2.5 h-12"
+                className="hand-drawn-btn inline-flex items-center justify-center gap-2 sm:gap-3 px-5 py-2.5 h-12"
                 title="Settings"
               >
                 <span className="text-base font-medium leading-none">Settings</span>
