@@ -27,10 +27,7 @@ const AboutModal = ({ onClose }) => {
                 <div className="flex flex-col gap-6 px-2 text-[color:var(--text-color)]">
                     <div className="text-lg leading-relaxed flex flex-col gap-4 text-left">
                         <p>
-                            This game is one of my first web app projects and was made by a one-man team, with a bit of help from a few friends (huge thanks to them!).
-                        </p>
-                        <p>
-                            I decided to keep it completely ad-free to make the game more enjoyable. If you’re having fun, I’d really appreciate your support, it helps with hosting costs and lets me keep working on future projects.
+                            I keep the game completely ad-free to make it more enjoyable. If you’re having fun, I’d really appreciate your support, it helps with hosting costs and lets me keep working on future projects.
                         </p>
                         <p className="font-semibold text-center mt-2">
                             Cheers and have fun playing!
