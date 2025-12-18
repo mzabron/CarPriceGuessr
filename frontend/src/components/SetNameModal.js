@@ -60,7 +60,7 @@ const SetNameModal = ({ initialName = '', initialPreferredColorKey, onClose, onS
           type="button"
           onClick={() => { play('toggle'); onClose(); }}
           aria-label="Close"
-          className="absolute top-1 right-6 text-black hover:text-gray-600 focus:outline-none font-bold text-5xl leading-none"
+          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
         >
           ×
         </button>
