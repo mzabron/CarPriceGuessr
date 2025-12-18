@@ -21,6 +21,7 @@ const CreateGameModal = ({ onClose, user }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isDuplicateName, setIsDuplicateName] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const checkDuplicateRoomName = async (roomName) => {
     try {
@@ -146,22 +147,32 @@ const CreateGameModal = ({ onClose, user }) => {
     });
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="hand-drawn-modal p-6 w-full max-w-md relative">
-        <button
-          type="button"
-          onClick={() => { play('toggle'); onClose(); }}
-          aria-label="Close"
-          className="absolute top-1 right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
-        >
-          ×
-        </button>
-        <h2 className="text-2xl font-bold mb-4">Create New Game</h2>
+  const handleScroll = (e) => {
+    const scrollTop = e.target.scrollTop;
+    setIsScrolled(scrollTop > 0);
+  };
 
-        <form onSubmit={(e) => { play('toggle'); handleSubmit(e); }} noValidate className="space-y-4">
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-x-hidden">
+      <div className="hand-drawn-modal w-full max-w-md relative max-h-[90vh] sm:max-h-none overflow-hidden flex flex-col">
+        {/* Sticky Header */}
+        <div className={`relative p-4 sm:p-6 pb-3 sm:pb-4 transition-all duration-200 ${isScrolled ? 'border-b-2 border-[color:var(--text-color)]' : ''}`}>
+          <button
+            type="button"
+            onClick={() => { play('toggle'); onClose(); }}
+            aria-label="Close"
+            className="absolute top-0 right-4 sm:right-6 focus:outline-none font-bold text-5xl leading-none hover:opacity-70"
+          >
+            ×
+          </button>
+          <h2 className="text-xl sm:text-2xl font-bold">Create New Game</h2>
+        </div>
+
+        {/* Scrollable Form Content */}
+        <div className="overflow-y-auto sm:overflow-y-visible overflow-x-hidden p-4 sm:p-6 pt-3 sm:pt-4" onScroll={handleScroll}>
+          <form onSubmit={(e) => { play('toggle'); handleSubmit(e); }} noValidate className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block mb-2">Room Name</label>
+            <label className="block mb-1.5 sm:mb-2 text-sm sm:text-base">Room Name</label>
             <input
               type="text"
               name="roomName"
@@ -175,7 +186,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Visibility</label>
+            <label className="block mb-1.5 sm:mb-2 text-sm sm:text-base">Visibility</label>
             <select
               name="visibility"
               value={formData.visibility}
@@ -188,7 +199,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Maximum Players</label>
+            <label className="block mb-1.5 sm:mb-2 text-sm sm:text-base">Maximum Players</label>
             <HandDrawnNumberInput
               name="maxPlayers"
               min="2"
@@ -200,7 +211,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Number of Rounds</label>
+            <label className="block mb-1.5 sm:mb-2 text-sm sm:text-base">Number of Rounds</label>
             <HandDrawnNumberInput
               name="rounds"
               min="1"
@@ -212,7 +223,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2 flex items-center gap-3">
+            <label className="block mb-1.5 sm:mb-2 flex items-center gap-2 text-sm sm:text-base">
               <span>Steals</span>
               <span
                 className="inline-flex items-center justify-center cursor-help relative group select-none ml-1"
@@ -236,7 +247,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2">Answer Time</label>
+            <label className="block mb-1.5 sm:mb-2 text-sm sm:text-base">Answer Time</label>
             <select
               name="roundDuration"
               value={formData.roundDuration}
@@ -250,7 +261,7 @@ const CreateGameModal = ({ onClose, user }) => {
           </div>
 
           <div>
-            <label className="block mb-2 flex items-center gap-3">
+            <label className="block mb-1.5 sm:mb-2 flex items-center gap-2 text-sm sm:text-base">
               <span>Guess Accuracy Threshold</span>
               <span
                 className="inline-flex items-center justify-center cursor-help relative group select-none ml-1"
@@ -286,7 +297,7 @@ const CreateGameModal = ({ onClose, user }) => {
             ) : null;
           })()}
 
-          <div className="flex justify-end space-x-4 mt-6">
+          <div className="flex justify-end space-x-4 mt-4 sm:mt-6">
             <button
               type="submit"
               className="hand-drawn-btn px-4 py-2"
@@ -296,6 +307,7 @@ const CreateGameModal = ({ onClose, user }) => {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

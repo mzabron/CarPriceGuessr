@@ -50,7 +50,7 @@ const Home = () => {
                 />
               </Link>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-row items-stretch sm:items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
               <button
                 onClick={() => { play('toggle'); setShowSetName(true); }}
                 className={`hand-drawn-btn inline-flex items-center justify-center gap-2 sm:gap-3 px-5 py-2.5 h-12`}
@@ -121,7 +121,7 @@ const Home = () => {
                 className="hand-drawn-btn inline-flex items-center justify-center gap-2 sm:gap-3 px-5 py-2.5 h-12"
                 title="Settings"
               >
-                <span className="text-base font-medium leading-none">Settings</span>
+                <span className="text-base font-medium leading-none hidden sm:block">Settings</span>
                 <svg
                   className="w-5 h-5 text-[color:var(--text-color)]"
                   viewBox="0 0 24 24"
@@ -226,13 +226,15 @@ const Home = () => {
       </button>
 
       {/* Mobile About Button (Icon only) - positioned slightly differently to avoid overlap if needed, or same */}
-      <button
-        onClick={() => { play('toggle'); setShowAbout(true); }}
-        className="fixed bottom-4 left-4 hand-drawn-btn w-12 h-12 flex items-center justify-center rounded-full z-40 md:hidden"
-        title="About & Donate"
-      >
-        <span className="text-xl font-bold">?</span>
-      </button>
+      {!showCreateGame && !showSingleGame && !showRoomList && !showSetName && !showSettings && !showAbout && (
+        <button
+          onClick={() => { play('toggle'); setShowAbout(true); }}
+          className="fixed bottom-4 left-4 hand-drawn-btn w-12 h-12 flex items-center justify-center rounded-full z-10 md:hidden"
+          title="About & Donate"
+        >
+          <span className="text-xl font-bold">?</span>
+        </button>
+      )}
 
       {showAbout && (
         <AboutModal onClose={() => setShowAbout(false)} />
