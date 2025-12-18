@@ -19,7 +19,7 @@ const server = createServer(app);
 const allowedOrigins = [
   'https://carpriceguessr.com',
   'https://www.carpriceguessr.com'
-];      
+];
 
 const io = new Server(server, {
   path: '/ws',

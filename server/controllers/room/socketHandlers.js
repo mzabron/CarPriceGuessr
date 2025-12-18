@@ -63,7 +63,6 @@ function triggerRoundStart(room, socket) {
       }
     );
   } catch (error) {
-    console.error(`Failed to start round for room ${room.id}:`, error);
     releaseLock();
   }
 

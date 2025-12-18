@@ -10,17 +10,15 @@ exports.createRoom = (req, res) => {
   try {
     const roomData = req.body;
     let rooms = getRooms();
-    console.log('Current rooms before creation:', getSafeRooms(rooms));
-    console.log('Received room creation request:', roomData && typeof roomData === 'object' ? { roomName: roomData.roomName } : roomData);
 
     if (!roomData.roomName) {
-      console.log('Room creation failed: name is required');
+      
       return res.status(400).json({ error: 'Room name is required' });
     }
 
   const newId = rooms.length > 0 ? Math.max(...rooms.map(r => r.id)) + 1 : 1;
   const roomCode = generateRoomCode(rooms);
-    console.log('Generated new room ID:', newId, 'with code:', roomCode);
+    
 
     const newRoom = {
       id: newId,
@@ -46,19 +44,15 @@ exports.createRoom = (req, res) => {
       chatHistory: [] // Store chat messages
     };
 
-    console.log('Created new room object:', getSafeRoom(newRoom));
+    
 
   rooms = [...rooms, newRoom];
   setRooms(rooms);
-    console.log('Current rooms after adding new room:', getSafeRooms(rooms));
 
     const { getIo } = require('./room/state');
     const io = getIo();
     if (io) {
-      console.log('Broadcasting updated room list to all clients');
       io.emit('rooms:list', getSafeRooms(rooms));
-    } else {
-      console.warn('Socket.io instance not available - room list not broadcasted');
     }
 
     res.status(201).json({ 
@@ -74,7 +68,6 @@ exports.createRoom = (req, res) => {
 exports.getRooms = (req, res) => {
   try {
     const rooms = getRooms();
-    console.log('Getting all rooms: (safe)', getSafeRooms(rooms));
     res.json(getSafeRooms(rooms));
   } catch (error) {
     console.error('Error in getRooms:', error);

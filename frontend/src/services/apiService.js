@@ -4,7 +4,7 @@ class ApiService {
   async createRoom(roomConfig) {
     try {
       console.log('Sending room creation request with config:', roomConfig);
-      
+
       const requestBody = {
         roomName: roomConfig.roomName,
         playersLimit: roomConfig.maxPlayers,
@@ -14,7 +14,7 @@ class ApiService {
         answerTime: roomConfig.roundDuration,
         correctGuessThreshold: roomConfig.correctGuessThreshold
       };
-      
+
       console.log('Formatted request body:', requestBody);
 
       const response = await fetch(`${API_URL}/api/rooms`, {
