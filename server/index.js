@@ -16,7 +16,7 @@ const swaggerDocument = yaml.load('./docs/swagger.yaml');
 const app = express();
 const server = createServer(app);
 
-const allowedOrigins = [
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [
   'https://carpriceguessr.com',
   'https://www.carpriceguessr.com'
 ];

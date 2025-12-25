@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "backend of car-price-guessr",
   "main": "index.js",
+  "scripts": {
+    "init": "sqlite3 ./data/cars.db < ./seed.sql"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
