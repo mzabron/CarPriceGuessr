@@ -9,8 +9,9 @@ class SocketService {
 
   connect() {
     if (!this.socket) {
-      // Use current origin (works in both dev and prod)
-      this.socket = io(window.location.origin, {
+      // Use env var for dev (points to backend), empty string for prod (nginx proxy)
+      const socketUrl = process.env.REACT_APP_WS_URL || window.location.origin;
+      this.socket = io(socketUrl, {
         path: '/ws',
       });
       
