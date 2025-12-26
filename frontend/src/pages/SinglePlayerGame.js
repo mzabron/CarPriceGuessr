@@ -26,7 +26,7 @@ const SinglePlayerGame = () => {
   // Game state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [sliderPrice, setSliderPrice] = useState(10000);
-  const [guessPrice, setGuessPrice] = useState(10000);
+  const [guessPrice, setGuessPrice] = useState('10000');
   const [selectedRange, setSelectedRange] = useState(PRICE_RANGES[0]);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
@@ -79,7 +79,7 @@ const SinglePlayerGame = () => {
       setPhase('playing');
       setCurrentImageIndex(0);
       setSliderPrice(10000);
-      setGuessPrice(10000);
+      setGuessPrice('10000');
       setSelectedRange(PRICE_RANGES[0]);
       setFeedbackMessage('');
     }, 2000);
@@ -195,21 +195,59 @@ const SinglePlayerGame = () => {
     </div>
   );
 
+  const getSliderMax = () => selectedRange.max;
+  const getSliderMin = () => selectedRange.min;
+
   const handleSliderChange = (e) => {
     let value = Number(e.target.value);
-    const sliderMin = selectedRange.min;
-    const sliderMax = selectedRange.max;
+    const sliderMin = getSliderMin();
+    const sliderMax = getSliderMax();
     if (value < sliderMin) value = sliderMin;
     if (value > sliderMax) value = sliderMax;
     setSliderPrice(value);
+    setGuessPrice(String(value));
+
+    // Auto-switch range if slider hits boundary (though slider is constrained by min/max, handling edge cases)
+    const foundRange = PRICE_RANGES.find((r, index) => {
+      // Special cases for slider boundaries
+      if (value === sliderMin && r.label === selectedRange.label) return true;
+      if (value === sliderMax && r.label === selectedRange.label) return true;
+
+      // For the last range, just check if value is >= min
+      if (index === PRICE_RANGES.length - 1) {
+        return value >= r.min;
+      }
+      // For other ranges, check if value is within the range
+      return value >= r.min && value < r.max;
+    });
+    if (foundRange && foundRange.label !== selectedRange.label) {
+      setSelectedRange(foundRange);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
     setGuessPrice(value);
+    setSliderPrice(Number(value));
+    const price = Number(value);
+    const foundRange = PRICE_RANGES.find((r, index) => {
+      // For the last range, just check if price is >= min
+      if (index === PRICE_RANGES.length - 1) {
+        return price >= r.min;
+      }
+      // For other ranges, check if price is within the range
+      return price >= r.min && price < r.max;
+    });
+    if (foundRange && foundRange.label !== selectedRange.label) {
+      setSelectedRange(foundRange);
+    }
   };
 
   const handleRangeClick = (range) => {
     setSelectedRange(range);
     const middle = Math.round((range.min + range.max) / 2 / 100) * 100;
     setSliderPrice(middle);
-    setGuessPrice(middle);
+    setGuessPrice(String(middle));
     play('toggle', { volume: 0.5 });
   };
 
@@ -530,14 +568,14 @@ const SinglePlayerGame = () => {
               <div className="flex flex-col items-center gap-4">
                 <input
                   type="range"
-                  min={selectedRange.min}
-                  max={selectedRange.max}
+                  min={getSliderMin()}
+                  max={getSliderMax()}
                   step={100}
                   value={sliderPrice}
                   onChange={handleSliderChange}
                   className="w-full max-w-lg h-3 hand-drawn-slider border-2 border-[color:var(--text-color)] rounded-full cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent ${((Number(sliderPrice) - selectedRange.min) / (selectedRange.max - selectedRange.min)) * 100}%, transparent 100%)`
+                    background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
                   }}
                 />
 
@@ -547,21 +585,35 @@ const SinglePlayerGame = () => {
                     <input
                       type="number"
                       value={guessPrice}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setGuessPrice(val);
-                        setSliderPrice(val);
-                      }}
+                      onChange={handleInputChange}
                       className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
                     />
                     <div className="flex flex-col gap-3 ml-2">
                       <button
                         type="button"
                         onClick={() => {
-                          let newVal = Number(guessPrice) + 100;
-                          if (newVal > selectedRange.max) newVal = selectedRange.max;
-                          setGuessPrice(newVal);
-                          setSliderPrice(newVal);
+                          let newVal = Number(sliderPrice) + 100;
+                          // Check if we need to switch range first
+                          const foundRange = PRICE_RANGES.find((r, index) => {
+                            if (index === PRICE_RANGES.length - 1) {
+                              return newVal >= r.min;
+                            }
+                            return newVal >= r.min && newVal < r.max;
+                          });
+
+                          if (foundRange) {
+                            if (foundRange.label !== selectedRange.label) {
+                              setSelectedRange(foundRange);
+                            }
+                            // Allow value to exceed current max if we found a valid range (which we did)
+                            setSliderPrice(newVal);
+                            setGuessPrice(String(newVal));
+                          } else {
+                            // Fallback to clamping if no range found (shouldn't happen within global bounds)
+                            if (newVal > getSliderMax()) newVal = getSliderMax();
+                            setSliderPrice(newVal);
+                            setGuessPrice(String(newVal));
+                          }
                         }}
                         className="hover:scale-110 transition-transform focus:outline-none"
                         aria-label="Increase price"
@@ -573,10 +625,27 @@ const SinglePlayerGame = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          let newVal = Number(guessPrice) - 100;
-                          if (newVal < selectedRange.min) newVal = selectedRange.min;
-                          setGuessPrice(newVal);
-                          setSliderPrice(newVal);
+                          let newVal = Number(sliderPrice) - 100;
+
+                          const foundRange = PRICE_RANGES.find((r, index) => {
+                            if (index === PRICE_RANGES.length - 1) {
+                              return newVal >= r.min;
+                            }
+                            return newVal >= r.min && newVal < r.max;
+                          });
+
+                          if (foundRange) {
+                            if (foundRange.label !== selectedRange.label) {
+                              setSelectedRange(foundRange);
+                            }
+                            setSliderPrice(newVal);
+                            setGuessPrice(String(newVal));
+                          } else {
+                            if (newVal < 0) newVal = 0; // Global min
+                            if (newVal < getSliderMin()) newVal = getSliderMin(); // Clamp to current if no associated range found? but we should search globally
+                            setSliderPrice(newVal);
+                            setGuessPrice(String(newVal));
+                          }
                         }}
                         className="hover:scale-110 transition-transform focus:outline-none"
                         aria-label="Decrease price"
