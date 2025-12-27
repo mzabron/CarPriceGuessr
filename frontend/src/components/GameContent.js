@@ -1102,7 +1102,7 @@ const GameContent = ({ gameSettings, players = [] }) => {
                     {/* Last guess message next to timer */}
                     {lastGuess && (
                       <span className="text-sm font-semibold ml-2 flex items-center">
-                        <span className={getPlayerBadgeClassesById(lastGuess.playerId, players)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${lastGuess.price}</span>
+                        <span className={getPlayerBadgeClassesById(lastGuess.playerId, players)} style={{ marginRight: 4 }}>{lastGuess.playerName}</span> guess was <span className="text-green-700 ml-1">${Number(lastGuess.price).toLocaleString('en-US').replace(/,/g, ' ')}</span>
                         {(() => {
                           // Compare guess to actual car price
                           const car = cars[getActiveCarIndex()];
