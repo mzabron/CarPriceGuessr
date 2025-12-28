@@ -34,13 +34,4 @@ All cars featured in the game are real, live listings sourced directly from the 
 - Node.js & Express  
 - Socket.io  
 - Sequelize ORM  
-- SQLite  
-
-## Preview
-
-
-
-## Rights & Ownership
-
-This repository contains original work by the author.  
-All rights are reserved. No license is granted for reuse, redistribution, or commercial use.
+- SQLite
