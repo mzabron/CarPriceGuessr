@@ -1,4 +1,4 @@
-### PLAY NOW AT: [CARPRICEGUESSR.COM](carpriceguessr.com)
+### PLAY NOW AT: [CARPRICEGUESSR.COM](https://carpriceguessr.com)
 
 CarPriceGuessr is a real-time multiplayer web game where players compete to estimate the value of real vehicles.
 
