@@ -1,74 +1,46 @@
-Projekt WWW i JS!
+### PLAY NOW AT: CARPRICEGUESSR.COM
 
-# Getting Started with Create React App
+CarPriceGuessr is a real-time multiplayer web game where players compete to estimate the value of real vehicles.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+All cars featured in the game are real, live listings sourced directly from the U.S. eBay marketplace using the eBay Developers API. Players can visit the original listings through the “View on eBay” buttons available in the game summary. The database is continuously updated throughout the day, with eBay offers batch-fetched every six minutes, ensuring fresh content and truly real-time pricing.
 
-## Available Scripts
+## Current Game Modes
 
-In the project directory, you can run:
+### Multiplayer
 
-### `npm start`
+- Competitive lobbies with up to 10 players  
+- Turn-based gameplay with time limits and turn-stealing mechanics  
+- Before each round, players vote on a category; the most-voted category is selected  
+- In-lobby chat and a live player list displaying current scores  
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Single Player
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Endless gameplay mode  
+- Players continue guessing until they run out of lives  
+- Each incorrect guess costs one life  
+- Players start each round with three lives  
 
-### `npm test`
+## Tech Stack
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Frontend
 
-### `npm run build`
+- React  
+- Tailwind CSS  
+- Socket.io Client  
+- React Router  
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Backend
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Node.js & Express  
+- Socket.io  
+- Sequelize ORM  
+- SQLite  
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Preview
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Rights & Ownership
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
->>>>>>> d9ca013 (Initialize project using Create React App)
->>>>>>> main
+This repository contains original work by the author.  
+All rights are reserved. No license is granted for reuse, redistribution, or commercial use.

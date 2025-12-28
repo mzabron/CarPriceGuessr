@@ -419,19 +419,7 @@ const SinglePlayerGame = () => {
               <span>Go back</span>
             </button>
             <div className="text-xl font-bold">Round {round}</div>
-            <div className="flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <svg
-                  key={i}
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className={`w-8 h-8 ${i < lives ? 'text-[color:var(--text-color)]' : 'text-gray-300'}`}
-                >
-                  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                </svg>
-              ))}
-            </div>
+
           </div>
           <div className="text-xl font-bold">Score: {score}</div>
         </div>
@@ -566,113 +554,132 @@ const SinglePlayerGame = () => {
               </div>
 
               <div className="flex flex-col items-center gap-4">
-                <input
-                  type="range"
-                  min={getSliderMin()}
-                  max={getSliderMax()}
-                  step={100}
-                  value={sliderPrice}
-                  onChange={handleSliderChange}
-                  className="w-full max-w-lg h-3 hand-drawn-slider border-2 border-[color:var(--text-color)] rounded-full cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
-                  }}
-                />
+                <div className="flex flex-col md:flex-row items-center gap-4 justify-center w-full">
+                  <input
+                    type="range"
+                    min={getSliderMin()}
+                    max={getSliderMax()}
+                    step={100}
+                    value={sliderPrice}
+                    onChange={handleSliderChange}
+                    className="w-full md:w-[500px] h-3 hand-drawn-slider border-2 border-[color:var(--text-color)] rounded-full cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, var(--text-color) 0%, var(--text-color) ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent ${((Number(sliderPrice) - getSliderMin()) / (getSliderMax() - getSliderMin())) * 100}%, transparent 100%)`
+                    }}
+                  />
 
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">$</span>
-                  <div className="relative flex items-center">
-                    <input
-                      type="number"
-                      value={guessPrice}
-                      onChange={handleInputChange}
-                      className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
-                    />
-                    <div className="flex flex-col gap-3 ml-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          let newVal = Number(sliderPrice) + 100;
-                          // Check if we need to switch range first
-                          const foundRange = PRICE_RANGES.find((r, index) => {
-                            if (index === PRICE_RANGES.length - 1) {
-                              return newVal >= r.min;
-                            }
-                            return newVal >= r.min && newVal < r.max;
-                          });
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold">$</span>
+                    <div className="relative flex items-center">
+                      <input
+                        type="number"
+                        value={guessPrice}
+                        onChange={handleInputChange}
+                        className="text-2xl font-bold hand-drawn-input w-40 text-right no-spinner"
+                      />
+                      <div className="flex flex-col gap-3 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            let newVal = Number(sliderPrice) + 100;
+                            // Check if we need to switch range first
+                            const foundRange = PRICE_RANGES.find((r, index) => {
+                              if (index === PRICE_RANGES.length - 1) {
+                                return newVal >= r.min;
+                              }
+                              return newVal >= r.min && newVal < r.max;
+                            });
 
-                          if (foundRange) {
-                            if (foundRange.label !== selectedRange.label) {
-                              setSelectedRange(foundRange);
+                            if (foundRange) {
+                              if (foundRange.label !== selectedRange.label) {
+                                setSelectedRange(foundRange);
+                              }
+                              // Allow value to exceed current max if we found a valid range (which we did)
+                              setSliderPrice(newVal);
+                              setGuessPrice(String(newVal));
+                            } else {
+                              // Fallback to clamping if no range found (shouldn't happen within global bounds)
+                              if (newVal > getSliderMax()) newVal = getSliderMax();
+                              setSliderPrice(newVal);
+                              setGuessPrice(String(newVal));
                             }
-                            // Allow value to exceed current max if we found a valid range (which we did)
-                            setSliderPrice(newVal);
-                            setGuessPrice(String(newVal));
-                          } else {
-                            // Fallback to clamping if no range found (shouldn't happen within global bounds)
-                            if (newVal > getSliderMax()) newVal = getSliderMax();
-                            setSliderPrice(newVal);
-                            setGuessPrice(String(newVal));
-                          }
-                        }}
-                        className="hover:scale-110 transition-transform focus:outline-none"
-                        aria-label="Increase price"
-                      >
-                        <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          let newVal = Number(sliderPrice) - 100;
+                          }}
+                          className="hover:scale-110 transition-transform focus:outline-none"
+                          aria-label="Increase price"
+                        >
+                          <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 7C1 7 5 2 7 1C9 2 13 7 13 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            let newVal = Number(sliderPrice) - 100;
 
-                          const foundRange = PRICE_RANGES.find((r, index) => {
-                            if (index === PRICE_RANGES.length - 1) {
-                              return newVal >= r.min;
-                            }
-                            return newVal >= r.min && newVal < r.max;
-                          });
+                            const foundRange = PRICE_RANGES.find((r, index) => {
+                              if (index === PRICE_RANGES.length - 1) {
+                                return newVal >= r.min;
+                              }
+                              return newVal >= r.min && newVal < r.max;
+                            });
 
-                          if (foundRange) {
-                            if (foundRange.label !== selectedRange.label) {
-                              setSelectedRange(foundRange);
+                            if (foundRange) {
+                              if (foundRange.label !== selectedRange.label) {
+                                setSelectedRange(foundRange);
+                              }
+                              setSliderPrice(newVal);
+                              setGuessPrice(String(newVal));
+                            } else {
+                              if (newVal < 0) newVal = 0; // Global min
+                              if (newVal < getSliderMin()) newVal = getSliderMin(); // Clamp to current if no associated range found? but we should search globally
+                              setSliderPrice(newVal);
+                              setGuessPrice(String(newVal));
                             }
-                            setSliderPrice(newVal);
-                            setGuessPrice(String(newVal));
-                          } else {
-                            if (newVal < 0) newVal = 0; // Global min
-                            if (newVal < getSliderMin()) newVal = getSliderMin(); // Clamp to current if no associated range found? but we should search globally
-                            setSliderPrice(newVal);
-                            setGuessPrice(String(newVal));
-                          }
-                        }}
-                        className="hover:scale-110 transition-transform focus:outline-none"
-                        aria-label="Decrease price"
-                      >
-                        <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
+                          }}
+                          className="hover:scale-110 transition-transform focus:outline-none"
+                          aria-label="Decrease price"
+                        >
+                          <svg width="20" height="12" viewBox="-2 -2 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1C1 1 5 6 7 7C9 6 13 1 13 1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {feedbackMessage && (
-                  <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-[color:var(--text-color)]' :
-                    feedbackMessage.includes('Low') ? 'text-[color:var(--text-color)]' : 'text-[color:var(--text-color)]'
-                    }`}>
-                    {feedbackMessage}
+                <div className="flex items-center justify-center gap-4 min-h-[32px]">
+                  {feedbackMessage && (
+                    <div className={`text-xl font-bold ${feedbackMessage.includes('Correct') ? 'text-[color:var(--text-color)]' :
+                      feedbackMessage.includes('Low') ? 'text-[color:var(--text-color)]' : 'text-[color:var(--text-color)]'
+                      }`}>
+                      {feedbackMessage}
+                    </div>
+                  )}
+                  <div className="flex gap-1">
+                    {[...Array(3)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className={`w-6 h-6 ${i < lives ? 'text-[color:var(--text-color)]' : 'text-gray-300'}`}
+                      >
+                        <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                      </svg>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                <button
-                  onClick={handleGuess}
-                  disabled={!!feedbackMessage && feedbackMessage.includes('Correct')}
-                  className="hand-drawn-btn px-8 py-3 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Confirm Guess
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleGuess}
+                    disabled={!!feedbackMessage && feedbackMessage.includes('Correct')}
+                    className="hand-drawn-btn px-8 py-3 font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Confirm Guess
+                  </button>
+                </div>
               </div>
             </div>
           </div>
