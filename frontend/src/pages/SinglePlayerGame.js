@@ -37,6 +37,7 @@ const SinglePlayerGame = () => {
   const [gameHistory, setGameHistory] = useState([]);
   const [startTime] = useState(Date.now());
   const [endTime, setEndTime] = useState(null);
+  const [showFullHistory, setShowFullHistory] = useState(false);
 
   // Fetch cars for the round
   const fetchCars = useCallback(async () => {
@@ -281,119 +282,231 @@ const SinglePlayerGame = () => {
     return (
       <div className="h-screen bg-[color:var(--bg-color)] flex flex-col items-center p-4 overflow-y-auto thin-scrollbar">
         <div className="hand-drawn-panel p-8 w-full max-w-6xl mb-8 shrink-0">
-          <h1 className="text-4xl font-bold text-center mb-2">Game Over</h1>
-          <p className="text-xl text-center mb-8">You ran out of lives!</p>
+          {!showFullHistory && (
+            <>
+              <h1 className="text-4xl font-bold text-center mb-2">Game Over</h1>
+              <p className="text-xl text-center mb-8">You ran out of lives!</p>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
-              <div className="font-semibold mb-1">Final Score</div>
-              <div className="text-4xl font-bold">{score}</div>
-            </div>
-            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
-              <div className="font-semibold mb-1">Avg. Price Deviation</div>
-              <div className="text-4xl font-bold">{avgDeviation}%</div>
-            </div>
-            <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
-              <div className="font-semibold mb-1">Time Played</div>
-              <div className="text-4xl font-bold">{timeString}</div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button
-              onClick={() => {
-                play('toggle');
-                setPhase('voting');
-                setRound(1);
-                setScore(0);
-                setLives(3);
-                setCars([]);
-                setSelectedCarIndex(null);
-                setGameHistory([]);
-                navigate(0);
-              }}
-              className="hand-drawn-btn px-8 py-3 font-bold"
-            >
-              Play Again
-            </button>
-            <button
-              onClick={() => {
-                play('toggle');
-                navigate('/');
-              }}
-              className="hand-drawn-btn px-8 py-3 font-bold"
-            >
-              Back to Home
-            </button>
-          </div>
-
-          {/* Game History */}
-          <h2 className="text-2xl font-bold mb-6 text-center">Game History</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {uniqueRoundHistory.map((roundData, index) => (
-              <div key={index} className="border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden hover:shadow-lg transition-all bg-transparent">
-                <div className="bg-transparent border-b-2 border-[color:var(--text-color)] text-center py-2 flex justify-between px-4 items-center">
-                  <span className="font-bold">Round {roundData.round}</span>
-                  <span className={`text-sm font-bold px-2 py-1 rounded border-2 border-[color:var(--text-color)] ${roundData.correct ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)]' : 'bg-transparent text-[color:var(--text-color)]'}`}>
-                    {roundData.correct ? 'Correct' : 'Incorrect'}
-                  </span>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
+                  <div className="font-semibold mb-1">Final Score</div>
+                  <div className="text-4xl font-bold">{score}</div>
                 </div>
-
-                <div className="p-4">
-                  {roundData.car.thumbnailImages && roundData.car.thumbnailImages[0] && (
-                    <div className="mb-3 relative group">
-                      <img
-                        src={roundData.car.thumbnailImages[0].imageUrl}
-                        alt={roundData.car.title}
-                        className="w-full h-48 object-cover rounded cursor-pointer border-2 border-[color:var(--text-color)]"
-                        onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center"
-                        onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}>
-                        <span className="opacity-0 group-hover:opacity-100 bg-[color:var(--bg-color)] px-3 py-1 rounded-full text-sm font-bold shadow border-2 border-[color:var(--text-color)] text-[color:var(--text-color)]">View on eBay</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <div
-                      className="font-semibold line-clamp-2 cursor-pointer hover:underline transition-colors h-12"
-                      onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
-                      title={roundData.car.title}
-                    >
-                      {roundData.car.title}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                      <div className="opacity-70">Your Guess:</div>
-                      <div className="font-semibold text-right">${roundData.guess.toLocaleString()}</div>
-
-                      <div className="opacity-70">Actual Price:</div>
-                      <div className="font-bold text-right">${roundData.actualPrice.toLocaleString()}</div>
-
-                      <div className="opacity-70">Deviation:</div>
-                      <div className={`font-semibold text-right ${roundData.deviation <= difficultyThreshold ? 'font-bold' : ''}`}>
-                        {roundData.deviation.toFixed(1)}%
-                      </div>
-                    </div>
-
-                    {roundData.car.itemWebUrl && (
-                      <a
-                        href={roundData.car.itemWebUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full text-center mt-4 hand-drawn-btn py-2 px-4 text-sm font-semibold"
-                      >
-                        View on eBay
-                      </a>
-                    )}
-                  </div>
+                <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
+                  <div className="font-semibold mb-1">Avg. Price Deviation</div>
+                  <div className="text-4xl font-bold">{avgDeviation}%</div>
+                </div>
+                <div className="p-6 rounded-lg text-center border-2 border-[color:var(--text-color)]">
+                  <div className="font-semibold mb-1">Time Played</div>
+                  <div className="text-4xl font-bold">{timeString}</div>
                 </div>
               </div>
-            ))}
-          </div>
+
+
+            </>
+          )}
+
+          {showFullHistory && (
+            <div className="flex justify-start mb-6">
+              <button
+                onClick={() => {
+                  play('toggle');
+                  setShowFullHistory(false);
+                }}
+                className="hand-drawn-btn px-6 py-2 font-bold flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                </svg>
+                Go Back
+              </button>
+            </div>
+          )}
+
+          {/* Game History / Last Car View */}
+          {showFullHistory ? (
+            <>
+              <h2 className="text-2xl font-bold mb-6 text-center">Game History</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {uniqueRoundHistory.map((roundData, index) => (
+                  <div key={index} className="border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden hover:shadow-lg transition-all bg-transparent">
+                    {/* Card Header (Round # + Correct/Incorrect) */}
+                    <div className="bg-transparent border-b-2 border-[color:var(--text-color)] text-center py-2 flex justify-between px-4 items-center">
+                      <span className="font-bold">Round {roundData.round}</span>
+                      <span className={`text-sm font-bold px-2 py-1 rounded border-2 border-[color:var(--text-color)] ${roundData.correct ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)]' : 'bg-transparent text-[color:var(--text-color)]'}`}>
+                        {roundData.correct ? 'Correct' : 'Incorrect'}
+                      </span>
+                    </div>
+
+                    <div className="p-4">
+                      {/* Image */}
+                      {roundData.car.thumbnailImages && roundData.car.thumbnailImages[0] && (
+                        <div className="mb-3 relative group">
+                          <img
+                            src={roundData.car.thumbnailImages[0].imageUrl}
+                            alt={roundData.car.title}
+                            className="w-full h-48 object-cover rounded cursor-pointer border-2 border-[color:var(--text-color)]"
+                            onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center"
+                            onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}>
+                            <span className="opacity-0 group-hover:opacity-100 bg-[color:var(--bg-color)] px-3 py-1 rounded-full text-sm font-bold shadow border-2 border-[color:var(--text-color)] text-[color:var(--text-color)]">View on eBay</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Title & Details */}
+                      <div className="space-y-2">
+                        <div
+                          className="font-semibold line-clamp-2 cursor-pointer hover:underline transition-colors h-12"
+                          onClick={() => roundData.car.itemWebUrl && window.open(roundData.car.itemWebUrl, '_blank')}
+                          title={roundData.car.title}
+                        >
+                          {roundData.car.title}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                          <div className="opacity-70">Your Guess:</div>
+                          <div className="font-semibold text-right">${roundData.guess.toLocaleString()}</div>
+
+                          <div className="opacity-70">Actual Price:</div>
+                          <div className="font-bold text-right">${roundData.actualPrice.toLocaleString()}</div>
+
+                          <div className="opacity-70">Deviation:</div>
+                          <div className={`font-semibold text-right ${roundData.deviation <= difficultyThreshold ? 'font-bold' : ''}`}>
+                            {roundData.deviation.toFixed(1)}%
+                          </div>
+                        </div>
+
+                        {roundData.car.itemWebUrl && (
+                          <a
+                            href={roundData.car.itemWebUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full text-center mt-4 hand-drawn-btn py-2 px-4 text-sm font-semibold"
+                          >
+                            View on eBay
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            uniqueRoundHistory.length > 0 && (
+              <div className="w-full max-w-4xl mx-auto">
+                {/* Wide Card for Last Round */}
+                <div className="border-2 border-[color:var(--text-color)] rounded-lg overflow-hidden bg-transparent mb-6">
+                  {/* Header */}
+                  <div className="bg-transparent border-b-2 border-[color:var(--text-color)] text-center py-3 flex justify-between px-6 items-center">
+                    <span className="font-bold text-lg">Round {uniqueRoundHistory[uniqueRoundHistory.length - 1].round}</span>
+                    <span className={`text-base font-bold px-3 py-1 rounded border-2 border-[color:var(--text-color)] ${uniqueRoundHistory[uniqueRoundHistory.length - 1].correct ? 'bg-[color:var(--text-color)] text-[color:var(--bg-color)]' : 'bg-transparent text-[color:var(--text-color)]'}`}>
+                      {uniqueRoundHistory[uniqueRoundHistory.length - 1].correct ? 'Correct' : 'Incorrect'}
+                    </span>
+                  </div>
+
+                  <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+                    {/* Left Big Image */}
+                    <div className="w-full md:w-1/2">
+                      {uniqueRoundHistory[uniqueRoundHistory.length - 1].car.thumbnailImages && uniqueRoundHistory[uniqueRoundHistory.length - 1].car.thumbnailImages[0] && (
+                        <div className="relative group w-full h-full max-h-[400px]">
+                          <img
+                            src={uniqueRoundHistory[uniqueRoundHistory.length - 1].car.thumbnailImages[0].imageUrl}
+                            alt={uniqueRoundHistory[uniqueRoundHistory.length - 1].car.title}
+                            className="w-full h-full object-contain rounded border-2 border-[color:var(--text-color)]"
+                            onClick={() => uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl && window.open(uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center rounded"
+                            onClick={() => uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl && window.open(uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl, '_blank')}>
+                            <span className="opacity-0 group-hover:opacity-100 bg-[color:var(--bg-color)] px-4 py-2 rounded-full text-base font-bold shadow border-2 border-[color:var(--text-color)] text-[color:var(--text-color)]">View on eBay</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Details */}
+                    <div className="w-full md:w-1/2 flex flex-col justify-center">
+                      <div
+                        className="text-2xl font-bold mb-6 cursor-pointer hover:underline transition-colors"
+                        onClick={() => uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl && window.open(uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl, '_blank')}
+                      >
+                        {uniqueRoundHistory[uniqueRoundHistory.length - 1].car.title}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-base mb-6">
+                        <div className="opacity-90 font-medium text-lg">Your Guess:</div>
+                        <div className="font-bold text-xl text-right">${uniqueRoundHistory[uniqueRoundHistory.length - 1].guess.toLocaleString()}</div>
+
+                        <div className="opacity-90 font-medium text-lg">Actual Price:</div>
+                        <div className="font-bold text-xl text-right">${uniqueRoundHistory[uniqueRoundHistory.length - 1].actualPrice.toLocaleString()}</div>
+
+                        <div className="opacity-90 font-medium text-lg">Deviation:</div>
+                        <div className={`font-bold text-xl text-right`}>
+                          {uniqueRoundHistory[uniqueRoundHistory.length - 1].deviation.toFixed(1)}%
+                        </div>
+                      </div>
+
+                      {uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl && (
+                        <a
+                          href={uniqueRoundHistory[uniqueRoundHistory.length - 1].car.itemWebUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full text-center hand-drawn-btn py-3 px-6 text-lg font-bold mb-4"
+                        >
+                          View on eBay
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button
+                    onClick={() => {
+                      play('toggle');
+                      setPhase('voting');
+                      setRound(1);
+                      setScore(0);
+                      setLives(3);
+                      setCars([]);
+                      setSelectedCarIndex(null);
+                      setGameHistory([]);
+                      setShowFullHistory(false);
+                      navigate(0);
+                    }}
+                    className="hand-drawn-btn px-8 py-3 font-bold text-lg"
+                  >
+                    Play Again
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      play('toggle');
+                      navigate('/');
+                    }}
+                    className="hand-drawn-btn px-8 py-3 font-bold text-lg"
+                  >
+                    Back to Home
+                  </button>
+
+                  {uniqueRoundHistory.length > 1 && (
+                    <button
+                      onClick={() => {
+                        play('toggle');
+                        setShowFullHistory(true);
+                      }}
+                      className="hand-drawn-btn px-8 py-3 font-bold text-lg"
+                    >
+                      Show Game History
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          )}
         </div>
       </div>
     );
