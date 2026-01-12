@@ -87,12 +87,19 @@ body {
   border: 2px solid var(--text-color) !important;
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px !important;
   font-family: 'Gloria Hallelujah', cursive !important;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1rem !important;
   outline: none;
+  line-height: normal !important;
+  /* Override Tailwind's fixed line-heights to prevent jumps */
+  vertical-align: middle !important;
 }
 
 .hand-drawn-input:focus {
-  border-width: 3px !important;
+  /* mimic thicker border without layout shift */
+  box-shadow: 0 0 0 1px var(--text-color) !important;
+  border-width: 2px !important;
+  padding: 0.5rem 1rem !important;
+  /* Explicitly match non-focus padding */
 }
 
 .hand-drawn-panel {
