@@ -35,3 +35,16 @@ All cars featured in the game are real, live listings sourced directly from the 
 - Socket.io  
 - Sequelize ORM  
 - SQLite
+
+## Visual Overview
+
+![Screenshot 1](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20232401.png)
+![Screenshot 1](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20231900.png)
+![Screenshot 2](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20232510.png)
+![Screenshot 4](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233324.png)
+![Screenshot 3](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20232648.png)
+![Screenshot 5](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233352.png)
+![Screenshot 6](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233507.png)
+![Screenshot 7](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233704.png)
+![Screenshot 8](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233919.png)
+![Screenshot 9](server/docs/screenshots/Zrzut%20ekranu%202026-02-05%20233830.png)
